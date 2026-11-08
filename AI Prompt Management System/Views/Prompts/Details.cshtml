@@ -1,0 +1,221 @@
+@using AI_Prompt_Management_System.ViewModels
+@model PromptDetailsViewModel
+@{
+    ViewData["Title"] = Model.Prompt.Title;
+    var p = Model.Prompt;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a asp-action="Index">Library</a></li>
+            <li class="breadcrumb-item active">@p.Title</li>
+        </ol>
+    </nav>
+    <div class="d-flex gap-2">
+        @if (!p.IsArchived)
+        {
+            <a asp-action="CreateVersion" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-git"></i> New Version
+            </a>
+            <a asp-action="Rate" asp-route-id="@p.Id" class="btn btn-sm btn-outline-warning">
+                <i class="bi bi-star"></i> Rate
+            </a>
+            <form asp-action="Archive" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@p.Id" />
+                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                        onclick="return confirm('Archive this prompt?')">
+                    <i class="bi bi-archive"></i> Archive
+                </button>
+            </form>
+        }
+        else
+        {
+            <span class="badge bg-secondary fs-6 py-2 px-3"><i class="bi bi-archive"></i> Archived</span>
+        }
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Main Prompt Card -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">@p.Title</h5>
+                <span class="badge bg-secondary">v@(p.CurrentVersion)</span>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrWhiteSpace(p.Description))
+                {
+                    <p class="text-muted mb-3">@p.Description</p>
+                    <hr />
+                }
+
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
+                        <i class="bi bi-tag"></i> @p.Category
+                    </span>
+                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">
+                        <i class="bi bi-robot"></i> @p.AiTool
+                    </span>
+                    <span class="badge bg-light text-dark border px-3 py-2">
+                        <i class="bi bi-person"></i> @p.Author
+                    </span>
+                </div>
+
+                <div class="bg-light rounded p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted fw-semibold">PROMPT TEXT</small>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="copyPrompt()">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <pre id="promptText" class="mb-0" style="white-space: pre-wrap; font-size: 0.9rem;">@p.CurrentText</pre>
+                </div>
+
+                @if (!p.IsArchived)
+                {
+                    <form asp-action="UsePrompt" method="post" class="d-flex gap-2 align-items-end">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="PromptId" value="@p.Id" />
+                        <div class="flex-fill">
+                            <label class="form-label small fw-semibold">Your Name (for usage tracking)</label>
+                            <input type="text" name="UserName" class="form-control form-control-sm"
+                                   placeholder="Enter your name..." required />
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-lightning-charge"></i> Use Prompt
+                        </button>
+                    </form>
+                }
+            </div>
+            <div class="card-footer text-muted small">
+                <i class="bi bi-calendar"></i> Created: @p.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                &nbsp;|&nbsp;
+                <i class="bi bi-pencil"></i> Updated: @p.UpdatedAt.ToString("dd MMM yyyy HH:mm")
+            </div>
+        </div>
+
+        <!-- Versions History -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-clock-history"></i> Version History</h6>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.Versions.Any())
+                {
+                    <p class="text-muted p-3 mb-0">No versions yet.</p>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var v in Model.Versions)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <span class="badge bg-primary me-2">v@(v.VersionNumber)</span>
+                                        <strong>@(string.IsNullOrEmpty(v.ChangeNote) ? "No change note" : v.ChangeNote)</strong>
+                                        <div class="text-muted small mt-1">
+                                            <i class="bi bi-person"></i> @v.CreatedBy &nbsp;
+                                            <i class="bi bi-calendar"></i> @v.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#version-@v.Id">
+                                        <i class="bi bi-code-square"></i>
+                                    </button>
+                                </div>
+                                <div class="collapse mt-2" id="version-@v.Id">
+                                    <pre class="bg-light p-2 rounded small mb-0" style="white-space: pre-wrap;">@v.PromptText</pre>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Rating Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-star-fill text-warning"></i> Rating</h6>
+            </div>
+            <div class="card-body text-center">
+                <div class="display-4 fw-bold text-warning mb-1">@p.AverageRating.ToString("F1")</div>
+                <div class="star-rating fs-4 mb-2">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <i class="bi @(i <= Math.Round(p.AverageRating) ? "bi-star-fill" : "bi-star") text-warning"></i>
+                    }
+                </div>
+                <p class="text-muted small mb-0">Average Rating</p>
+                @if (!p.IsArchived)
+                {
+                    <a asp-action="Rate" asp-route-id="@p.Id" class="btn btn-sm btn-outline-warning mt-2">
+                        Rate this prompt
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Details Card -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Details</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted small">Category</td>
+                        <td><span class="badge bg-primary bg-opacity-10 text-primary">@p.Category</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted small">AI Tool</td>
+                        <td><span class="badge bg-success bg-opacity-10 text-success">@p.AiTool</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted small">Author</td>
+                        <td class="small">@p.Author</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted small">Version</td>
+                        <td><span class="badge bg-secondary">v@(p.CurrentVersion)</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted small">Status</td>
+                        <td>
+                            @if (p.IsArchived)
+                            {
+                                <span class="badge bg-secondary">Archived</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function copyPrompt() {
+            const text = document.getElementById('promptText').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.currentTarget;
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
+                setTimeout(() => btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy', 2000);
+            });
+        }
+    </script>
+}

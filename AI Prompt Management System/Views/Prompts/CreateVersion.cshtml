@@ -1,0 +1,71 @@
+@using AI_Prompt_Management_System.DTOs
+@model CreatePromptVersionDto
+@{
+    ViewData["Title"] = "Create New Version";
+    var prompt = ViewBag.Prompt as AI_Prompt_Management_System.DTOs.PromptDetailsDto;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-git"></i> Create New Version</h5>
+            </div>
+            <div class="card-body">
+                @if (prompt != null)
+                {
+                    <div class="alert alert-light border mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>@prompt.Title</strong>
+                                <span class="badge bg-secondary ms-2">Current: v@(prompt.CurrentVersion)</span>
+                                <span class="badge bg-primary ms-1">New: v@(prompt.CurrentVersion + 1)</span>
+                            </div>
+                            <small class="text-muted">@prompt.Category · @prompt.AiTool</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-muted">CURRENT VERSION TEXT (v@(prompt.CurrentVersion))</label>
+                        <pre class="bg-light p-3 rounded small" style="white-space: pre-wrap; max-height: 150px; overflow-y: auto;">@prompt.CurrentText</pre>
+                    </div>
+                }
+
+                <form asp-action="CreateVersion" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="PromptId" />
+
+                    <div class="mb-3">
+                        <label asp-for="PromptText" class="form-label fw-semibold">New Prompt Text</label>
+                        <textarea asp-for="PromptText" class="form-control" rows="8"
+                                  placeholder="Enter the updated prompt text (min. 20 characters)..."></textarea>
+                        <span asp-validation-for="PromptText" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ChangeNote" class="form-label fw-semibold">Change Note</label>
+                        <input asp-for="ChangeNote" class="form-control"
+                               placeholder="Describe what changed in this version..." />
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="CreatedBy" class="form-label fw-semibold">Your Name</label>
+                        <input asp-for="CreatedBy" class="form-control" placeholder="Your name..." />
+                        <span asp-validation-for="CreatedBy" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-info text-white">
+                            <i class="bi bi-check-lg"></i> Create Version
+                        </button>
+                        <a asp-action="Details" asp-route-id="@Model.PromptId" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

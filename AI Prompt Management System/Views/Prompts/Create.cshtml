@@ -1,0 +1,81 @@
+@using AI_Prompt_Management_System.DTOs
+@model CreatePromptDto
+@{
+    ViewData["Title"] = "Create Prompt";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Create New Prompt</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-semibold"></label>
+                        <input asp-for="Title" class="form-control" placeholder="Enter prompt title..." />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="2"
+                                  placeholder="Brief description of what this prompt does..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="PromptText" class="form-label fw-semibold">Prompt Text</label>
+                        <textarea asp-for="PromptText" class="form-control" rows="6"
+                                  placeholder="Enter your prompt text (min. 20 characters)..."></textarea>
+                        <span asp-validation-for="PromptText" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Category" class="form-label fw-semibold"></label>
+                            <select asp-for="Category" class="form-select">
+                                <option value="">-- Select Category --</option>
+                                @foreach (var cat in ViewBag.Categories as List<string>)
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Category" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AiTool" class="form-label fw-semibold">AI Tool</label>
+                            <select asp-for="AiTool" class="form-select">
+                                <option value="">-- Select AI Tool --</option>
+                                @foreach (var tool in ViewBag.AiTools as List<string>)
+                                {
+                                    <option value="@tool">@tool</option>
+                                }
+                            </select>
+                            <span asp-validation-for="AiTool" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Author" class="form-label fw-semibold"></label>
+                        <input asp-for="Author" class="form-control" placeholder="Your name..." />
+                        <span asp-validation-for="Author" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Create Prompt
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

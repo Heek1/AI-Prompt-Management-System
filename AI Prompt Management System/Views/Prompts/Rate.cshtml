@@ -1,0 +1,84 @@
+@using AI_Prompt_Management_System.DTOs
+@model RatePromptDto
+@{
+    ViewData["Title"] = "Rate Prompt";
+    var prompt = ViewBag.Prompt as AI_Prompt_Management_System.DTOs.PromptDetailsDto;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-star-fill"></i> Rate Prompt</h5>
+            </div>
+            <div class="card-body">
+                @if (prompt != null)
+                {
+                    <div class="alert alert-light border mb-4">
+                        <strong>@prompt.Title</strong>
+                        <div class="text-muted small">@prompt.Category · @prompt.AiTool · by @prompt.Author</div>
+                    </div>
+                }
+
+                <form asp-action="Rate" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="PromptId" />
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Rating</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @{
+                                var ratingLabels = new Dictionary<int, (string label, string color)>
+                                {
+                                    { 1, ("Poor", "danger") },
+                                    { 2, ("Fair", "warning") },
+                                    { 3, ("Good", "info") },
+                                    { 4, ("Great", "primary") },
+                                    { 5, ("Excellent", "success") }
+                                };
+                            }
+                            @foreach (var (val, (label, color)) in ratingLabels)
+                            {
+                                <div>
+                                    <input type="radio" class="btn-check" name="Rating" id="rating-@val"
+                                           value="@val" required @(Model.Rating == val ? "checked" : "") />
+                                    <label class="btn btn-outline-@color" for="rating-@val">
+                                        @for (int s = 0; s < val; s++) { <i class="bi bi-star-fill"></i> }
+                                        <br /><small>@label</small>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                        <span asp-validation-for="Rating" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="UserName" class="form-label fw-semibold">Your Name</label>
+                        <input asp-for="UserName" class="form-control" placeholder="Enter your name..." />
+                        <span asp-validation-for="UserName" class="text-danger small"></span>
+                        <div class="form-text">Note: You can only rate a prompt once per username.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Comment" class="form-label fw-semibold">Comment <span class="text-muted fw-normal">(optional)</span></label>
+                        <textarea asp-for="Comment" class="form-control" rows="3"
+                                  placeholder="Share your thoughts about this prompt..."></textarea>
+                    </div>
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger small" style="display:@(ViewContext.ModelState.IsValid ? "none" : "block")"></div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-warning text-dark">
+                            <i class="bi bi-star-fill"></i> Submit Rating
+                        </button>
+                        <a asp-action="Details" asp-route-id="@Model.PromptId" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
