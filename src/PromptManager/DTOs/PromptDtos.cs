@@ -1,26 +1,32 @@
 using System.ComponentModel.DataAnnotations;
+using PromptManager.Infrastructure;
 
 namespace PromptManager.DTOs;
 
 public class CreatePromptDto
 {
     [Required(ErrorMessage = "Title is required.")]
-    [StringLength(200, ErrorMessage = "Title cannot exceed 200 characters.")]
+    [StringLength(FieldLimits.Title, ErrorMessage = "Title cannot exceed {1} characters.")]
     public string Title { get; set; } = string.Empty;
 
+    [StringLength(FieldLimits.Description, ErrorMessage = "Description cannot exceed {1} characters.")]
     public string Description { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Prompt text is required.")]
-    [MinLength(20, ErrorMessage = "Prompt text must be at least 20 characters.")]
+    [StringLength(FieldLimits.PromptText, MinimumLength = FieldLimits.PromptTextMin,
+        ErrorMessage = "Prompt text must be between {2} and {1} characters.")]
     public string PromptText { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Category is required.")]
+    [AllowedListValue(AllowedList.Categories)]
     public string Category { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "AI Tool is required.")]
+    [AllowedListValue(AllowedList.AiTools)]
     public string AiTool { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Author is required.")]
+    [StringLength(FieldLimits.PersonName, ErrorMessage = "Author cannot exceed {1} characters.")]
     public string Author { get; set; } = string.Empty;
 }
 
@@ -69,12 +75,15 @@ public class CreatePromptVersionDto
     public int PromptId { get; set; }
 
     [Required(ErrorMessage = "Prompt text is required.")]
-    [MinLength(20, ErrorMessage = "Prompt text must be at least 20 characters.")]
+    [StringLength(FieldLimits.PromptText, MinimumLength = FieldLimits.PromptTextMin,
+        ErrorMessage = "Prompt text must be between {2} and {1} characters.")]
     public string PromptText { get; set; } = string.Empty;
 
+    [StringLength(FieldLimits.ChangeNote, ErrorMessage = "Change note cannot exceed {1} characters.")]
     public string ChangeNote { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Author is required.")]
+    [StringLength(FieldLimits.PersonName, ErrorMessage = "Author cannot exceed {1} characters.")]
     public string CreatedBy { get; set; } = string.Empty;
 }
 
@@ -84,17 +93,21 @@ public class RatePromptDto
     public int PromptId { get; set; }
 
     [Required(ErrorMessage = "Username is required.")]
+    [StringLength(FieldLimits.PersonName, ErrorMessage = "Username cannot exceed {1} characters.")]
     public string UserName { get; set; } = string.Empty;
 
     [Required]
     [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5.")]
     public int Rating { get; set; }
 
+    [StringLength(FieldLimits.Comment, ErrorMessage = "Comment cannot exceed {1} characters.")]
     public string Comment { get; set; } = string.Empty;
 }
 
 public class UsePromptDto
 {
     public int PromptId { get; set; }
+
+    [StringLength(FieldLimits.PersonName)]
     public string UserName { get; set; } = string.Empty;
 }
