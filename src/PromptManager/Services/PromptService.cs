@@ -110,7 +110,7 @@ public class PromptService : IPromptService
         var prompt = new Prompt
         {
             Title = dto.Title,
-            Description = dto.Description,
+            Description = dto.Description ?? string.Empty,
             CurrentText = dto.PromptText,
             Category = dto.Category,
             AiTool = dto.AiTool,
@@ -153,7 +153,7 @@ public class PromptService : IPromptService
                 PromptId = dto.PromptId,
                 VersionNumber = prompt.CurrentVersion,
                 PromptText = dto.PromptText,
-                ChangeNote = dto.ChangeNote,
+                ChangeNote = dto.ChangeNote ?? string.Empty,
                 CreatedBy = dto.CreatedBy,
                 CreatedAt = now
             });
@@ -186,7 +186,7 @@ public class PromptService : IPromptService
             PromptId = dto.PromptId,
             UserName = dto.UserName,
             Rating = dto.Rating,
-            Comment = dto.Comment
+            Comment = dto.Comment ?? string.Empty
         });
 
         // No "already rated?" query first: two requests could both pass it.
@@ -240,7 +240,7 @@ public class PromptService : IPromptService
                 RowKey = Guid.NewGuid().ToString(),
                 PromptId = dto.PromptId.ToString(),
                 PromptTitle = prompt.Title,
-                UserName = dto.UserName,
+                UserName = dto.UserName ?? string.Empty,
                 AiTool = prompt.AiTool,
                 Category = prompt.Category,
                 UsedAt = DateTime.UtcNow

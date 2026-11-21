@@ -10,7 +10,9 @@ public class CreatePromptDto
     public string Title { get; set; } = string.Empty;
 
     [StringLength(FieldLimits.Description, ErrorMessage = "Description cannot exceed {1} characters.")]
-    public string Description { get; set; } = string.Empty;
+    // Optional fields are nullable: an empty textarea binds as null, and a non-nullable
+    // string would get an implicit [Required] from MVC and reject the form.
+    public string? Description { get; set; }
 
     [Required(ErrorMessage = "Prompt text is required.")]
     [StringLength(FieldLimits.PromptText, MinimumLength = FieldLimits.PromptTextMin,
@@ -80,7 +82,7 @@ public class CreatePromptVersionDto
     public string PromptText { get; set; } = string.Empty;
 
     [StringLength(FieldLimits.ChangeNote, ErrorMessage = "Change note cannot exceed {1} characters.")]
-    public string ChangeNote { get; set; } = string.Empty;
+    public string? ChangeNote { get; set; }
 
     [Required(ErrorMessage = "Author is required.")]
     [StringLength(FieldLimits.PersonName, ErrorMessage = "Author cannot exceed {1} characters.")]
@@ -101,7 +103,7 @@ public class RatePromptDto
     public int Rating { get; set; }
 
     [StringLength(FieldLimits.Comment, ErrorMessage = "Comment cannot exceed {1} characters.")]
-    public string Comment { get; set; } = string.Empty;
+    public string? Comment { get; set; }
 }
 
 public class UsePromptDto
@@ -109,5 +111,5 @@ public class UsePromptDto
     public int PromptId { get; set; }
 
     [StringLength(FieldLimits.PersonName)]
-    public string UserName { get; set; } = string.Empty;
+    public string? UserName { get; set; }
 }
