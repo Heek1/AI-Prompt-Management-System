@@ -1,4 +1,5 @@
 using PromptManager.DTOs;
+using PromptManager.Llm;
 
 namespace PromptManager.ViewModels;
 
@@ -8,6 +9,10 @@ public class PromptDetailsViewModel
     public List<PromptVersionDto> Versions { get; set; } = new();
     public RatePromptDto RateForm { get; set; } = new();
     public CreatePromptVersionDto NewVersionForm { get; set; } = new();
+    public RunPromptDto RunForm { get; set; } = new();
+    public IReadOnlyList<AvailableModel> Models { get; set; } = [];
+    public List<RunListItemDto> RecentRuns { get; set; } = [];
+    public int TotalRuns { get; set; }
 }
 
 public class PromptIndexViewModel

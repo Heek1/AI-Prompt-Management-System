@@ -1,0 +1,78 @@
+@using System.Globalization
+@using PromptManager.DTOs
+@using PromptManager.Models
+@model RunDetailsDto
+@{
+    ViewData["Title"] = $"Run #{Model.Id}";
+    var inv = CultureInfo.InvariantCulture;
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Index">Library</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.PromptId">@Model.PromptTitle</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index" asp-route-promptId="@Model.PromptId">Runs</a></li>
+        <li class="breadcrumb-item active">#@Model.Id</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        @if (Model.Status == PromptRunStatus.Failed)
+        {
+            <div class="alert alert-danger"><i class="bi bi-x-circle"></i> @Model.Error</div>
+        }
+        @if (!string.IsNullOrEmpty(Model.Note))
+        {
+            <div class="alert alert-secondary"><i class="bi bi-info-circle"></i> @Model.Note</div>
+        }
+        @if (Model.Status == PromptRunStatus.Truncated)
+        {
+            <div class="alert alert-warning"><i class="bi bi-scissors"></i> The answer stopped at the token limit and is incomplete.</div>
+        }
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-chat-left-text"></i> Output</h6></div>
+            <div class="card-body">
+                @if (string.IsNullOrEmpty(Model.Output))
+                {
+                    <p class="text-muted mb-0">No output.</p>
+                }
+                else
+                {
+                    <pre class="mb-0" style="white-space: pre-wrap;" data-testid="run-output">@Model.Output</pre>
+                }
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-send"></i> Prompt sent (v@(Model.VersionNumber))</h6></div>
+            <div class="card-body">
+                <pre class="bg-light p-2 rounded small mb-0" style="white-space: pre-wrap;">@Model.PromptText</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-speedometer2"></i> Run</h6></div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><td class="text-muted small">Status</td><td><partial name="_RunStatusBadge" model="Model.Status" /></td></tr>
+                    <tr><td class="text-muted small">Model</td><td><code>@Model.Model</code></td></tr>
+                    @if (Model.ServedByModel is not null)
+                    {
+                        <tr><td class="text-muted small">Answered by</td><td><code>@Model.ServedByModel</code> <span class="small text-muted">(fallback)</span></td></tr>
+                    }
+                    <tr><td class="text-muted small">Input tokens</td><td>@Model.InputTokens.ToString("N0")</td></tr>
+                    <tr><td class="text-muted small">Output tokens</td><td>@Model.OutputTokens.ToString("N0")</td></tr>
+                    <tr><td class="text-muted small">Cost</td><td>$@Model.CostUsd.ToString("0.000000", inv)</td></tr>
+                    <tr><td class="text-muted small">Duration</td><td>@((Model.DurationMs / 1000.0).ToString("0.00", inv)) s</td></tr>
+                    <tr><td class="text-muted small">Stop reason</td><td class="small">@(Model.StopReason ?? "-")</td></tr>
+                    <tr><td class="text-muted small">Run by</td><td class="small">@Model.RunBy</td></tr>
+                    <tr><td class="text-muted small">At</td><td class="small">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss", inv) UTC</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

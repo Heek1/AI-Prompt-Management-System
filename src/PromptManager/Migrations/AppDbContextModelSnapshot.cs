@@ -112,6 +112,85 @@ namespace PromptManager.Migrations
                     b.ToTable("PromptRatings");
                 });
 
+            modelBuilder.Entity("PromptManager.Models.PromptRun", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("CostUsd")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("DurationMs")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("InputTokens")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Output")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("OutputTokens")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PromptId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PromptText")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RunBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ServedByModel")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StopReason")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("PromptId", "CreatedAt");
+
+                    b.ToTable("PromptRuns");
+                });
+
             modelBuilder.Entity("PromptManager.Models.PromptVersion", b =>
                 {
                     b.Property<int>("Id")
@@ -154,6 +233,17 @@ namespace PromptManager.Migrations
                 {
                     b.HasOne("PromptManager.Models.Prompt", "Prompt")
                         .WithMany("Ratings")
+                        .HasForeignKey("PromptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prompt");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.PromptRun", b =>
+                {
+                    b.HasOne("PromptManager.Models.Prompt", "Prompt")
+                        .WithMany()
                         .HasForeignKey("PromptId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

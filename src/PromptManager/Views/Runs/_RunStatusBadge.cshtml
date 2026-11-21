@@ -1,0 +1,12 @@
+@using PromptManager.Models
+@model PromptRunStatus
+@{
+    var (css, icon) = Model switch
+    {
+        PromptRunStatus.Succeeded => ("bg-success", "bi-check-circle"),
+        PromptRunStatus.Truncated => ("bg-warning text-dark", "bi-scissors"),
+        PromptRunStatus.Refused => ("bg-secondary", "bi-slash-circle"),
+        _ => ("bg-danger", "bi-x-circle")
+    };
+}
+<span class="badge @css"><i class="bi @icon"></i> @Model</span>
