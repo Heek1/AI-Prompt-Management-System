@@ -79,6 +79,38 @@ namespace PromptManager.Migrations
                     b.ToTable("Prompts");
                 });
 
+            modelBuilder.Entity("PromptManager.Models.PromptInputSet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PromptId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ValuesJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PromptId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("PromptInputSets");
+                });
+
             modelBuilder.Entity("PromptManager.Models.PromptRating", b =>
                 {
                     b.Property<int>("Id")
@@ -179,6 +211,9 @@ namespace PromptManager.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("VariablesJson")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("VersionNumber")
                         .HasColumnType("INTEGER");
 
@@ -227,6 +262,17 @@ namespace PromptManager.Migrations
                         .IsUnique();
 
                     b.ToTable("PromptVersions");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.PromptInputSet", b =>
+                {
+                    b.HasOne("PromptManager.Models.Prompt", "Prompt")
+                        .WithMany()
+                        .HasForeignKey("PromptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prompt");
                 });
 
             modelBuilder.Entity("PromptManager.Models.PromptRating", b =>

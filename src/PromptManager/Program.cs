@@ -13,6 +13,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IPromptService, PromptService>();
 builder.Services.AddScoped<IPromptRunner, PromptRunner>();
+builder.Services.AddScoped<IInputSetService, InputSetService>();
 builder.Services.AddLlmClients(builder.Configuration);
 
 var app = builder.Build();

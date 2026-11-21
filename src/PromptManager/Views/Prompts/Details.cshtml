@@ -132,11 +132,65 @@
                             <label class="form-label small fw-semibold" for="run-by">Your name</label>
                             <input id="run-by" name="RunBy" class="form-control form-control-sm" maxlength="100" placeholder="optional" />
                         </div>
+                        @if (Model.Variables.Any())
+                        {
+                            <div class="col-12 mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small fw-semibold">Variables</span>
+                                    @if (Model.InputSets.Any())
+                                    {
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-box-arrow-in-down"></i> @(Model.SelectedInputSet?.Name ?? "Load input set")
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                @foreach (var set in Model.InputSets)
+                                                {
+                                                    <li><a class="dropdown-item small" asp-action="Details" asp-route-id="@p.Id" asp-route-inputSet="@set.Id">@set.Name</a></li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                </div>
+                                @foreach (var name in Model.Variables)
+                                {
+                                    var value = Model.SelectedInputSet?.Values.GetValueOrDefault(name) ?? "";
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-0" for="var-@name"><code>{{@name}}</code></label>
+                                        <textarea id="var-@name" name="Variables[@name]" class="form-control form-control-sm" rows="2" maxlength="20000">@value</textarea>
+                                    </div>
+                                }
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">Save these values as</span>
+                                    <input name="SaveInputSetAs" class="form-control" maxlength="100" placeholder="optional name, e.g. short-input" value="@Model.SelectedInputSet?.Name" />
+                                </div>
+                            </div>
+                        }
                         <div class="col-md-2 d-grid">
                             <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-play-fill"></i> Run</button>
                         </div>
                     </form>
-                    <div class="form-text">The prompt text is sent to the selected provider. Runs are saved with tokens, cost and timing.</div>
+                    @if (Model.InputSets.Any())
+                    {
+                        <details class="mt-2 small">
+                            <summary class="text-muted">Saved input sets (@Model.InputSets.Count)</summary>
+                            <ul class="list-unstyled mt-2 mb-0">
+                                @foreach (var set in Model.InputSets)
+                                {
+                                    <li class="d-flex justify-content-between align-items-center border-bottom py-1">
+                                        <span><strong>@set.Name</strong> <span class="text-muted">(@string.Join(", ", set.Values.Keys))</span></span>
+                                        <form asp-action="DeleteInputSet" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="promptId" value="@p.Id" />
+                                            <input type="hidden" name="inputSetId" value="@set.Id" />
+                                            <button type="submit" class="btn btn-link btn-sm text-danger p-0">Delete</button>
+                                        </form>
+                                    </li>
+                                }
+                            </ul>
+                        </details>
+                    }
+                    <div class="form-text">The prompt text is sent to the selected provider. Write <code>{{name}}</code> in a prompt to add a variable. Runs are saved with tokens, cost and timing.</div>
                 </div>
             </div>
         }

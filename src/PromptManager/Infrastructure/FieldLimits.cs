@@ -15,4 +15,5 @@ public static class FieldLimits
     public const int PersonName = 100;
     public const int ChangeNote = 500;
     public const int Comment = 1000;
+    public const int InputSetName = 100;
 }

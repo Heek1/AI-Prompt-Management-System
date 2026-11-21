@@ -100,4 +100,63 @@ public sealed class RunsEndpointsTests : IDisposable
     {
         Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync("/Runs/Details/999")).StatusCode);
     }
+
+    [Fact]
+    public async Task Variables_get_form_fields_and_can_be_saved_and_reloaded()
+    {
+        var create = await _client.PostFormAsync("/Prompts/Create", "/Prompts/Create", new Dictionary<string, string>
+        {
+            ["Title"] = "Templated",
+            ["PromptText"] = "Translate {{text}} into {{language}}.",
+            ["Category"] = "Learning",
+            ["AiTool"] = "Claude",
+            ["Author"] = "alice"
+        });
+        var id = int.Parse(create.Headers.Location!.OriginalString.Split('/').Last());
+
+        var page = await _client.GetStringAsync($"/Prompts/Details/{id}");
+        Assert.Contains("name=\"Variables[text]\"", page);
+        Assert.Contains("name=\"Variables[language]\"", page);
+
+        var run = await _client.PostFormAsync($"/Prompts/Details/{id}", "/Prompts/Run", new Dictionary<string, string>
+        {
+            ["PromptId"] = id.ToString(),
+            ["Model"] = "echo",
+            ["Variables[text]"] = "good night",
+            ["Variables[language]"] = "Ukrainian",
+            ["SaveInputSetAs"] = "evening"
+        });
+        Assert.Equal(HttpStatusCode.Redirect, run.StatusCode);
+        Assert.Contains("Translate good night into Ukrainian.", await _client.GetStringAsync(run.Headers.Location!.OriginalString));
+
+        var withSet = await _client.GetStringAsync($"/Prompts/Details/{id}");
+        Assert.Contains(">evening<", withSet);
+        var setId = System.Text.RegularExpressions.Regex.Match(withSet, @"inputSet=(\d+)").Groups[1].Value;
+        var prefilled = await _client.GetStringAsync($"/Prompts/Details/{id}?inputSet={setId}");
+        Assert.Contains(">good night</textarea>", prefilled);
+    }
+
+    [Fact]
+    public async Task Missing_variable_redirects_back_with_an_error_and_stores_nothing()
+    {
+        var create = await _client.PostFormAsync("/Prompts/Create", "/Prompts/Create", new Dictionary<string, string>
+        {
+            ["Title"] = "Templated",
+            ["PromptText"] = "Summarise {{text}} in one sentence.",
+            ["Category"] = "Learning",
+            ["AiTool"] = "Claude",
+            ["Author"] = "alice"
+        });
+        var id = int.Parse(create.Headers.Location!.OriginalString.Split('/').Last());
+
+        var run = await _client.PostFormAsync($"/Prompts/Details/{id}", "/Prompts/Run", new Dictionary<string, string>
+        {
+            ["PromptId"] = id.ToString(), ["Model"] = "echo"
+        });
+
+        Assert.Equal($"/Prompts/Details/{id}", run.Headers.Location!.OriginalString);
+        Assert.Contains("Fill in a value for: text.", await _client.GetStringAsync(run.Headers.Location.OriginalString));
+        await using var db = _factory.CreateDbContext();
+        Assert.Equal(0, await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(db.PromptRuns));
+    }
 }

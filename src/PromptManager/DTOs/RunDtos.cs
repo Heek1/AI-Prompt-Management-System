@@ -18,6 +18,21 @@ public class RunPromptDto
 
     [StringLength(FieldLimits.PersonName)]
     public string? RunBy { get; set; }
+
+    /// <summary>Values for {{name}} placeholders, bound from form fields "Variables[name]".</summary>
+    public Dictionary<string, string?> Variables { get; set; } = [];
+
+    /// <summary>When set, the values are also saved as an input set under this name.</summary>
+    [StringLength(FieldLimits.InputSetName)]
+    public string? SaveInputSetAs { get; set; }
+}
+
+public class InputSetDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public Dictionary<string, string> Values { get; set; } = [];
+    public DateTime UpdatedAt { get; set; }
 }
 
 public class RunListItemDto
@@ -38,6 +53,7 @@ public class RunListItemDto
 
 public class RunDetailsDto : RunListItemDto
 {
+    public Dictionary<string, string> Variables { get; set; } = [];
     public string? ServedByModel { get; set; }
     public string Provider { get; set; } = string.Empty;
     public string PromptText { get; set; } = string.Empty;

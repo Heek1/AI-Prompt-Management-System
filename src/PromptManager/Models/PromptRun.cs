@@ -29,7 +29,10 @@ public class PromptRun
 
     public string Provider { get; set; } = string.Empty;
 
-    /// <summary>The exact text sent to the model.</summary>
+    /// <summary>Template variable values used for this run, as a JSON object; null when the prompt has none.</summary>
+    public string? VariablesJson { get; set; }
+
+    /// <summary>The exact text sent to the model, after variables were filled in.</summary>
     public string PromptText { get; set; } = string.Empty;
 
     public string Output { get; set; } = string.Empty;

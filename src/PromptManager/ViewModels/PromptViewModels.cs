@@ -12,6 +12,13 @@ public class PromptDetailsViewModel
     public RunPromptDto RunForm { get; set; } = new();
     public IReadOnlyList<AvailableModel> Models { get; set; } = [];
     public List<RunListItemDto> RecentRuns { get; set; } = [];
+
+    /// <summary>Variables used by any version, those of the current version first.</summary>
+    public IReadOnlyList<string> Variables { get; set; } = [];
+    public List<InputSetDto> InputSets { get; set; } = [];
+
+    /// <summary>The input set whose values prefill the form, if one was chosen.</summary>
+    public InputSetDto? SelectedInputSet { get; set; }
     public int TotalRuns { get; set; }
 }
 

@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<PromptVersion> PromptVersions => Set<PromptVersion>();
     public DbSet<PromptRating> PromptRatings => Set<PromptRating>();
     public DbSet<PromptRun> PromptRuns => Set<PromptRun>();
+    public DbSet<PromptInputSet> PromptInputSets => Set<PromptInputSet>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -78,6 +79,20 @@ public class AppDbContext : DbContext
             // Runs are listed newest first, per prompt and overall.
             e.HasIndex(r => new { r.PromptId, r.CreatedAt });
             e.HasIndex(r => r.CreatedAt);
+        });
+
+        modelBuilder.Entity<PromptInputSet>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Name).IsRequired().HasMaxLength(FieldLimits.InputSetName);
+            e.Property(s => s.ValuesJson).IsRequired();
+            e.HasOne(s => s.Prompt)
+             .WithMany()
+             .HasForeignKey(s => s.PromptId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            // Saving under an existing name replaces that set.
+            e.HasIndex(s => new { s.PromptId, s.Name }).IsUnique();
         });
     }
 }
