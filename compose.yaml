@@ -1,0 +1,21 @@
+# docker compose up --build
+# Then open http://localhost:8080
+services:
+  app:
+    build: .
+    image: prompt-manager:local
+    ports:
+      - "8080:8080"
+    environment:
+      # Production by default. Set to Development to get the sample prompts
+      # on an empty database and detailed error pages.
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      # Passed through from your shell or a local .env file; never commit it.
+      # Without it, only the offline "echo" model is available.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - prompt-data:/data
+    restart: unless-stopped
+
+volumes:
+  prompt-data:

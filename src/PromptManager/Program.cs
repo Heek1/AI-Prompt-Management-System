@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using PromptManager.Data;
 using PromptManager.Llm;
@@ -15,6 +16,16 @@ builder.Services.AddScoped<IPromptService, PromptService>();
 builder.Services.AddScoped<IPromptRunner, PromptRunner>();
 builder.Services.AddScoped<IInputSetService, InputSetService>();
 builder.Services.AddLlmClients(builder.Configuration);
+
+// Antiforgery tokens are encrypted with data-protection keys. In a container
+// the default key folder is lost on restart, which would break every open
+// form, so keep the keys on the data volume when a path is configured.
+if (builder.Configuration["DataProtection:KeysPath"] is { Length: > 0 } keysPath)
+{
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
+        .SetApplicationName("PromptManager");
+}
 
 var app = builder.Build();
 

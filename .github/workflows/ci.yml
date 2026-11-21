@@ -49,3 +49,29 @@ jobs:
           name: test-results
           path: TestResults
           retention-days: 7
+
+  docker:
+    # Builds the image and checks that the container starts and serves pages;
+    # nothing is pushed.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build --tag prompt-manager:ci .
+
+      - name: Start container and check it responds
+        run: |
+          docker run --detach --name pm --publish 8080:8080 prompt-manager:ci
+          for i in $(seq 1 30); do
+            if curl --silent --fail http://localhost:8080/health > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --silent --fail http://localhost:8080/health
+          curl --silent --fail --output /dev/null http://localhost:8080/Prompts
+          curl --silent --fail --output /dev/null http://localhost:8080/Runs
+
+      - name: Container logs
+        if: always()
+        run: docker logs pm || true
