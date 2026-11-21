@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PromptManager.Data;
+using PromptManager.Llm;
 using PromptManager.Middleware;
 using PromptManager.Services;
 
@@ -11,6 +12,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IPromptService, PromptService>();
+builder.Services.AddLlmClients(builder.Configuration);
 
 var app = builder.Build();
 
