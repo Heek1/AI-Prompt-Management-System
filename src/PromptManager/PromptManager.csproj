@@ -1,8 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>PromptManager</RootNamespace>
+    <UserSecretsId>4120e63b-a603-4718-be7f-8e3853614858</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
