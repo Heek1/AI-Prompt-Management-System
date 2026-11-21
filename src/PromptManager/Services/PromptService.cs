@@ -1,4 +1,5 @@
 using Azure.Data.Tables;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using PromptManager.Data;
 using PromptManager.DTOs;
@@ -12,6 +13,8 @@ public class PromptService : IPromptService
     private readonly AppDbContext _db;
     private readonly TableClient? _tableClient;
     private readonly ILogger<PromptService> _logger;
+
+    private const int MaxConcurrencyAttempts = 3;
 
     public PromptService(AppDbContext db, IConfiguration config, ILogger<PromptService> logger)
     {
@@ -115,20 +118,18 @@ public class PromptService : IPromptService
             CurrentVersion = 1
         };
 
-        _db.Prompts.Add(prompt);
-        await _db.SaveChangesAsync();
-
-        // Create initial version
-        var version = new PromptVersion
+        // Adding the version through the navigation property lets EF insert both
+        // rows in one SaveChanges, i.e. one transaction: no prompt without a version.
+        prompt.Versions.Add(new PromptVersion
         {
-            PromptId = prompt.Id,
             VersionNumber = 1,
             PromptText = dto.PromptText,
             ChangeNote = "Initial version",
             CreatedBy = dto.Author,
-            CreatedAt = DateTime.UtcNow
-        };
-        _db.PromptVersions.Add(version);
+            CreatedAt = prompt.CreatedAt
+        });
+
+        _db.Prompts.Add(prompt);
         await _db.SaveChangesAsync();
 
         return prompt.Id;
@@ -136,70 +137,93 @@ public class PromptService : IPromptService
 
     public async Task<bool> CreateVersionAsync(CreatePromptVersionDto dto)
     {
-        var prompt = await _db.Prompts.FindAsync(dto.PromptId);
-        if (prompt == null || prompt.IsArchived) return false;
-
-        prompt.CurrentVersion++;
-        prompt.CurrentText = dto.PromptText;
-        prompt.UpdatedAt = DateTime.UtcNow;
-
-        var version = new PromptVersion
+        for (var attempt = 1; attempt <= MaxConcurrencyAttempts; attempt++)
         {
-            PromptId = dto.PromptId,
-            VersionNumber = prompt.CurrentVersion,
-            PromptText = dto.PromptText,
-            ChangeNote = dto.ChangeNote,
-            CreatedBy = dto.CreatedBy,
-            CreatedAt = DateTime.UtcNow
-        };
+            var prompt = await _db.Prompts.FirstOrDefaultAsync(p => p.Id == dto.PromptId);
+            if (prompt == null || prompt.IsArchived) return false;
 
-        _db.PromptVersions.Add(version);
-        await _db.SaveChangesAsync();
-        return true;
+            var now = DateTime.UtcNow;
+            prompt.CurrentVersion++;
+            prompt.CurrentText = dto.PromptText;
+            prompt.UpdatedAt = now;
+            prompt.ConcurrencyStamp = Guid.NewGuid().ToString();
+
+            _db.PromptVersions.Add(new PromptVersion
+            {
+                PromptId = dto.PromptId,
+                VersionNumber = prompt.CurrentVersion,
+                PromptText = dto.PromptText,
+                ChangeNote = dto.ChangeNote,
+                CreatedBy = dto.CreatedBy,
+                CreatedAt = now
+            });
+
+            try
+            {
+                await _db.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex) when (ex is DbUpdateConcurrencyException || IsUniqueViolation(ex))
+            {
+                // Someone else changed the prompt (or took this version number)
+                // between our read and write. Re-read and try again.
+                _logger.LogInformation("Version conflict on prompt {PromptId}, attempt {Attempt}.", dto.PromptId, attempt);
+                _db.ChangeTracker.Clear();
+            }
+        }
+
+        _logger.LogWarning("Gave up creating a version for prompt {PromptId} after {Attempts} conflicts.", dto.PromptId, MaxConcurrencyAttempts);
+        return false;
     }
 
     public async Task<(bool success, string error)> RateAsync(RatePromptDto dto)
     {
-        var prompt = await _db.Prompts.FindAsync(dto.PromptId);
-        if (prompt == null) return (false, "Prompt not found.");
+        if (!await _db.Prompts.AnyAsync(p => p.Id == dto.PromptId))
+            return (false, "Prompt not found.");
 
-        var existing = await _db.PromptRatings
-            .FirstOrDefaultAsync(r => r.PromptId == dto.PromptId && r.UserName == dto.UserName);
-
-        if (existing != null)
-            return (false, "You have already rated this prompt.");
-
-        var rating = new PromptRating
+        _db.PromptRatings.Add(new PromptRating
         {
             PromptId = dto.PromptId,
             UserName = dto.UserName,
             Rating = dto.Rating,
             Comment = dto.Comment
-        };
+        });
 
-        _db.PromptRatings.Add(rating);
-        await _db.SaveChangesAsync();
+        // No "already rated?" query first: two requests could both pass it.
+        // The unique index on (PromptId, UserName) decides instead.
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            _db.ChangeTracker.Clear();
+            return (false, "You have already rated this prompt.");
+        }
 
-        // Recalculate average
-        var avg = await _db.PromptRatings
-            .Where(r => r.PromptId == dto.PromptId)
-            .AverageAsync(r => (double)r.Rating);
-
-        prompt.AverageRating = Math.Round(avg, 2);
-        await _db.SaveChangesAsync();
+        // Recomputed in a single UPDATE from the ratings table, so concurrent
+        // ratings cannot overwrite each other's average.
+        await _db.Prompts
+            .Where(p => p.Id == dto.PromptId)
+            .ExecuteUpdateAsync(s => s.SetProperty(
+                p => p.AverageRating,
+                p => Math.Round(p.Ratings.Average(r => (double)r.Rating), 2)));
 
         return (true, string.Empty);
     }
 
     public async Task<bool> ArchiveAsync(int id)
     {
-        var prompt = await _db.Prompts.FindAsync(id);
-        if (prompt == null) return false;
+        // Unconditional single UPDATE: archiving is idempotent, and the new stamp
+        // makes a concurrent CreateVersionAsync retry and see the archived flag.
+        var updated = await _db.Prompts
+            .Where(p => p.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.IsArchived, true)
+                .SetProperty(p => p.UpdatedAt, DateTime.UtcNow)
+                .SetProperty(p => p.ConcurrencyStamp, Guid.NewGuid().ToString()));
 
-        prompt.IsArchived = true;
-        prompt.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
-        return true;
+        return updated > 0;
     }
 
     public async Task<(bool success, string error)> UsePromptAsync(UsePromptDto dto)
@@ -278,4 +302,9 @@ public class PromptService : IPromptService
 
         return (totalPrompts, totalUsages);
     }
+
+    // SQLITE_CONSTRAINT_UNIQUE. Provider-specific on purpose: if the app moves to
+    // another database, this is the one place to update.
+    private static bool IsUniqueViolation(Exception ex) =>
+        ex is DbUpdateException { InnerException: SqliteException { SqliteExtendedErrorCode: 2067 } };
 }
