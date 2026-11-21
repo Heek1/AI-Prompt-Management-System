@@ -27,6 +27,28 @@ public class RunPromptDto
     public string? SaveInputSetAs { get; set; }
 }
 
+/// <summary>Runs two versions of one prompt on the same model with the same values.</summary>
+public class CompareRunDto
+{
+    [Required]
+    public int PromptId { get; set; }
+
+    [Required]
+    public int FromVersion { get; set; }
+
+    [Required]
+    public int ToVersion { get; set; }
+
+    [Required(ErrorMessage = "Choose a model.")]
+    [StringLength(100)]
+    public string Model { get; set; } = string.Empty;
+
+    [StringLength(FieldLimits.PersonName)]
+    public string? RunBy { get; set; }
+
+    public Dictionary<string, string?> Variables { get; set; } = [];
+}
+
 public class InputSetDto
 {
     public int Id { get; set; }

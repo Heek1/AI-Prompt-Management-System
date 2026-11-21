@@ -1,0 +1,56 @@
+@using PromptManager.Infrastructure
+@model (DiffResult Diff, string LeftLabel, string RightLabel)
+@functions {
+    static string RowClass(DiffLine line) => line.Kind switch
+    {
+        DiffLineKind.Deleted => "diff-del",
+        DiffLineKind.Inserted => "diff-ins",
+        DiffLineKind.Modified => "diff-mod",
+        DiffLineKind.Empty => "diff-empty",
+        _ => ""
+    };
+}
+<style>
+    .diff-table { font-family: var(--bs-font-monospace); font-size: .8rem; table-layout: fixed; }
+    .diff-table td { white-space: pre-wrap; word-break: break-word; vertical-align: top; padding: 1px 6px; }
+    .diff-table td.num { width: 3rem; color: var(--bs-secondary-color); text-align: right; user-select: none; }
+    .diff-del { background: #ffebe9; }
+    .diff-ins { background: #e6ffec; }
+    .diff-mod { background: #fff8c5; }
+    .diff-empty { background: #f6f8fa; }
+    .diff-del mark, .diff-mod.old mark { background: #ffc1c0; padding: 0; }
+    .diff-ins mark, .diff-mod.new mark { background: #abf2bc; padding: 0; }
+</style>
+<p class="small text-muted mb-2">
+    @if (Model.Diff.HasChanges)
+    {
+        <span class="text-success">+@Model.Diff.Added added</span>
+        <span class="text-danger ms-2">-@Model.Diff.Removed removed</span>
+        <span class="text-warning ms-2">~@Model.Diff.Modified changed</span>
+    }
+    else
+    {
+        <span>No differences.</span>
+    }
+</p>
+<div class="table-responsive border rounded">
+    <table class="table table-sm diff-table mb-0" aria-label="Differences between @Model.LeftLabel and @Model.RightLabel">
+        <thead class="table-light">
+            <tr>
+                <th colspan="2">@Model.LeftLabel</th>
+                <th colspan="2">@Model.RightLabel</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.Diff.Rows)
+            {
+                <tr>
+                    <td class="num @RowClass(row.Old)">@row.Old.Number</td>
+                    <td class="@RowClass(row.Old) old">@foreach (var seg in row.Old.Segments){if (seg.Changed && row.Old.Kind == DiffLineKind.Modified){<mark>@seg.Text</mark>}else{@seg.Text}}</td>
+                    <td class="num @RowClass(row.New)">@row.New.Number</td>
+                    <td class="@RowClass(row.New) new">@foreach (var seg in row.New.Segments){if (seg.Changed && row.New.Kind == DiffLineKind.Modified){<mark>@seg.Text</mark>}else{@seg.Text}}</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

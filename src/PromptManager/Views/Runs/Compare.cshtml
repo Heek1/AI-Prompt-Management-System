@@ -1,0 +1,55 @@
+@using System.Globalization
+@using PromptManager.DTOs
+@using PromptManager.ViewModels
+@model CompareRunsViewModel
+@{
+    ViewData["Title"] = $"Runs #{Model.Left.Id} and #{Model.Right.Id}";
+    var inv = CultureInfo.InvariantCulture;
+    var runs = new[] { Model.Left, Model.Right };
+    var diffModel = (Model.OutputDiff, $"Run #{Model.Left.Id} (v{Model.Left.VersionNumber})", $"Run #{Model.Right.Id} (v{Model.Right.VersionNumber})");
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Index">Library</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.Left.PromptId">@Model.Left.PromptTitle</a></li>
+        <li class="breadcrumb-item active">Compare runs</li>
+    </ol>
+</nav>
+
+<div class="row g-4 mb-4">
+    @foreach (var r in runs)
+    {
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <a asp-action="Details" asp-route-id="@r.Id">Run #@r.Id</a>
+                        <span class="badge bg-primary ms-1">v@(r.VersionNumber)</span>
+                        <code class="small ms-1">@(r.ServedByModel ?? r.Model)</code>
+                    </h6>
+                    <partial name="_RunStatusBadge" model="r.Status" />
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-2">
+                        @r.InputTokens.ToString("N0") in / @r.OutputTokens.ToString("N0") out
+                        &middot; $@r.CostUsd.ToString("0.0000", inv)
+                        &middot; @((r.DurationMs / 1000.0).ToString("0.0", inv)) s
+                    </p>
+                    @if (r.Error is not null)
+                    {
+                        <div class="alert alert-danger small py-1">@r.Error</div>
+                    }
+                    <pre class="mb-0" style="white-space: pre-wrap;">@r.Output</pre>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header"><h6 class="mb-0"><i class="bi bi-file-diff"></i> Output differences</h6></div>
+    <div class="card-body">
+        <partial name="_Diff" model="diffModel" />
+    </div>
+</div>
