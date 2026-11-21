@@ -61,4 +61,17 @@ public class LlmCatalogTests
         Assert.Equal(3, response.InputTokens);
         Assert.Equal(LlmOutcome.Completed, response.Outcome);
     }
+
+    [Fact]
+    public void Default_model_falls_back_to_the_first_usable_one()
+    {
+        var options = new LlmOptions
+        {
+            DefaultModel = "b-model",
+            Models = [new() { Id = "b-model", Provider = "B" }, new() { Id = "a-model", Provider = "A" }]
+        };
+
+        Assert.Equal("a-model", new LlmCatalog(Options.Create(options), [new FakeClient("A", true), new FakeClient("B", false)]).DefaultModel);
+        Assert.Equal("b-model", new LlmCatalog(Options.Create(options), [new FakeClient("A", true), new FakeClient("B", true)]).DefaultModel);
+    }
 }

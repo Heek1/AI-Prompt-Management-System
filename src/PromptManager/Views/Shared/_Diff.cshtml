@@ -13,7 +13,7 @@
 <style>
     .diff-table { font-family: var(--bs-font-monospace); font-size: .8rem; table-layout: fixed; }
     .diff-table td { white-space: pre-wrap; word-break: break-word; vertical-align: top; padding: 1px 6px; }
-    .diff-table td.num { width: 3rem; color: var(--bs-secondary-color); text-align: right; user-select: none; }
+    .diff-table td.num { color: var(--bs-secondary-color); text-align: right; user-select: none; }
     .diff-del { background: #ffebe9; }
     .diff-ins { background: #e6ffec; }
     .diff-mod { background: #fff8c5; }
@@ -35,6 +35,9 @@
 </p>
 <div class="table-responsive border rounded">
     <table class="table table-sm diff-table mb-0" aria-label="Differences between @Model.LeftLabel and @Model.RightLabel">
+        <colgroup>
+            <col style="width: 3.5rem" /><col /><col style="width: 3.5rem" /><col />
+        </colgroup>
         <thead class="table-light">
             <tr>
                 <th colspan="2">@Model.LeftLabel</th>

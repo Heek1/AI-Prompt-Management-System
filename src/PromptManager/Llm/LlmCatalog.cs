@@ -20,7 +20,21 @@ public sealed class LlmCatalog
         _clients = clients.ToDictionary(c => c.Provider, StringComparer.OrdinalIgnoreCase);
     }
 
-    public string DefaultModel => _options.DefaultModel;
+    /// <summary>
+    /// The model to preselect: the configured default when it can be used,
+    /// otherwise the first usable one. Preselecting a disabled option would
+    /// submit no model at all.
+    /// </summary>
+    public string DefaultModel
+    {
+        get
+        {
+            var models = List();
+            return models.FirstOrDefault(m => m.IsAvailable && m.Model.Id == _options.DefaultModel)?.Model.Id
+                ?? models.FirstOrDefault(m => m.IsAvailable)?.Model.Id
+                ?? _options.DefaultModel;
+        }
+    }
 
     public TimeSpan Timeout => TimeSpan.FromSeconds(_options.TimeoutSeconds);
 
