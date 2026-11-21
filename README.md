@@ -3,15 +3,20 @@
 [![CI](https://github.com/Heek1/AI-Prompt-Management-System/actions/workflows/ci.yml/badge.svg)](https://github.com/Heek1/AI-Prompt-Management-System/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A small web app for keeping a team's AI prompts in one place: write a prompt,
-improve it in versions, rate it, record when it was used, and find it again by
-search and filters.
+A web app for keeping a team's AI prompts in one place and checking how they
+behave: write a prompt, improve it in versions, run any version on a model,
+compare versions side by side, and keep every run with its tokens, cost and
+timing.
 
 Built with ASP.NET Core 10 MVC, EF Core and SQLite.
 
 | Library | Prompt details |
 |---|---|
 | ![Prompt library](docs/images/library.png) | ![Prompt details](docs/images/details.png) |
+| **Run with variables** | **Run result** |
+| ![Run form with variables](docs/images/run-form.png) | ![Run details](docs/images/run-details.png) |
+| **Version diff** | **Two versions side by side** |
+| ![Version diff](docs/images/compare-versions.png) | ![Compared runs](docs/images/compare-runs.png) |
 
 ## What it does
 
@@ -19,6 +24,15 @@ Built with ASP.NET Core 10 MVC, EF Core and SQLite.
   filters by category and AI tool, and sorting by rating, date, title or version.
 - **Versions.** Each edit creates a new numbered version with a change note.
   The full history stays visible.
+- **Run on a model.** Run any version on Claude (through the official
+  Anthropic .NET SDK) or on the offline *echo* model. Each run stores the exact
+  text sent, the answer, status (succeeded, truncated, refused, failed),
+  tokens, cost and duration; `/Runs` lists them all.
+- **Variables.** Write `{{name}}` in a prompt and the Run form asks for a
+  value. Values can be saved as named *input sets* and reused.
+- **Compare versions.** A side-by-side diff with changed words highlighted,
+  and a button that runs both versions on the same model and inputs, then
+  shows the two answers and their differences.
 - **Ratings** from 1 to 5 with an optional comment, one per user name per prompt.
 - **Archive.** Archived prompts can no longer be edited or used.
 - **Usage history** (optional). "Use prompt" events can be written to
@@ -29,8 +43,14 @@ Built with ASP.NET Core 10 MVC, EF Core and SQLite.
 
 Known limitations:
 
-- **It does not run prompts against a model.** The app stores and organises
-  prompt text; it does not call any AI API.
+- **Only Claude is wired in.** Other providers (OpenAI, Gemini) need their own
+  `ILlmClient`; the interface is ready for them.
+- **Runs happen inside the web request** (up to `Llm:TimeoutSeconds`, 180 s by
+  default). There is no background queue yet.
+- **Prices are configuration.** Cost is computed from the per-million-token
+  prices in `appsettings.json`, which must be kept up to date by hand.
+- **The real Anthropic API path has not been exercised by the automated
+  tests**: they drive the SDK against a stubbed HTTP handler.
 - **There is no authentication.** Author and user names are free text from the
   form, so "one rating per user" is per typed name, and anyone can archive any
   prompt.
@@ -52,6 +72,33 @@ Open http://localhost:5139. On first start the SQLite database
 (`src/PromptManager/promptmanager.db`) is created and migrated, and in
 Development three sample prompts are added.
 
+### Running prompts on Claude
+
+Without a key only the offline *echo* model is available, which returns the
+prompt it was given. To use Claude, set an API key with user secrets (or the
+`ANTHROPIC_API_KEY` environment variable):
+
+```bash
+dotnet user-secrets --project src/PromptManager set "Anthropic:ApiKey" "<your key>"
+```
+
+Models, prices, the default model and the timeout are in the `Llm` section of
+[`appsettings.json`](src/PromptManager/appsettings.json). `Anthropic:Effort`
+(default `high`) sets the reasoning effort, and `Anthropic:UseRefusalFallbacks`
+(default `true`) lets the API re-serve a refused request with a fallback
+model; the run then shows which model answered.
+
+### With Docker
+
+```bash
+docker compose up --build
+```
+
+Open http://localhost:8080. The database and data-protection keys are kept in
+the `prompt-data` volume. Pass a key with `ANTHROPIC_API_KEY=<key> docker
+compose up`, and set `ASPNETCORE_ENVIRONMENT=Development` to get the sample
+prompts.
+
 ### Optional: usage history in Azure Table Storage
 
 Set the connection string with user secrets (never in `appsettings.json`):
@@ -69,29 +116,37 @@ works with `UseDevelopmentStorage=true`.
 dotnet test
 ```
 
-57 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
+122 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
 
 - **Service tests** run `PromptService` against an in-memory SQLite database
   (real SQLite, so unique indexes and transactions behave as in the app).
 - **Concurrency tests** inject a competing write between the service's read and
   its save, to check version numbering, duplicate ratings and archive-vs-edit.
 - **Validation tests** for every form DTO.
+- **LLM client tests** run the real Anthropic SDK against a stub HTTP handler
+  and check the request it sends and how answers, refusals, truncation and
+  errors are read.
+- **Runner tests** cover variables, timeouts, cancellation, provider failures
+  and cost.
 - **Integration tests** start the app with `WebApplicationFactory` and post real
   forms with antiforgery tokens.
 
 CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) builds with
-`-warnaserror` and runs the tests on every pull request.
+`-warnaserror`, runs the tests, and builds and starts the Docker image on every
+pull request.
 
 ## How it is built
 
 ```
 src/PromptManager/
   Controllers/      Prompts, History, Health, Home (redirect + error page)
-  Services/         PromptService: prompts, versions, ratings, archive, usage
+  Services/         PromptService (prompts, versions, ratings, archive, usage),
+                    PromptRunner (runs), InputSetService
+  Llm/              ILlmClient, Anthropic and Echo clients, model catalogue
   Data/             AppDbContext, DevDataSeeder
   Models/           EF entities and the Azure Table entity
   DTOs/             Form and view DTOs with validation attributes
-  Infrastructure/   Category and tool lists, field length limits
+  Infrastructure/   Category and tool lists, field limits, templates, diff
   Migrations/       EF Core migrations (applied automatically at startup)
   Views/            Razor views, Bootstrap 5
 tests/PromptManager.Tests/
@@ -109,14 +164,20 @@ tests/PromptManager.Tests/
 - **One source of truth for field limits.**
   [`FieldLimits`](src/PromptManager/Infrastructure/FieldLimits.cs) is used by
   both the form validation and the EF model.
+- **Providers behind one small interface.** `ILlmClient` only translates a
+  prompt into a provider call and back. Timing, cost and storage are done once
+  in `PromptRunner`, so every model is measured the same way.
+- **A failed call is still a run.** Provider errors and timeouts are stored as
+  failed runs, because the call was made and may have cost money; only invalid
+  input (unknown model, missing variable) is rejected without a record.
 - **Warnings are errors**, including NuGet vulnerability audits of transitive
   packages ([`Directory.Build.props`](Directory.Build.props)).
 
 ## Roadmap
 
-Next steps, roughly in order: running a prompt version against a model and
-recording the result, template variables, a diff between versions, evaluation
-sets per prompt, sign-in, Docker and a hosted demo.
+Next steps, roughly in order: evaluation sets per prompt (expected results and
+a pass rate per version), comparing models on the same input, sign-in,
+PostgreSQL and a hosted demo.
 
 ## License
 
