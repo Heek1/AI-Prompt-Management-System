@@ -15,6 +15,10 @@ public class Prompt
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public bool IsArchived { get; set; } = false;
 
+    // Optimistic concurrency token. SQLite has no rowversion type, so the
+    // service replaces this value on every change to the prompt row.
+    public string ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString();
+
     public ICollection<PromptVersion> Versions { get; set; } = new List<PromptVersion>();
     public ICollection<PromptRating> Ratings { get; set; } = new List<PromptRating>();
 }
