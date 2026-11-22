@@ -51,27 +51,30 @@ jobs:
           retention-days: 7
 
   docker:
-    # Builds the image and checks that the container starts and serves pages;
-    # nothing is pushed.
+    # Builds the image, starts it with PostgreSQL through compose.yaml and
+    # checks that the app migrates and serves pages; nothing is pushed.
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build image
-        run: docker build --tag prompt-manager:ci .
+      - name: Start the stack
+        run: docker compose up --build --detach --wait
 
-      - name: Start container and check it responds
+      - name: Check the app responds
         run: |
-          docker run --detach --name pm --publish 8080:8080 prompt-manager:ci
           for i in $(seq 1 30); do
             if curl --silent --fail http://localhost:8080/health > /dev/null; then break; fi
-            sleep 1
+            sleep 2
           done
           curl --silent --fail http://localhost:8080/health
           curl --silent --fail --output /dev/null http://localhost:8080/Prompts
           curl --silent --fail --output /dev/null http://localhost:8080/Runs
 
-      - name: Container logs
+      - name: Logs
         if: always()
-        run: docker logs pm || true
+        run: docker compose logs
+
+      - name: Stop
+        if: always()
+        run: docker compose down --volumes

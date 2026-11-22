@@ -15,7 +15,7 @@ namespace PromptManager.Tests.Services;
 /// </summary>
 public sealed class PromptServiceConcurrencyTests : IDisposable
 {
-    private readonly SqliteTestDatabase _database = new();
+    private readonly TestDatabase _database = new();
 
     public void Dispose() => _database.Dispose();
 

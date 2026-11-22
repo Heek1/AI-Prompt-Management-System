@@ -2,38 +2,27 @@ using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using PromptManager.Data;
 
 namespace PromptManager.Tests.Infrastructure;
 
 /// <summary>
-/// Runs the real app in memory with its own in-memory SQLite database.
+/// Runs the real app in memory against its own PostgreSQL test database.
 /// The "Testing" environment is not Development, so the sample-data seeder is
 /// off and the production error pages are on, as in a deployed app.
 /// </summary>
 public sealed class PromptManagerFactory : WebApplicationFactory<Program>
 {
-    private readonly SqliteConnection _connection = new("Data Source=:memory:");
-
-    public PromptManagerFactory() => _connection.Open();
+    private readonly TestDatabase _database = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.ConfigureServices(services =>
-        {
-            services.RemoveAll<DbContextOptions<AppDbContext>>();
-            services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
-            services.AddDbContext<AppDbContext>(o => o.UseSqlite(_connection));
-        });
+        builder.UseSetting("ConnectionStrings:DefaultConnection", _database.ConnectionString);
     }
 
-    public AppDbContext CreateDbContext() =>
-        new(new DbContextOptionsBuilder<AppDbContext>().UseSqlite(_connection).Options);
+    public AppDbContext CreateDbContext() => _database.CreateContext();
 
     public HttpClient CreateNoRedirectClient() =>
         CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
@@ -41,7 +30,7 @@ public sealed class PromptManagerFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if (disposing) _connection.Dispose();
+        if (disposing) _database.Dispose();
     }
 }
 

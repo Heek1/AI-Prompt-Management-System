@@ -10,7 +10,7 @@ namespace PromptManager.Tests.Services;
 
 public sealed class PromptServiceTests : IDisposable
 {
-    private readonly SqliteTestDatabase _database = new();
+    private readonly TestDatabase _database = new();
 
     public void Dispose() => _database.Dispose();
 
@@ -205,6 +205,24 @@ public sealed class PromptServiceTests : IDisposable
         var result = await CreateService().GetAllAsync(term, null, null, "rating");
 
         Assert.Equal("Review a diff", Assert.Single(result).Title);
+    }
+
+    [Theory]
+    [InlineData("REVIEW", "Review a diff")]   // case-insensitive
+    [InlineData("100%", "Coverage 100% please")] // % is literal
+    [InlineData("a_b", "Name a_b exactly")]   // _ is literal
+    public async Task GetAllAsync_search_is_case_insensitive_and_literal(string term, string expected)
+    {
+        const string text = "Neutral prompt text without the search terms.";
+        await CreatePromptAsync(NewPrompt(title: "Review a diff", text: text));
+        await CreatePromptAsync(NewPrompt(title: "Coverage 100% please", text: text));
+        await CreatePromptAsync(NewPrompt(title: "Coverage 1000 please", text: text));
+        await CreatePromptAsync(NewPrompt(title: "Name a_b exactly", text: text));
+        await CreatePromptAsync(NewPrompt(title: "Name axb exactly", text: text));
+
+        var result = await CreateService().GetAllAsync(term, null, null, "title");
+
+        Assert.Equal(expected, Assert.Single(result).Title);
     }
 
     [Fact]

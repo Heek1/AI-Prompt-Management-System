@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using PromptManager.Data;
 using PromptManager.Llm;
 using PromptManager.Middleware;
@@ -9,8 +10,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Services
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection is not set. For local development run `docker compose up db`; " +
+        "elsewhere set the ConnectionStrings__DefaultConnection environment variable.");
+
+// Kerberos/GSS is never used here, and probing for it logs a libgssapi error
+// in the slim runtime image, so turn it off unless the string says otherwise.
+var npgsql = new NpgsqlConnectionStringBuilder(connectionString);
+if (!connectionString.Contains("GSS", StringComparison.OrdinalIgnoreCase))
+    npgsql.GssEncryptionMode = GssEncryptionMode.Disable;
+
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(npgsql.ConnectionString));
 
 builder.Services.AddScoped<IPromptService, PromptService>();
 builder.Services.AddScoped<IPromptRunner, PromptRunner>();
