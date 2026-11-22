@@ -1,0 +1,169 @@
+@using System.Globalization
+@using PromptManager.Models
+@using PromptManager.ViewModels
+@model EvalsIndexViewModel
+@{
+    var p = Model.Prompt;
+    ViewData["Title"] = $"Evals: {p.Title}";
+    var inv = CultureInfo.InvariantCulture;
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Index">Library</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Details" asp-route-id="@p.Id">@p.Title</a></li>
+        <li class="breadcrumb-item active">Evals</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-ui-checks"></i> Test cases (@Model.Cases.Count)</h6>
+                @if (Model.CanManage)
+                {
+                    <a asp-action="Case" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus"></i> Add case</a>
+                }
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.Cases.Any())
+                {
+                    <p class="text-muted small p-3 mb-0">
+                        No cases yet. A case is an input for the prompt plus what a good answer must (or must not) contain.
+                    </p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var c in Model.Cases)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>@c.Name</strong>
+                                    <div class="small text-muted">
+                                        @c.CheckCount check(s)
+                                        @if (c.Variables.Any())
+                                        {
+                                            <span>&middot; @string.Join(", ", c.Variables.Keys.Select(k => "{{" + k + "}}"))</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(c.JudgeRubric))
+                                        {
+                                            <span class="badge bg-info text-dark ms-1">judge</span>
+                                        }
+                                    </div>
+                                </div>
+                                @if (Model.CanManage)
+                                {
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Case" asp-route-id="@p.Id" asp-route-caseId="@c.Id" class="btn btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                        <form asp-action="DeleteCase" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="promptId" value="@p.Id" />
+                                            <input type="hidden" name="caseId" value="@c.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete" onclick="return confirm('Delete this case?')"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        @if (Model.IsSignedIn && Model.Cases.Any() && !p.IsArchived)
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><h6 class="mb-0"><i class="bi bi-play-circle text-primary"></i> Run an eval</h6></div>
+                <div class="card-body">
+                    <form asp-action="Start" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="PromptId" value="@p.Id" />
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold" for="eval-version">Version</label>
+                            <select id="eval-version" name="VersionNumber" class="form-select form-select-sm">
+                                @foreach (var v in p.Versions)
+                                {
+                                    <option value="@v.VersionNumber" selected="@(v.VersionNumber == p.CurrentVersion)">v@(v.VersionNumber)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold" for="eval-model">Model</label>
+                            <select id="eval-model" name="Model" class="form-select form-select-sm">
+                                @foreach (var m in Model.Models)
+                                {
+                                    <option value="@m.Model.Id" disabled="@(!m.IsAvailable)" selected="@(m.Model.Id == Model.DefaultModel)">
+                                        @m.Model.DisplayName@(m.IsAvailable ? "" : $" - {m.UnavailableReason}")
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        @if (Model.NeedsJudge)
+                        {
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="eval-judge">Judge model (for rubrics)</label>
+                                <select id="eval-judge" name="JudgeModel" class="form-select form-select-sm">
+                                    @foreach (var m in Model.Models)
+                                    {
+                                        <option value="@m.Model.Id" disabled="@(!m.IsAvailable)" selected="@(m.Model.Id == Model.DefaultModel)">
+                                            @m.Model.DisplayName@(m.IsAvailable ? "" : $" - {m.UnavailableReason}")
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        <button type="submit" class="btn btn-primary btn-sm w-100 mt-2"><i class="bi bi-play-fill"></i> Run @Model.Cases.Count case(s)</button>
+                    </form>
+                    <div class="form-text">Runs in the background, one call per case@(Model.NeedsJudge ? " plus one judge call per rubric" : "").</div>
+                </div>
+            </div>
+        }
+        else if (!Model.IsSignedIn)
+        {
+            <div class="alert alert-light border small">
+                <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Sign in</a> to run evals.
+            </div>
+        }
+
+        <div class="card shadow-sm">
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-clipboard-data"></i> Eval runs</h6></div>
+            <div class="card-body p-0">
+                @if (!Model.Runs.Any())
+                {
+                    <p class="text-muted small p-3 mb-0">No evals yet.</p>
+                }
+                else
+                {
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light"><tr><th>#</th><th>Version</th><th>Model</th><th class="text-end">Passed</th><th class="text-end">Cost</th></tr></thead>
+                        <tbody>
+                            @foreach (var r in Model.Runs)
+                            {
+                                <tr>
+                                    <td><a asp-action="Run" asp-route-id="@r.Id">@r.Id</a></td>
+                                    <td><span class="badge bg-primary">v@(r.VersionNumber)</span></td>
+                                    <td class="small"><code>@r.Model</code></td>
+                                    <td class="text-end small">
+                                        @if (r.Status == EvalRunStatus.Completed)
+                                        {
+                                            <span>@r.PassedCases/@r.TotalCases</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@r.Status.ToString().ToLowerInvariant()</span>
+                                        }
+                                    </td>
+                                    <td class="text-end small">$@r.CostUsd.ToString("0.0000", inv)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>
