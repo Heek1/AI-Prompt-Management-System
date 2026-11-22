@@ -101,3 +101,12 @@ public class EvalCaseViewModel
     /// <summary>Variables used by any version of the prompt.</summary>
     public IReadOnlyList<string> Variables { get; set; } = [];
 }
+
+public class ModelComparisonViewModel
+{
+    /// <summary>The first eval, for prompt and version details.</summary>
+    public EvalRunDetailsDto First { get; set; } = new();
+    public List<ModelComparisonRowDto> Rows { get; set; } = [];
+
+    public bool AllFinished => Rows.All(r => r.Eval.Status is Models.EvalRunStatus.Completed or Models.EvalRunStatus.Failed);
+}

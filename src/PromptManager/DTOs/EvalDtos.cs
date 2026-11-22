@@ -64,9 +64,39 @@ public class StartEvalDto
     [BindNever] public bool MayUsePaidModels { get; set; }
 }
 
+/// <summary>Runs the same version and cases on several models to compare them.</summary>
+public class CompareModelsDto
+{
+    [Required]
+    public int PromptId { get; set; }
+
+    public int? VersionNumber { get; set; }
+
+    public List<string> Models { get; set; } = [];
+
+    [StringLength(100)]
+    public string? JudgeModel { get; set; }
+
+    [BindNever] public string RunBy { get; set; } = string.Empty;
+    [BindNever] public string? RunByUserId { get; set; }
+    [BindNever] public bool MayUsePaidModels { get; set; }
+}
+
+public class ModelComparisonRowDto
+{
+    public EvalRunListItemDto Eval { get; set; } = new();
+    public string DisplayName { get; set; } = string.Empty;
+    public long InputTokens { get; set; }
+    public long OutputTokens { get; set; }
+
+    /// <summary>Mean time per answer (judge calls excluded); null until a case has run.</summary>
+    public double? AverageSeconds { get; set; }
+}
+
 public class EvalRunListItemDto
 {
     public int Id { get; set; }
+    public int PromptId { get; set; }
     public int VersionNumber { get; set; }
     public string Model { get; set; } = string.Empty;
     public string? JudgeModel { get; set; }
@@ -91,7 +121,6 @@ public class EvalCaseResultDto
 
 public class EvalRunDetailsDto : EvalRunListItemDto
 {
-    public int PromptId { get; set; }
     public string PromptTitle { get; set; } = string.Empty;
     public string? Error { get; set; }
     public DateTime? StartedAt { get; set; }

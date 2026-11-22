@@ -15,6 +15,8 @@ Built with ASP.NET Core 10 MVC, EF Core and PostgreSQL.
 | ![Prompt library](docs/images/library.png) | ![Prompt details](docs/images/details.png) |
 | **Run with variables** | **Run result** |
 | ![Run form with variables](docs/images/run-form.png) | ![Run details](docs/images/run-details.png) |
+| **Eval results** | |
+| ![Eval run](docs/images/eval-run.png) | |
 | **Version diff** | **Two versions side by side** |
 | ![Version diff](docs/images/compare-versions.png) | ![Compared runs](docs/images/compare-runs.png) |
 
@@ -30,6 +32,13 @@ Built with ASP.NET Core 10 MVC, EF Core and PostgreSQL.
   tokens, cost and duration; `/Runs` lists them all.
 - **Variables.** Write `{{name}}` in a prompt and the Run form asks for a
   value. Values can be saved as named *input sets* and reused.
+- **Evals.** Give a prompt test cases: variable values plus checks (must or
+  must not contain, a regular expression, a JSON Schema, or a rubric graded by
+  a judge model). Run any version on any model; the eval runs in the
+  background, keeps every answer as a run, and flags a version that passes
+  fewer cases than the previous one on the same model.
+- **Compare models.** Run the same version and cases on two to four models
+  and see pass rate, cost, tokens and average answer time side by side.
 - **Compare versions.** A side-by-side diff with changed words highlighted,
   and a button that runs both versions on the same model and inputs, then
   shows the two answers and their differences.
@@ -45,8 +54,10 @@ Known limitations:
 
 - **Only Claude is wired in.** Other providers (OpenAI, Gemini) need their own
   `ILlmClient`; the interface is ready for them.
-- **Runs happen inside the web request** (up to `Llm:TimeoutSeconds`, 180 s by
-  default). There is no background queue yet.
+- **Single runs happen inside the web request** (up to `Llm:TimeoutSeconds`,
+  180 s by default). Evals use an in-process background queue, which is lost
+  if the app restarts mid-eval (the eval is then marked failed with its
+  partial results) and does not spread over several app instances.
 - **Prices are configuration.** Cost is computed from the per-million-token
   prices in `appsettings.json`, which must be kept up to date by hand.
 - **The real Anthropic API path has not been exercised by the automated
@@ -135,7 +146,7 @@ works with `UseDevelopmentStorage=true`.
 dotnet test
 ```
 
-125 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
+187 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
 
 - **All database tests use real PostgreSQL** in a container started by
   [Testcontainers](https://dotnet.testcontainers.org/), so Docker must be
@@ -151,6 +162,10 @@ dotnet test
   errors are read.
 - **Runner tests** cover variables, timeouts, cancellation, provider failures
   and cost.
+- **Eval tests** cover every check type, judge replies, the executor, model
+  comparison, and the full loop through the real background worker.
+- **Authorization tests** cover anonymous visitors, authors, other users and
+  admins, including attempts to spoof the author or owner in a form.
 - **Integration tests** start the app with `WebApplicationFactory` and post real
   forms with antiforgery tokens.
 
@@ -166,6 +181,7 @@ src/PromptManager/
   Services/         PromptService (prompts, versions, ratings, archive, usage),
                     PromptRunner (runs), InputSetService
   Llm/              ILlmClient, Anthropic and Echo clients, model catalogue
+  Evals/            Checks, judge, executor, background worker, eval service
   Data/             AppDbContext, DevDataSeeder
   Models/           EF entities and the Azure Table entity
   DTOs/             Form and view DTOs with validation attributes
@@ -200,9 +216,10 @@ tests/PromptManager.Tests/
 
 ## Roadmap
 
-Next steps, roughly in order: evaluation sets per prompt (expected results and
-a pass rate per version), comparing models on the same input, sign-in,
-PostgreSQL and a hosted demo.
+Next steps: version statuses (draft, tested, production) with a gate that
+blocks publishing a version that regressed, an HTTP API for applications to
+fetch the production version of a prompt, a cost dashboard, and a set of
+prompt-injection test inputs.
 
 ## License
 

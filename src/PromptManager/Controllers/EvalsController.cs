@@ -132,6 +132,46 @@ public class EvalsController : Controller
         return RedirectToAction(nameof(Run), new { id = evalId });
     }
 
+    // POST /Evals/CompareModels
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CompareModels(CompareModelsDto dto)
+    {
+        dto.RunBy = await _user.GetDisplayNameAsync();
+        dto.RunByUserId = _user.Id;
+        dto.MayUsePaidModels = _user.MayUsePaidModels;
+
+        var (ids, error) = await _evals.StartComparisonAsync(dto);
+        if (ids is null)
+        {
+            TempData["Error"] = error;
+            return RedirectToAction(nameof(Index), new { id = dto.PromptId });
+        }
+        return RedirectToAction(nameof(Compare), new { ids = string.Join(",", ids) });
+    }
+
+    // GET /Evals/Compare?ids=7,8,9
+    public async Task<IActionResult> Compare(string ids)
+    {
+        var parsed = (ids ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => int.TryParse(s, out var n) ? n : 0)
+            .Where(n => n > 0)
+            .Distinct()
+            .Take(EvalService.MaxModelsPerComparison)
+            .ToList();
+        if (parsed.Count == 0) return NotFound();
+
+        var rows = await _evals.CompareAsync(parsed);
+        if (rows.Count == 0) return NotFound();
+
+        // All rows must belong to one prompt and version, or the table would mislead.
+        var first = await _evals.GetRunAsync(rows[0].Eval.Id);
+        if (rows.Any(r => r.Eval.PromptId != first!.PromptId || r.Eval.VersionNumber != first.VersionNumber)) return BadRequest();
+
+        return View(new ModelComparisonViewModel { First = first!, Rows = rows });
+    }
+
     // GET /Evals/Run/7
     public async Task<IActionResult> Run(int id)
     {

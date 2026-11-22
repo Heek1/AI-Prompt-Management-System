@@ -122,7 +122,41 @@
                 </div>
             </div>
         }
-        else if (!Model.IsSignedIn)
+        @if (Model.IsSignedIn && Model.Cases.Any() && !p.IsArchived && Model.Models.Count(m => m.IsAvailable) >= 2)
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><h6 class="mb-0"><i class="bi bi-bar-chart-steps text-primary"></i> Compare models</h6></div>
+                <div class="card-body">
+                    <form asp-action="CompareModels" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="PromptId" value="@p.Id" />
+                        <input type="hidden" name="VersionNumber" value="@p.CurrentVersion" />
+                        <p class="small text-muted mb-2">Runs v@(p.CurrentVersion) and all cases on each model you tick (2 to 4).</p>
+                        @foreach (var m in Model.Models)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Models" value="@m.Model.Id" id="cmp-@m.Model.Id" disabled="@(!m.IsAvailable)" />
+                                <label class="form-check-label small" for="cmp-@m.Model.Id">
+                                    @m.Model.DisplayName@(m.IsAvailable ? "" : $" - {m.UnavailableReason}")
+                                </label>
+                            </div>
+                        }
+                        @if (Model.NeedsJudge)
+                        {
+                            <label class="form-label small fw-semibold mt-2" for="cmp-judge">Judge model</label>
+                            <select id="cmp-judge" name="JudgeModel" class="form-select form-select-sm">
+                                @foreach (var m in Model.Models.Where(m => m.IsAvailable))
+                                {
+                                    <option value="@m.Model.Id" selected="@(m.Model.Id == Model.DefaultModel)">@m.Model.DisplayName</option>
+                                }
+                            </select>
+                        }
+                        <button type="submit" class="btn btn-outline-primary btn-sm w-100 mt-2"><i class="bi bi-bar-chart-steps"></i> Compare</button>
+                    </form>
+                </div>
+            </div>
+        }
+        @if (!Model.IsSignedIn)
         {
             <div class="alert alert-light border small">
                 <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Sign in</a> to run evals.
