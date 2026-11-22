@@ -52,7 +52,13 @@
     </div>
 </div>
 
-@if (!p.IsArchived)
+@if (!p.IsArchived && !Model.IsSignedIn)
+{
+    <div class="alert alert-light border">
+        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Sign in</a> to run both versions side by side.
+    </div>
+}
+@if (!p.IsArchived && Model.IsSignedIn)
 {
     <div class="card shadow-sm">
         <div class="card-header">
@@ -64,7 +70,7 @@
                 <input type="hidden" name="PromptId" value="@p.Id" />
                 <input type="hidden" name="FromVersion" value="@Model.From.VersionNumber" />
                 <input type="hidden" name="ToVersion" value="@Model.To.VersionNumber" />
-                <div class="col-md-6">
+                <div class="col-md-10">
                     <label class="form-label small fw-semibold" for="cmp-model">Model</label>
                     <select id="cmp-model" name="Model" class="form-select form-select-sm">
                         @foreach (var m in Model.Models)
@@ -74,10 +80,6 @@
                             </option>
                         }
                     </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label small fw-semibold" for="cmp-by">Your name</label>
-                    <input id="cmp-by" name="RunBy" class="form-control form-control-sm" maxlength="100" placeholder="optional" />
                 </div>
                 <div class="col-md-2 d-grid">
                     <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-play-fill"></i> Run both</button>

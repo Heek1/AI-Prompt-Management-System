@@ -52,6 +52,7 @@ public class PromptRun
 
     public long DurationMs { get; set; }
     public string RunBy { get; set; } = string.Empty;
+    public string? RunByUserId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public Prompt? Prompt { get; set; }

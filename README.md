@@ -51,12 +51,10 @@ Known limitations:
   prices in `appsettings.json`, which must be kept up to date by hand.
 - **The real Anthropic API path has not been exercised by the automated
   tests**: they drive the SDK against a stubbed HTTP handler.
-- **There is no authentication.** Author and user names are free text from the
-  form, so "one rating per user" is per typed name, and anyone can archive any
-  prompt.
+- **No e-mail confirmation or password reset yet.** Accounts work right after
+  registration, and there is no admin page for managing users and roles.
 - Categories and AI tools are fixed lists in
   [`Constants.cs`](src/PromptManager/Infrastructure/Constants.cs).
-- No editing of title or description, no unarchive or delete, no pagination.
 - Usage history is stored only if an Azure Storage connection string is set;
   the Azure path is not covered by automated tests.
 
@@ -74,6 +72,24 @@ Open http://localhost:5139. On start the database is migrated, and in
 Development three sample prompts are added to an empty database. The local
 connection string is in `appsettings.Development.json`; it only works with the
 database from `compose.yaml`.
+
+### Accounts and admins
+
+Anyone can browse the library and runs. Creating, rating and running need an
+account (e-mail and password, ASP.NET Core Identity). A prompt can be edited,
+versioned, archived, restored or deleted only by its author or an admin.
+
+Admins are chosen in configuration, never in the UI: an account registered
+with an address listed in `Auth:AdminEmails` gets the Admin role.
+
+```bash
+dotnet user-secrets --project src/PromptManager set "Auth:AdminEmails:0" "you@example.com"
+```
+
+`Llm:PaidModelsAccess` decides who may run models that cost money: `Admins`
+(the default, so a public instance cannot spend your API credit) or
+`Everyone` (the Development setting). The offline echo model is open to every
+signed-in user.
 
 ### Running prompts on Claude
 

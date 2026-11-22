@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using PromptManager.Data;
 using PromptManager.Llm;
 using PromptManager.Middleware;
+using PromptManager.Models;
 using PromptManager.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +25,33 @@ if (!connectionString.Contains("GSS", StringComparison.OrdinalIgnoreCase))
     npgsql.GssEncryptionMode = GssEncryptionMode.Disable;
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(npgsql.ConnectionString));
+
+builder.Services
+    .AddIdentity<AppUser, IdentityRole>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequiredLength = 10;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    })
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.SlidingExpiration = true;
+    options.ExpireTimeSpan = TimeSpan.FromDays(14);
+});
+
+builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.Section));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
 builder.Services.AddScoped<IPromptService, PromptService>();
 builder.Services.AddScoped<IPromptRunner, PromptRunner>();
@@ -47,6 +76,10 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 
+    var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    if (!await roles.RoleExistsAsync(Roles.Admin))
+        await roles.CreateAsync(new IdentityRole(Roles.Admin));
+
     if (app.Environment.IsDevelopment())
         await DevDataSeeder.SeedAsync(db);
 }
@@ -59,6 +92,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Custom Middleware

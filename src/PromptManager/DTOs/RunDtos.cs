@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using PromptManager.Infrastructure;
 using PromptManager.Models;
 
@@ -16,8 +17,16 @@ public class RunPromptDto
     [StringLength(100)]
     public string Model { get; set; } = string.Empty;
 
-    [StringLength(FieldLimits.PersonName)]
+    /// <summary>Set from the signed-in account, never from the form.</summary>
+    [BindNever]
     public string? RunBy { get; set; }
+
+    [BindNever]
+    public string? RunByUserId { get; set; }
+
+    /// <summary>Whether this caller may use models that cost money (see Llm:PaidModelsAccess).</summary>
+    [BindNever]
+    public bool MayUsePaidModels { get; set; } = true;
 
     /// <summary>Values for {{name}} placeholders, bound from form fields "Variables[name]".</summary>
     public Dictionary<string, string?> Variables { get; set; } = [];
@@ -43,8 +52,16 @@ public class CompareRunDto
     [StringLength(100)]
     public string Model { get; set; } = string.Empty;
 
-    [StringLength(FieldLimits.PersonName)]
+    /// <summary>Set from the signed-in account, never from the form.</summary>
+    [BindNever]
     public string? RunBy { get; set; }
+
+    [BindNever]
+    public string? RunByUserId { get; set; }
+
+    /// <summary>Whether this caller may use models that cost money (see Llm:PaidModelsAccess).</summary>
+    [BindNever]
+    public bool MayUsePaidModels { get; set; } = true;
 
     public Dictionary<string, string?> Variables { get; set; } = [];
 }

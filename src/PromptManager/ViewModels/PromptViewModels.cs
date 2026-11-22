@@ -20,12 +20,21 @@ public class PromptDetailsViewModel
 
     /// <summary>The input set whose values prefill the form, if one was chosen.</summary>
     public InputSetDto? SelectedInputSet { get; set; }
+
+    public bool IsSignedIn { get; set; }
+
+    /// <summary>Author or admin: may edit, add versions, archive, delete.</summary>
+    public bool CanManage { get; set; }
     public int TotalRuns { get; set; }
 }
 
 public class PromptIndexViewModel
 {
     public List<PromptListDto> Prompts { get; set; } = new();
+    public int Page { get; set; } = 1;
+    public int PageCount { get; set; } = 1;
+    public int TotalCount { get; set; }
+    public bool ShowArchived { get; set; }
     public string? SearchQuery { get; set; }
     public string? CategoryFilter { get; set; }
     public string? AiToolFilter { get; set; }
@@ -58,6 +67,8 @@ public class CompareVersionsViewModel
     public DiffResult Diff { get; set; } = new([], 0, 0, 0);
     public IReadOnlyList<AvailableModel> Models { get; set; } = [];
     public string DefaultModel { get; set; } = string.Empty;
+
+    public bool IsSignedIn { get; set; }
 
     /// <summary>Variables used by either version.</summary>
     public IReadOnlyList<string> Variables { get; set; } = [];

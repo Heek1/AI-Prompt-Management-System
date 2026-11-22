@@ -38,6 +38,8 @@ public sealed class PromptRunner(AppDbContext db, LlmCatalog catalog, ILogger<Pr
 
         var (model, client, modelError) = catalog.Resolve(dto.Model);
         if (model is null || client is null) return (null, modelError);
+        if (model.IsPaid && !dto.MayUsePaidModels)
+            return (null, $"{model.DisplayName} costs money to run; on this instance only admins can use it. Try the echo model.");
 
         var (values, variablesError) = ValuesFor(version.PromptText, dto.Variables);
         if (variablesError is not null) return (null, variablesError);
@@ -54,7 +56,8 @@ public sealed class PromptRunner(AppDbContext db, LlmCatalog catalog, ILogger<Pr
             Provider = model.Provider,
             VariablesJson = values.Count > 0 ? JsonSerializer.Serialize(values) : null,
             PromptText = text,
-            RunBy = string.IsNullOrWhiteSpace(dto.RunBy) ? "anonymous" : dto.RunBy.Trim()
+            RunBy = string.IsNullOrWhiteSpace(dto.RunBy) ? "anonymous" : dto.RunBy.Trim(),
+            RunByUserId = dto.RunByUserId
         };
 
         // The run gets its own deadline, but a closed browser tab (ct) also stops it.

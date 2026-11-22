@@ -1,3 +1,4 @@
+@inject PromptManager.Services.ICurrentUser CurrentUser
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,6 +49,30 @@
                             <i class="bi bi-clock-history"></i> Usage History
                         </a>
                     </li>
+                </ul>
+                <ul class="navbar-nav ms-auto me-3 align-items-lg-center">
+                    @if (CurrentUser.IsSignedIn)
+                    {
+                        <li class="nav-item">
+                            <span class="navbar-text small me-2">
+                                <i class="bi bi-person-circle"></i> @await CurrentUser.GetDisplayNameAsync()
+                                @if (CurrentUser.IsAdmin)
+                                {
+                                    <span class="badge bg-warning text-dark ms-1">admin</span>
+                                }
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-link nav-link">Sign out</button>
+                            </form>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Sign in</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Register">Create account</a></li>
+                    }
                 </ul>
                 <span class="navbar-text text-muted small">
                     <a href="/health" target="_blank" class="text-muted text-decoration-none">
