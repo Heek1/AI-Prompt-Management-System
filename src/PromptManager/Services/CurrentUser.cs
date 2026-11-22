@@ -53,8 +53,13 @@ public sealed class CurrentUser(
     public async Task<string> GetDisplayNameAsync()
     {
         if (_displayName is not null) return _displayName;
-        var user = IsSignedIn ? await users.GetUserAsync(Principal) : null;
-        return _displayName = user is null ? "anonymous" : (string.IsNullOrWhiteSpace(user.DisplayName) ? user.Email ?? "user" : user.DisplayName);
+        if (!IsSignedIn) return _displayName = "anonymous";
+
+        // The cookie can outlive its account until the next security-stamp
+        // check; fall back to the name stored in the cookie.
+        var user = await users.GetUserAsync(Principal);
+        return _displayName = !string.IsNullOrWhiteSpace(user?.DisplayName) ? user.DisplayName
+            : user?.Email ?? Principal.Identity?.Name ?? "user";
     }
 
     public bool CanManage(string? ownerId) =>
