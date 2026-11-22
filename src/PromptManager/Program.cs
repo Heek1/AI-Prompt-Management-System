@@ -32,6 +32,11 @@ builder.Services
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
+// Form-token and TempData cookies get the Secure flag on https requests too
+// (the sign-in cookie already does by default).
+builder.Services.AddAntiforgery(options => options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest);
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.CookieTempDataProviderOptions>(options => options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest);
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -89,16 +94,27 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseStatusCodePagesWithReExecute("/Home/Error/{0}");
+    // Only takes effect on https requests (behind Render's proxy: forwarded headers).
+    app.UseHsts();
 }
+
+app.UseSecurityHeaders();
+
+// One fixed culture, so dates and numbers look the same on every server.
+var culture = new System.Globalization.CultureInfo("en-GB");
+app.UseRequestLocalization(new Microsoft.AspNetCore.Builder.RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(culture),
+    SupportedCultures = [culture],
+    SupportedUICultures = [culture]
+});
 
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Custom Middleware
 app.UseRequestLogging();
-app.UseAiUsageLogging();
 
 app.MapControllerRoute(
     name: "default",

@@ -127,7 +127,7 @@ else
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@prompt.Id" />
                                 <button type="submit" class="btn btn-sm btn-outline-secondary"
-                                        onclick="return confirm('Archive this prompt?')">
+                                        data-confirm="Archive this prompt?">
                                     <i class="bi bi-archive"></i>
                                 </button>
                             </form>
