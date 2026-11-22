@@ -1,12 +1,36 @@
-# docker compose up --build
-# Then open http://localhost:8080
+# docker compose up --build        -> app on http://localhost:8080 plus PostgreSQL
+# docker compose up db               -> only the database, for `dotnet run`
+#
+# The database password below is for this local stack only. Any deployed
+# instance gets its connection string from the hosting platform.
 services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: promptmanager
+      POSTGRES_USER: promptmanager
+      POSTGRES_PASSWORD: promptmanager
+    ports:
+      # 5433 on the host, so it does not clash with another local PostgreSQL.
+      - "5433:5432"
+    volumes:
+      - prompt-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U promptmanager -d promptmanager"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
   app:
     build: .
     image: prompt-manager:local
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=promptmanager;Username=promptmanager;Password=promptmanager"
       # Production by default. Set to Development to get the sample prompts
       # on an empty database and detailed error pages.
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
@@ -14,8 +38,9 @@ services:
       # Without it, only the offline "echo" model is available.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
-      - prompt-data:/data
+      - prompt-keys:/data
     restart: unless-stopped
 
 volumes:
-  prompt-data:
+  prompt-db:
+  prompt-keys:

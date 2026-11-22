@@ -12,7 +12,7 @@ namespace PromptManager.Tests.Services;
 
 public sealed class PromptRunnerVariablesTests : IDisposable
 {
-    private readonly SqliteTestDatabase _database = new();
+    private readonly TestDatabase _database = new();
 
     public void Dispose() => _database.Dispose();
 

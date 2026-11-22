@@ -8,7 +8,7 @@ behave: write a prompt, improve it in versions, run any version on a model,
 compare versions side by side, and keep every run with its tokens, cost and
 timing.
 
-Built with ASP.NET Core 10 MVC, EF Core and SQLite.
+Built with ASP.NET Core 10 MVC, EF Core and PostgreSQL.
 
 | Library | Prompt details |
 |---|---|
@@ -62,15 +62,18 @@ Known limitations:
 
 ## Run it
 
-Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
+Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download) and Docker
+(for PostgreSQL).
 
 ```bash
+docker compose up -d db                  # PostgreSQL 17 on localhost:5433
 dotnet run --project src/PromptManager
 ```
 
-Open http://localhost:5139. On first start the SQLite database
-(`src/PromptManager/promptmanager.db`) is created and migrated, and in
-Development three sample prompts are added.
+Open http://localhost:5139. On start the database is migrated, and in
+Development three sample prompts are added to an empty database. The local
+connection string is in `appsettings.Development.json`; it only works with the
+database from `compose.yaml`.
 
 ### Running prompts on Claude
 
@@ -94,8 +97,8 @@ model; the run then shows which model answered.
 docker compose up --build
 ```
 
-Open http://localhost:8080. The database and data-protection keys are kept in
-the `prompt-data` volume. Pass a key with `ANTHROPIC_API_KEY=<key> docker
+This starts the app and PostgreSQL. Open http://localhost:8080. Data is kept in
+the `prompt-db` volume and the data-protection keys in `prompt-keys`. Pass a key with `ANTHROPIC_API_KEY=<key> docker
 compose up`, and set `ASPNETCORE_ENVIRONMENT=Development` to get the sample
 prompts.
 
@@ -116,10 +119,14 @@ works with `UseDevelopmentStorage=true`.
 dotnet test
 ```
 
-122 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
+125 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
 
-- **Service tests** run `PromptService` against an in-memory SQLite database
-  (real SQLite, so unique indexes and transactions behave as in the app).
+- **All database tests use real PostgreSQL** in a container started by
+  [Testcontainers](https://dotnet.testcontainers.org/), so Docker must be
+  running. The schema is migrated once into a template database and every test
+  gets its own copy, so tests are isolated and still fast.
+- **Service tests** cover `PromptService`; unique indexes, transactions and
+  search behave exactly as in the app.
 - **Concurrency tests** inject a competing write between the service's read and
   its save, to check version numbering, duplicate ratings and archive-vs-edit.
 - **Validation tests** for every form DTO.
@@ -132,8 +139,8 @@ dotnet test
   forms with antiforgery tokens.
 
 CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) builds with
-`-warnaserror`, runs the tests, and builds and starts the Docker image on every
-pull request.
+`-warnaserror`, runs the tests, and starts the Docker image with PostgreSQL
+through `compose.yaml` on every pull request.
 
 ## How it is built
 
@@ -154,8 +161,10 @@ tests/PromptManager.Tests/
 
 ### Design decisions
 
-- **SQLite** keeps setup to zero: no database server is needed to run or test
-  the app.
+- **PostgreSQL everywhere.** Development, tests and deployment use the same
+  database, so there is one set of migrations and no provider differences
+  hiding in tests. (The project started on SQLite; its migrations were
+  replaced by a single PostgreSQL one.)
 - **Concurrency is handled by the database, not by checks in code.** A unique
   index on `(PromptId, VersionNumber)` and an optimistic concurrency token on
   `Prompt` make simultaneous edits produce consecutive versions (the service

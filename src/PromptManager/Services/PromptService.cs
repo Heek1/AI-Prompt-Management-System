@@ -1,5 +1,5 @@
 using Azure.Data.Tables;
-using Microsoft.Data.Sqlite;
+using Npgsql;
 using Microsoft.EntityFrameworkCore;
 using PromptManager.Data;
 using PromptManager.DTOs;
@@ -42,7 +42,15 @@ public class PromptService : IPromptService
         var query = _db.Prompts.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(p => p.Title.Contains(search) || p.Description.Contains(search) || p.CurrentText.Contains(search));
+        {
+            // ILIKE keeps search case-insensitive, as it was on SQLite. % and _
+            // in the input are escaped so they match literally.
+            var pattern = "%" + search.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_") + "%";
+            // Npgsql emits ESCAPE '' unless an escape character is given.
+            query = query.Where(p => EF.Functions.ILike(p.Title, pattern, @"\")
+                || EF.Functions.ILike(p.Description, pattern, @"\")
+                || EF.Functions.ILike(p.CurrentText, pattern, @"\"));
+        }
 
         if (!string.IsNullOrWhiteSpace(category))
             query = query.Where(p => p.Category == category);
@@ -207,7 +215,8 @@ public class PromptService : IPromptService
             .Where(p => p.Id == dto.PromptId)
             .ExecuteUpdateAsync(s => s.SetProperty(
                 p => p.AverageRating,
-                p => Math.Round(p.Ratings.Average(r => (double)r.Rating), 2)));
+                // PostgreSQL only has round(numeric, int), so average as decimal.
+                p => (double)Math.Round(p.Ratings.Average(r => (decimal)r.Rating), 2)));
 
         return (true, string.Empty);
     }
@@ -303,8 +312,8 @@ public class PromptService : IPromptService
         return (totalPrompts, totalUsages);
     }
 
-    // SQLITE_CONSTRAINT_UNIQUE. Provider-specific on purpose: if the app moves to
-    // another database, this is the one place to update.
+    // PostgreSQL unique_violation. Provider-specific on purpose: if the app moves
+    // to another database, this is the one place to update.
     private static bool IsUniqueViolation(Exception ex) =>
-        ex is DbUpdateException { InnerException: SqliteException { SqliteExtendedErrorCode: 2067 } };
+        ex is DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } };
 }
