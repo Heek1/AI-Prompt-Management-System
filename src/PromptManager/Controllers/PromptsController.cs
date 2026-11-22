@@ -11,12 +11,14 @@ public class PromptsController : Controller
     private readonly IPromptService _service;
     private readonly IPromptRunner _runner;
     private readonly LlmCatalog _catalog;
+    private readonly IInputSetService _inputSets;
 
-    public PromptsController(IPromptService service, IPromptRunner runner, LlmCatalog catalog)
+    public PromptsController(IPromptService service, IPromptRunner runner, LlmCatalog catalog, IInputSetService inputSets)
     {
         _service = service;
         _runner = runner;
         _catalog = catalog;
+        _inputSets = inputSets;
     }
 
     // GET /Prompts
@@ -63,13 +65,18 @@ public class PromptsController : Controller
         return RedirectToAction(nameof(Details), new { id });
     }
 
-    // GET /Prompts/Details/5
-    public async Task<IActionResult> Details(int id)
+    // GET /Prompts/Details/5?inputSet=3
+    public async Task<IActionResult> Details(int id, int? inputSet)
     {
         var prompt = await _service.GetByIdAsync(id);
         if (prompt == null) return NotFound();
 
         var runs = await _runner.ListRunsAsync(id, page: 1, pageSize: 5);
+        var inputSets = await _inputSets.ListAsync(id);
+        var variables = PromptTemplate.ExtractVariables(prompt.CurrentText)
+            .Concat(prompt.Versions.SelectMany(v => PromptTemplate.ExtractVariables(v.PromptText)))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
         var vm = new PromptDetailsViewModel
         {
             Prompt = prompt,
@@ -79,7 +86,10 @@ public class PromptsController : Controller
             RunForm = new RunPromptDto { PromptId = id, VersionNumber = prompt.CurrentVersion, Model = _catalog.DefaultModel },
             Models = _catalog.List(),
             RecentRuns = runs.Runs,
-            TotalRuns = runs.TotalCount
+            TotalRuns = runs.TotalCount,
+            Variables = variables,
+            InputSets = inputSets,
+            SelectedInputSet = inputSet is { } setId ? inputSets.FirstOrDefault(s => s.Id == setId) : null
         };
 
         return View(vm);
@@ -207,5 +217,17 @@ public class PromptsController : Controller
         }
 
         return RedirectToAction("Details", "Runs", new { id = runId });
+    }
+
+    // POST /Prompts/DeleteInputSet
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteInputSet(int promptId, int inputSetId)
+    {
+        if (await _inputSets.DeleteAsync(promptId, inputSetId))
+            TempData["Success"] = "Input set deleted.";
+        else
+            TempData["Error"] = "Input set not found.";
+        return RedirectToAction(nameof(Details), new { id = promptId });
     }
 }

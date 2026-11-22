@@ -1,7 +1,9 @@
 using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using PromptManager.Data;
 using PromptManager.DTOs;
+using PromptManager.Infrastructure;
 using PromptManager.Llm;
 using PromptManager.Models;
 
@@ -37,13 +39,21 @@ public sealed class PromptRunner(AppDbContext db, LlmCatalog catalog, ILogger<Pr
         var (model, client, modelError) = catalog.Resolve(dto.Model);
         if (model is null || client is null) return (null, modelError);
 
+        var (values, variablesError) = ValuesFor(version.PromptText, dto.Variables);
+        if (variablesError is not null) return (null, variablesError);
+
+        var (text, missing) = PromptTemplate.Render(version.PromptText, values);
+        if (missing.Count > 0)
+            return (null, $"Fill in a value for: {string.Join(", ", missing)}.");
+
         var run = new PromptRun
         {
             PromptId = prompt.Id,
             VersionNumber = versionNumber,
             Model = model.Id,
             Provider = model.Provider,
-            PromptText = version.PromptText,
+            VariablesJson = values.Count > 0 ? JsonSerializer.Serialize(values) : null,
+            PromptText = text,
             RunBy = string.IsNullOrWhiteSpace(dto.RunBy) ? "anonymous" : dto.RunBy.Trim()
         };
 
@@ -92,13 +102,68 @@ public sealed class PromptRunner(AppDbContext db, LlmCatalog catalog, ILogger<Pr
         db.PromptRuns.Add(run);
         // Saved even if the user left: the call was made and may have cost money.
         await db.SaveChangesAsync(CancellationToken.None);
+
+        if (!string.IsNullOrWhiteSpace(dto.SaveInputSetAs) && values.Count > 0)
+            await SaveInputSetAsync(prompt.Id, dto.SaveInputSetAs.Trim(), values);
+
         return (run.Id, null);
     }
 
-    public async Task<RunDetailsDto?> GetRunAsync(int id) =>
-        await db.PromptRuns.AsNoTracking()
+    /// <summary>
+    /// Keeps only the values the version actually uses; a form may carry
+    /// fields for variables that exist only in other versions.
+    /// </summary>
+    private static (Dictionary<string, string> Values, string? Error) ValuesFor(string template, Dictionary<string, string?> submitted)
+    {
+        var used = PromptTemplate.ExtractVariables(template);
+        if (used.Count > PromptTemplate.MaxVariables)
+            return ([], $"A prompt can have at most {PromptTemplate.MaxVariables} variables.");
+
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var name in used)
+        {
+            // A submitted empty field binds as null: it was provided, just empty.
+            if (!submitted.TryGetValue(name, out var value)) continue;
+            value ??= string.Empty;
+            if (value.Length > PromptTemplate.MaxValueLength)
+                return ([], $"The value for {name} is longer than {PromptTemplate.MaxValueLength} characters.");
+            values[name] = value;
+        }
+        return (values, null);
+    }
+
+    private async Task SaveInputSetAsync(int promptId, string name, Dictionary<string, string> values)
+    {
+        var json = JsonSerializer.Serialize(values);
+        var existing = await db.PromptInputSets.FirstOrDefaultAsync(s => s.PromptId == promptId && s.Name == name);
+        if (existing is null)
+        {
+            db.PromptInputSets.Add(new PromptInputSet { PromptId = promptId, Name = name, ValuesJson = json });
+        }
+        else
+        {
+            existing.ValuesJson = json;
+            existing.UpdatedAt = DateTime.UtcNow;
+        }
+
+        try
+        {
+            await db.SaveChangesAsync(CancellationToken.None);
+        }
+        catch (DbUpdateException ex)
+        {
+            // Two saves under the same new name at once: the run is already
+            // stored, so losing this convenience copy is acceptable.
+            logger.LogWarning(ex, "Could not save input set {Name} for prompt {PromptId}.", name, promptId);
+            db.ChangeTracker.Clear();
+        }
+    }
+
+    public async Task<RunDetailsDto?> GetRunAsync(int id)
+    {
+        var row = await db.PromptRuns.AsNoTracking()
             .Where(r => r.Id == id)
-            .Select(r => new RunDetailsDto
+            .Select(r => new { r.VariablesJson, Dto = new RunDetailsDto
             {
                 Id = r.Id,
                 PromptId = r.PromptId,
@@ -119,8 +184,14 @@ public sealed class PromptRunner(AppDbContext db, LlmCatalog catalog, ILogger<Pr
                 StopReason = r.StopReason,
                 Note = r.Note,
                 Error = r.Error
-            })
+            } })
             .FirstOrDefaultAsync();
+
+        if (row is null) return null;
+        if (row.VariablesJson is not null)
+            row.Dto.Variables = JsonSerializer.Deserialize<Dictionary<string, string>>(row.VariablesJson) ?? [];
+        return row.Dto;
+    }
 
     public async Task<RunPageDto> ListRunsAsync(int? promptId, int page, int pageSize = 25)
     {

@@ -45,6 +45,22 @@
             </div>
         </div>
 
+        @if (Model.Variables.Any())
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><h6 class="mb-0"><i class="bi bi-braces"></i> Variables</h6></div>
+                <div class="card-body">
+                    <dl class="row mb-0 small">
+                        @foreach (var (name, value) in Model.Variables)
+                        {
+                            <dt class="col-sm-3"><code>{{@name}}</code></dt>
+                            <dd class="col-sm-9" style="white-space: pre-wrap;">@value</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+        }
+
         <div class="card shadow-sm">
             <div class="card-header"><h6 class="mb-0"><i class="bi bi-send"></i> Prompt sent (v@(Model.VersionNumber))</h6></div>
             <div class="card-body">
