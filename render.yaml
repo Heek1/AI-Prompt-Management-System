@@ -1,0 +1,37 @@
+# Render Blueprint: the web service (built from the Dockerfile) and its
+# PostgreSQL database. Secrets are marked `sync: false`, so Render asks for
+# them in the dashboard and they never live in this file.
+services:
+  - type: web
+    name: prompt-manager
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: prompt-manager-db
+          property: connectionString
+      # Render terminates HTTPS at its proxy; trust X-Forwarded-* so the app
+      # sees https (secure cookies, correct redirect URLs).
+      - key: ASPNETCORE_FORWARDEDHEADERS_ENABLED
+        value: "true"
+      # Port the container listens on (see Dockerfile).
+      - key: PORT
+        value: "8080"
+      # Accounts registered with this address become admins.
+      - key: Auth__AdminEmails__0
+        sync: false
+      # Optional: without it only the offline echo model is available.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+databases:
+  - name: prompt-manager-db
+    plan: free
+    region: frankfurt
+    databaseName: promptmanager
+    user: promptmanager

@@ -125,7 +125,25 @@ docker compose up --build
 ```
 
 This starts the app and PostgreSQL. Open http://localhost:8080. Data is kept in
-the `prompt-db` volume and the data-protection keys in `prompt-keys`. Pass a key with `ANTHROPIC_API_KEY=<key> docker
+the `prompt-db` volume. The data-protection keys (sign-in cookies, form
+tokens) are stored in the database too, so the app container is stateless.
+
+### Deploy to Render
+
+[`render.yaml`](render.yaml) is a Render Blueprint: a Docker web service and a
+PostgreSQL database, both on the free plan in Frankfurt. In the Render
+dashboard choose **New > Blueprint**, pick this repository, and fill in the two
+values it asks for: `Auth__AdminEmails__0` (your e-mail, to become admin) and,
+optionally, `ANTHROPIC_API_KEY`.
+
+The app accepts Render's `postgresql://` connection URL as it is, trusts
+Render's proxy headers (`ASPNETCORE_FORWARDEDHEADERS_ENABLED`) so cookies are
+marked secure, and keeps its keys in the database because free services have
+no persistent disk.
+
+Free-plan limits to know: the service sleeps after 15 minutes without traffic
+(the next request takes a while), and **the free database expires 30 days
+after it is created** and has no backups. Pass a key with `ANTHROPIC_API_KEY=<key> docker
 compose up`, and set `ASPNETCORE_ENVIRONMENT=Development` to get the sample
 prompts.
 
@@ -146,7 +164,7 @@ works with `UseDevelopmentStorage=true`.
 dotnet test
 ```
 
-187 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
+193 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
 
 - **All database tests use real PostgreSQL** in a container started by
   [Testcontainers](https://dotnet.testcontainers.org/), so Docker must be

@@ -37,10 +37,7 @@ services:
       # Passed through from your shell or a local .env file; never commit it.
       # Without it, only the offline "echo" model is available.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-    volumes:
-      - prompt-keys:/data
     restart: unless-stopped
 
 volumes:
   prompt-db:
-  prompt-keys:
