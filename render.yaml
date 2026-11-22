@@ -1,6 +1,6 @@
-# Render Blueprint: the web service (built from the Dockerfile) and its
-# PostgreSQL database. Secrets are marked `sync: false`, so Render asks for
-# them in the dashboard and they never live in this file.
+# Render Blueprint: the web service, built from the Dockerfile.
+# The database is PostgreSQL on Supabase (see README, "Deploy"). Secrets are
+# marked `sync: false`, so Render asks for them and they never live in this file.
 services:
   - type: web
     name: prompt-manager
@@ -11,10 +11,11 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
+      # Supabase session pooler (IPv4), e.g.
+      # Host=aws-0-eu-central-1.pooler.supabase.com;Port=5432;Database=postgres;
+      # Username=<role>.<project-ref>;Password=...;SSL Mode=Require
       - key: ConnectionStrings__DefaultConnection
-        fromDatabase:
-          name: prompt-manager-db
-          property: connectionString
+        sync: false
       # Render terminates HTTPS at its proxy; trust X-Forwarded-* so the app
       # sees https (secure cookies, correct redirect URLs).
       - key: ASPNETCORE_FORWARDEDHEADERS_ENABLED
@@ -28,10 +29,3 @@ services:
       # Optional: without it only the offline echo model is available.
       - key: ANTHROPIC_API_KEY
         sync: false
-
-databases:
-  - name: prompt-manager-db
-    plan: free
-    region: frankfurt
-    databaseName: promptmanager
-    user: promptmanager
