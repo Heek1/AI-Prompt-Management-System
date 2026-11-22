@@ -14,12 +14,16 @@ namespace PromptManager.Tests.Infrastructure;
 /// </summary>
 public sealed class PromptManagerFactory : WebApplicationFactory<Program>
 {
+    public const string AdminEmail = "admin@test.local";
+    public const string Password = "Test-password-1";
+
     private readonly TestDatabase _database = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:DefaultConnection", _database.ConnectionString);
+        builder.UseSetting("Auth:AdminEmails:0", AdminEmail);
     }
 
     public AppDbContext CreateDbContext() => _database.CreateContext();
@@ -36,6 +40,30 @@ public sealed class PromptManagerFactory : WebApplicationFactory<Program>
 
 public static class FormPosting
 {
+    /// <summary>Registers an account through the real form; the client keeps the sign-in cookie.</summary>
+    public static async Task SignUpAsync(this HttpClient client, string email, string displayName = "Tester")
+    {
+        var response = await client.PostFormAsync("/Account/Register", "/Account/Register", new Dictionary<string, string>
+        {
+            ["Email"] = email,
+            ["DisplayName"] = displayName,
+            ["Password"] = PromptManagerFactory.Password,
+            ["ConfirmPassword"] = PromptManagerFactory.Password
+        });
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+    }
+
+    public static async Task SignOutAsync(this HttpClient client)
+    {
+        var page = await client.GetStringAsync("/Prompts");
+        var token = TokenPattern.Match(page).Groups[1].Value;
+        var response = await client.PostAsync("/Account/Logout", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = WebUtility.HtmlDecode(token)
+        }));
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+    }
+
     private static readonly Regex TokenPattern =
         new("name=\"__RequestVerificationToken\" type=\"hidden\" value=\"([^\"]+)\"", RegexOptions.Compiled);
 

@@ -1,5 +1,6 @@
 @using PromptManager.ViewModels
 @model PromptIndexViewModel
+@inject PromptManager.Services.ICurrentUser CurrentUser
 @{
     ViewData["Title"] = "Prompt Library";
 }
@@ -49,6 +50,12 @@
                     <option value="version" selected="@(Model.SortBy == "version")">Version</option>
                 </select>
             </div>
+            <div class="col-12">
+                <div class="form-check form-check-inline small">
+                    <input class="form-check-input" type="checkbox" id="showArchived" name="showArchived" value="true" checked="@Model.ShowArchived" />
+                    <label class="form-check-label" for="showArchived">Show archived prompts</label>
+                </div>
+            </div>
             <div class="col-md-2 d-flex gap-2">
                 <button type="submit" class="btn btn-sm btn-primary flex-fill">
                     <i class="bi bi-search"></i> Filter
@@ -60,7 +67,9 @@
 </div>
 
 <!-- Results count -->
-<p class="text-muted small mb-3">Showing <strong>@Model.Prompts.Count</strong> prompts</p>
+<p class="text-muted small mb-3">
+    Showing <strong>@Model.Prompts.Count</strong> of <strong>@Model.TotalCount</strong> prompts@(Model.PageCount > 1 ? $", page {Model.Page} of {Model.PageCount}" : "")
+</p>
 
 @if (!Model.Prompts.Any())
 {
@@ -112,7 +121,7 @@ else
                         <a asp-action="Details" asp-route-id="@prompt.Id" class="btn btn-sm btn-outline-primary flex-fill">
                             <i class="bi bi-eye"></i> View
                         </a>
-                        @if (!prompt.IsArchived)
+                        @if (!prompt.IsArchived && CurrentUser.CanManage(prompt.OwnerId))
                         {
                             <form asp-action="Archive" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
@@ -128,4 +137,21 @@ else
             </div>
         }
     </div>
+}
+
+@if (Model.PageCount > 1)
+{
+    <nav class="mt-4" aria-label="Library pages">
+        <ul class="pagination justify-content-center">
+            @for (var i = 1; i <= Model.PageCount; i++)
+            {
+                <li class="page-item @(i == Model.Page ? "active" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-search="@Model.SearchQuery" asp-route-category="@Model.CategoryFilter"
+                       asp-route-aiTool="@Model.AiToolFilter" asp-route-sortBy="@Model.SortBy"
+                       asp-route-showArchived="@(Model.ShowArchived ? "true" : null)" asp-route-page="@i">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
 }

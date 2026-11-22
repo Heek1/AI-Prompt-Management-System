@@ -52,12 +52,7 @@
                         <span asp-validation-for="Rating" class="text-danger small"></span>
                     </div>
 
-                    <div class="mb-3">
-                        <label asp-for="UserName" class="form-label fw-semibold">Your Name</label>
-                        <input asp-for="UserName" class="form-control" placeholder="Enter your name..." />
-                        <span asp-validation-for="UserName" class="text-danger small"></span>
-                        <div class="form-text">Note: You can only rate a prompt once per username.</div>
-                    </div>
+                    <p class="form-text">You can rate each prompt once.</p>
 
                     <div class="mb-4">
                         <label asp-for="Comment" class="form-label fw-semibold">Comment <span class="text-muted fw-normal">(optional)</span></label>

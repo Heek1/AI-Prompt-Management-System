@@ -5,8 +5,13 @@ using PromptManager.Tests.Infrastructure;
 
 namespace PromptManager.Tests.Integration;
 
-public sealed class PromptsEndpointsTests : IDisposable
+public sealed class PromptsEndpointsTests : IDisposable, IAsyncLifetime
 {
+    // Every test starts signed in as an ordinary (non-admin) user.
+    public Task InitializeAsync() => _client.SignUpAsync("owner@test.local", "Owner");
+
+    public Task DisposeAsync() => Task.CompletedTask;
+
     private readonly PromptManagerFactory _factory = new();
     private readonly HttpClient _client;
 

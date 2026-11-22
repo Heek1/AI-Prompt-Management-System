@@ -37,9 +37,29 @@ public class PromptService : IPromptService
         }
     }
 
-    public async Task<List<PromptListDto>> GetAllAsync(string? search, string? category, string? aiTool, string sortBy)
+    public Task<List<PromptListDto>> GetAllAsync(string? search, string? category, string? aiTool, string sortBy) =>
+        Project(Filter(search, category, aiTool, sortBy, includeArchived: true)).ToListAsync();
+
+    public async Task<PromptPageDto> GetPageAsync(string? search, string? category, string? aiTool, string sortBy,
+        bool includeArchived, int page, int pageSize)
     {
-        var query = _db.Prompts.AsQueryable();
+        page = Math.Max(1, page);
+        var query = Filter(search, category, aiTool, sortBy, includeArchived);
+        return new PromptPageDto
+        {
+            TotalCount = await query.CountAsync(),
+            Prompts = await Project(query.Skip((page - 1) * pageSize).Take(pageSize)).ToListAsync(),
+            Page = page,
+            PageSize = pageSize
+        };
+    }
+
+    private IQueryable<Prompt> Filter(string? search, string? category, string? aiTool, string sortBy, bool includeArchived)
+    {
+        var query = _db.Prompts.AsNoTracking();
+
+        if (!includeArchived)
+            query = query.Where(p => !p.IsArchived);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -58,15 +78,18 @@ public class PromptService : IPromptService
         if (!string.IsNullOrWhiteSpace(aiTool))
             query = query.Where(p => p.AiTool == aiTool);
 
-        query = sortBy switch
+        // Id as the last key keeps paging stable when the main key ties.
+        return sortBy switch
         {
-            "title" => query.OrderBy(p => p.Title),
-            "date" => query.OrderByDescending(p => p.CreatedAt),
-            "version" => query.OrderByDescending(p => p.CurrentVersion),
-            _ => query.OrderByDescending(p => p.AverageRating)
+            "title" => query.OrderBy(p => p.Title).ThenBy(p => p.Id),
+            "date" => query.OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
+            "version" => query.OrderByDescending(p => p.CurrentVersion).ThenByDescending(p => p.Id),
+            _ => query.OrderByDescending(p => p.AverageRating).ThenByDescending(p => p.Id)
         };
+    }
 
-        return await query.Select(p => new PromptListDto
+    private static IQueryable<PromptListDto> Project(IQueryable<Prompt> query) =>
+        query.Select(p => new PromptListDto
         {
             Id = p.Id,
             Title = p.Title,
@@ -75,9 +98,9 @@ public class PromptService : IPromptService
             Author = p.Author,
             AverageRating = p.AverageRating,
             CurrentVersion = p.CurrentVersion,
-            IsArchived = p.IsArchived
-        }).ToListAsync();
-    }
+            IsArchived = p.IsArchived,
+            OwnerId = p.OwnerId
+        });
 
     public async Task<PromptDetailsDto?> GetByIdAsync(int id)
     {
@@ -96,6 +119,7 @@ public class PromptService : IPromptService
             Category = prompt.Category,
             AiTool = prompt.AiTool,
             Author = prompt.Author,
+            OwnerId = prompt.OwnerId,
             AverageRating = prompt.AverageRating,
             CurrentVersion = prompt.CurrentVersion,
             CreatedAt = prompt.CreatedAt,
@@ -123,6 +147,7 @@ public class PromptService : IPromptService
             Category = dto.Category,
             AiTool = dto.AiTool,
             Author = dto.Author,
+            OwnerId = dto.OwnerId,
             CurrentVersion = 1
         };
 
@@ -134,6 +159,7 @@ public class PromptService : IPromptService
             PromptText = dto.PromptText,
             ChangeNote = "Initial version",
             CreatedBy = dto.Author,
+            CreatedById = dto.OwnerId,
             CreatedAt = prompt.CreatedAt
         });
 
@@ -163,6 +189,7 @@ public class PromptService : IPromptService
                 PromptText = dto.PromptText,
                 ChangeNote = dto.ChangeNote ?? string.Empty,
                 CreatedBy = dto.CreatedBy,
+                CreatedById = dto.CreatedById,
                 CreatedAt = now
             });
 
@@ -193,6 +220,7 @@ public class PromptService : IPromptService
         {
             PromptId = dto.PromptId,
             UserName = dto.UserName,
+            UserId = dto.UserId,
             Rating = dto.Rating,
             Comment = dto.Comment ?? string.Empty
         });
@@ -220,6 +248,29 @@ public class PromptService : IPromptService
 
         return (true, string.Empty);
     }
+
+    public async Task<bool> UpdateAsync(EditPromptDto dto) =>
+        await _db.Prompts
+            .Where(p => p.Id == dto.Id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.Title, dto.Title)
+                .SetProperty(p => p.Description, dto.Description ?? string.Empty)
+                .SetProperty(p => p.Category, dto.Category)
+                .SetProperty(p => p.AiTool, dto.AiTool)
+                .SetProperty(p => p.UpdatedAt, DateTime.UtcNow)
+                .SetProperty(p => p.ConcurrencyStamp, Guid.NewGuid().ToString())) > 0;
+
+    public async Task<bool> UnarchiveAsync(int id) =>
+        await _db.Prompts
+            .Where(p => p.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.IsArchived, false)
+                .SetProperty(p => p.UpdatedAt, DateTime.UtcNow)
+                .SetProperty(p => p.ConcurrencyStamp, Guid.NewGuid().ToString())) > 0;
+
+    // Versions, ratings, runs and input sets go with it through ON DELETE CASCADE.
+    public async Task<bool> DeleteAsync(int id) =>
+        await _db.Prompts.Where(p => p.Id == id).ExecuteDeleteAsync() > 0;
 
     public async Task<bool> ArchiveAsync(int id)
     {

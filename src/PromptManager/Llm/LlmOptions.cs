@@ -12,6 +12,19 @@ public sealed class LlmOptions
     public int TimeoutSeconds { get; set; } = 180;
 
     public List<LlmModelOptions> Models { get; set; } = [];
+
+    /// <summary>
+    /// Who may run models that call a paid provider: "Admins" (default, so a
+    /// public demo cannot spend the owner's API credit) or "Everyone".
+    /// The offline echo model is always open to signed-in users.
+    /// </summary>
+    public string PaidModelsAccess { get; set; } = PaidAccess.Admins;
+}
+
+public static class PaidAccess
+{
+    public const string Admins = "Admins";
+    public const string Everyone = "Everyone";
 }
 
 public sealed class LlmModelOptions
@@ -29,6 +42,9 @@ public sealed class LlmModelOptions
 
     /// <summary>USD per million output tokens.</summary>
     public decimal OutputPricePerMillion { get; set; }
+
+    /// <summary>True for every provider except the offline echo model.</summary>
+    public bool IsPaid => !string.Equals(Provider, EchoLlmClient.ProviderName, StringComparison.OrdinalIgnoreCase);
 
     public decimal CostOf(long inputTokens, long outputTokens) =>
         (inputTokens * InputPricePerMillion + outputTokens * OutputPricePerMillion) / 1_000_000m;

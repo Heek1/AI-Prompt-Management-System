@@ -134,7 +134,7 @@ public sealed class PromptServiceTests : IDisposable
     {
         var id = await CreatePromptAsync();
 
-        var (success, error) = await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "bob", Rating = 4 });
+        var (success, error) = await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "bob", UserId = "bob", Rating = 4 });
 
         Assert.True(success);
         Assert.Equal(string.Empty, error);
@@ -145,9 +145,9 @@ public sealed class PromptServiceTests : IDisposable
     public async Task RateAsync_averages_ratings_from_different_users_to_two_decimals()
     {
         var id = await CreatePromptAsync();
-        await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "a", Rating = 5 });
-        await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "b", Rating = 4 });
-        await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "c", Rating = 4 });
+        await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "a", UserId = "a", Rating = 5 });
+        await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "b", UserId = "b", Rating = 4 });
+        await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "c", UserId = "c", Rating = 4 });
 
         Assert.Equal(4.33, (await CreateService().GetByIdAsync(id))!.AverageRating);
     }
@@ -156,9 +156,9 @@ public sealed class PromptServiceTests : IDisposable
     public async Task RateAsync_rejects_second_rating_from_same_user()
     {
         var id = await CreatePromptAsync();
-        await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "bob", Rating = 5 });
+        await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "bob", UserId = "bob", Rating = 5 });
 
-        var (success, error) = await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "bob", Rating = 1 });
+        var (success, error) = await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "bob", UserId = "bob", Rating = 1 });
 
         Assert.False(success);
         Assert.Equal("You have already rated this prompt.", error);
@@ -168,7 +168,7 @@ public sealed class PromptServiceTests : IDisposable
     [Fact]
     public async Task RateAsync_fails_for_unknown_prompt()
     {
-        var (success, error) = await CreateService().RateAsync(new RatePromptDto { PromptId = 999, UserName = "bob", Rating = 3 });
+        var (success, error) = await CreateService().RateAsync(new RatePromptDto { PromptId = 999, UserName = "bob", UserId = "bob", Rating = 3 });
 
         Assert.False(success);
         Assert.Equal("Prompt not found.", error);
@@ -245,7 +245,7 @@ public sealed class PromptServiceTests : IDisposable
         var b = await CreatePromptAsync(NewPrompt(title: "Bravo"));
         var a = await CreatePromptAsync(NewPrompt(title: "Alpha"));
         await CreateService().CreateVersionAsync(new CreatePromptVersionDto { PromptId = b, PromptText = "Second version of Bravo text.", CreatedBy = "x" });
-        await CreateService().RateAsync(new RatePromptDto { PromptId = a, UserName = "u", Rating = 5 });
+        await CreateService().RateAsync(new RatePromptDto { PromptId = a, UserName = "u", UserId = "u", Rating = 5 });
 
         var service = CreateService();
         Assert.Equal(new[] { "Alpha", "Bravo" }, (await service.GetAllAsync(null, null, null, "title")).Select(p => p.Title));
@@ -303,5 +303,82 @@ public sealed class PromptServiceTests : IDisposable
         await CreatePromptAsync(NewPrompt(title: "Second"));
 
         Assert.Equal((2, 0), await CreateService().GetHealthStatsAsync());
+    }
+
+    // ---------- Paging, edit, restore, delete ----------
+
+    [Fact]
+    public async Task GetPageAsync_pages_and_hides_archived_by_default()
+    {
+        for (var i = 1; i <= 5; i++)
+            await CreatePromptAsync(NewPrompt(title: $"P{i}"));
+        var archived = await CreatePromptAsync(NewPrompt(title: "Old"));
+        await CreateService().ArchiveAsync(archived);
+
+        var first = await CreateService().GetPageAsync(null, null, null, "title", includeArchived: false, page: 1, pageSize: 2);
+        var last = await CreateService().GetPageAsync(null, null, null, "title", includeArchived: false, page: 3, pageSize: 2);
+        var withArchived = await CreateService().GetPageAsync(null, null, null, "title", includeArchived: true, page: 1, pageSize: 10);
+
+        Assert.Equal((5, 3), (first.TotalCount, first.PageCount));
+        Assert.Equal(new[] { "P1", "P2" }, first.Prompts.Select(p => p.Title));
+        Assert.Equal("P5", Assert.Single(last.Prompts).Title);
+        Assert.Equal(6, withArchived.TotalCount);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_changes_metadata_but_not_text_or_version()
+    {
+        var id = await CreatePromptAsync();
+
+        var ok = await CreateService().UpdateAsync(new EditPromptDto
+        {
+            Id = id, Title = "New title", Description = null, Category = "Testing", AiTool = "Gemini"
+        });
+
+        Assert.True(ok);
+        var details = await CreateService().GetByIdAsync(id);
+        Assert.Equal(("New title", "", "Testing", "Gemini"), (details!.Title, details.Description, details.Category, details.AiTool));
+        Assert.Equal(1, details.CurrentVersion);
+        Assert.False(await CreateService().UpdateAsync(new EditPromptDto { Id = 999, Title = "x", Category = "Testing", AiTool = "Claude" }));
+    }
+
+    [Fact]
+    public async Task UnarchiveAsync_restores_an_archived_prompt()
+    {
+        var id = await CreatePromptAsync();
+        await CreateService().ArchiveAsync(id);
+
+        Assert.True(await CreateService().UnarchiveAsync(id));
+        Assert.False((await CreateService().GetByIdAsync(id))!.IsArchived);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_removes_the_prompt_with_everything_attached()
+    {
+        var id = await CreatePromptAsync();
+        var keep = await CreatePromptAsync(NewPrompt(title: "Keep"));
+        await CreateService().RateAsync(new RatePromptDto { PromptId = id, UserName = "u", UserId = "u", Rating = 3 });
+        await CreateService().CreateVersionAsync(new CreatePromptVersionDto { PromptId = id, PromptText = "A second version that is long.", CreatedBy = "x" });
+
+        Assert.True(await CreateService().DeleteAsync(id));
+        Assert.False(await CreateService().DeleteAsync(id));
+
+        using var db = _database.CreateContext();
+        Assert.Equal(keep, (await db.Prompts.SingleAsync()).Id);
+        Assert.Equal(1, await db.PromptVersions.CountAsync());
+        Assert.Equal(0, await db.PromptRatings.CountAsync());
+    }
+
+    [Fact]
+    public async Task CreateAsync_records_the_owner_on_prompt_and_first_version()
+    {
+        var dto = NewPrompt();
+        dto.OwnerId = "user-1";
+
+        var id = await CreatePromptAsync(dto);
+
+        using var db = _database.CreateContext();
+        Assert.Equal("user-1", (await db.Prompts.SingleAsync(p => p.Id == id)).OwnerId);
+        Assert.Equal("user-1", (await db.PromptVersions.SingleAsync(v => v.PromptId == id)).CreatedById);
     }
 }

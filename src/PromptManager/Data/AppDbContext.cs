@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PromptManager.Infrastructure;
 using PromptManager.Models;
 
 namespace PromptManager.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<AppUser>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -28,6 +29,8 @@ public class AppDbContext : DbContext
             e.Property(p => p.AiTool).IsRequired().HasMaxLength(FieldLimits.AiTool);
             e.Property(p => p.Author).IsRequired().HasMaxLength(FieldLimits.PersonName);
             e.Property(p => p.ConcurrencyStamp).IsRequired().HasMaxLength(36).IsConcurrencyToken();
+            e.Property(p => p.OwnerId).HasMaxLength(450);
+            e.HasIndex(p => p.OwnerId);
         });
 
         modelBuilder.Entity<PromptVersion>(e =>
@@ -36,6 +39,7 @@ public class AppDbContext : DbContext
             e.Property(v => v.PromptText).IsRequired().HasMaxLength(FieldLimits.PromptText);
             e.Property(v => v.ChangeNote).HasMaxLength(FieldLimits.ChangeNote);
             e.Property(v => v.CreatedBy).IsRequired().HasMaxLength(FieldLimits.PersonName);
+            e.Property(v => v.CreatedById).HasMaxLength(450);
             e.HasOne(v => v.Prompt)
              .WithMany(p => p.Versions)
              .HasForeignKey(v => v.PromptId)
@@ -50,15 +54,16 @@ public class AppDbContext : DbContext
         {
             e.HasKey(r => r.Id);
             e.Property(r => r.UserName).IsRequired().HasMaxLength(FieldLimits.PersonName);
+            e.Property(r => r.UserId).IsRequired().HasMaxLength(450);
             e.Property(r => r.Comment).HasMaxLength(FieldLimits.Comment);
             e.HasOne(r => r.Prompt)
              .WithMany(p => p.Ratings)
              .HasForeignKey(r => r.PromptId)
              .OnDelete(DeleteBehavior.Cascade);
 
-            // One rating per user per prompt. RateAsync relies on this index
+            // One rating per account per prompt. RateAsync relies on this index
             // instead of a check-then-insert, which two requests could both pass.
-            e.HasIndex(r => new { r.PromptId, r.UserName }).IsUnique();
+            e.HasIndex(r => new { r.PromptId, r.UserId }).IsUnique();
         });
 
         modelBuilder.Entity<PromptRun>(e =>
@@ -70,6 +75,7 @@ public class AppDbContext : DbContext
             e.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
             e.Property(r => r.StopReason).HasMaxLength(50);
             e.Property(r => r.RunBy).HasMaxLength(FieldLimits.PersonName);
+            e.Property(r => r.RunByUserId).HasMaxLength(450);
             e.Property(r => r.CostUsd).HasPrecision(18, 6);
             e.HasOne(r => r.Prompt)
              .WithMany()

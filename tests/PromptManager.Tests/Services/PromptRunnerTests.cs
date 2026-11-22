@@ -238,4 +238,32 @@ public sealed class PromptRunnerTests : IDisposable
         Assert.Single(onlyA.Runs);
         Assert.Equal("Runnable", onlyA.PromptTitle);
     }
+
+    [Fact]
+    public async Task Paid_models_are_refused_without_permission_and_echo_is_not_paid()
+    {
+        var id = await SeedPromptAsync();
+        var client = Answering("never");
+
+        var (runId, error) = await Runner(client).RunAsync(
+            new RunPromptDto { PromptId = id, Model = "model-a", MayUsePaidModels = false }, CancellationToken.None);
+
+        Assert.Null(runId);
+        Assert.Contains("only admins", error);
+        Assert.Empty(client.Requests);
+        Assert.False(new LlmModelOptions { Provider = EchoLlmClient.ProviderName }.IsPaid);
+        Assert.True(new LlmModelOptions { Provider = "Anthropic" }.IsPaid);
+    }
+
+    [Fact]
+    public async Task Run_records_the_account_that_ran_it()
+    {
+        var id = await SeedPromptAsync();
+
+        var (runId, _) = await Runner(Answering("ok")).RunAsync(
+            new RunPromptDto { PromptId = id, Model = "model-a", RunBy = "Olena", RunByUserId = "user-7" }, CancellationToken.None);
+
+        var run = await StoredRunAsync(runId!.Value);
+        Assert.Equal(("Olena", "user-7"), (run.RunBy, run.RunByUserId));
+    }
 }

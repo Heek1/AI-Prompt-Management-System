@@ -129,18 +129,18 @@ public sealed class PromptServiceConcurrencyTests : IDisposable
         using var db = _database.CreateContext();
         BeforeFirstSave(db, other =>
         {
-            other.PromptRatings.Add(new PromptRating { PromptId = id, UserName = "bob", Rating = 5 });
+            other.PromptRatings.Add(new PromptRating { PromptId = id, UserName = "bob", UserId = "bob", Rating = 5 });
             other.SaveChanges();
         });
         var service = CreateService(db);
 
-        var (success, error) = await service.RateAsync(new RatePromptDto { PromptId = id, UserName = "bob", Rating = 1 });
+        var (success, error) = await service.RateAsync(new RatePromptDto { PromptId = id, UserName = "bob", UserId = "bob", Rating = 1 });
 
         Assert.False(success);
         Assert.Equal("You have already rated this prompt.", error);
 
         // The same scoped service must still work after the conflict.
-        var second = await service.RateAsync(new RatePromptDto { PromptId = id, UserName = "dave", Rating = 3 });
+        var second = await service.RateAsync(new RatePromptDto { PromptId = id, UserName = "dave", UserId = "dave", Rating = 3 });
         Assert.True(second.success);
         using var check = _database.CreateContext();
         Assert.Equal(4, (await check.Prompts.SingleAsync(p => p.Id == id)).AverageRating);
