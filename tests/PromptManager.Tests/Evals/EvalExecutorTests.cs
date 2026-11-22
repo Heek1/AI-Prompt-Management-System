@@ -58,7 +58,9 @@ public sealed class EvalExecutorTests : IDisposable
         var catalog = Catalog();
         var executor = new EvalExecutor(db,
             new PromptRunner(db, catalog, NullLogger<PromptRunner>.Instance),
-            new EvalJudge(catalog), catalog, NullLogger<EvalExecutor>.Instance);
+            new EvalJudge(catalog), catalog,
+            new VersionLifecycle(db, NullLogger<VersionLifecycle>.Instance),
+            NullLogger<EvalExecutor>.Instance);
         await executor.ExecuteAsync(evalId, CancellationToken.None);
     }
 

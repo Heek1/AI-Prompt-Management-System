@@ -97,6 +97,7 @@ public class PromptDetailsDto
     public string? OwnerId { get; set; }
     public double AverageRating { get; set; }
     public int CurrentVersion { get; set; }
+    public int? ProductionVersion { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public bool IsArchived { get; set; }
@@ -111,6 +112,10 @@ public class PromptVersionDto
     public string ChangeNote { get; set; } = string.Empty;
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public PromptManager.Models.VersionStatus Status { get; set; }
+    public DateTime? PromotedAt { get; set; }
+    public string? PromotedBy { get; set; }
+    public bool PromotedOverRegression { get; set; }
 }
 
 public class CreatePromptVersionDto

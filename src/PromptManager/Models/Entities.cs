@@ -17,7 +17,15 @@ public class Prompt
     /// </summary>
     public string? OwnerId { get; set; }
 
+    /// <summary>The newest version number (the one new versions follow).</summary>
     public int CurrentVersion { get; set; } = 1;
+
+    /// <summary>
+    /// The version applications should use (see the API). Null when no version
+    /// has been promoted. Not necessarily the newest one: a newer draft may
+    /// still be under test, and a rollback points it at an older version.
+    /// </summary>
+    public int? ProductionVersion { get; set; }
     public double AverageRating { get; set; } = 0;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
@@ -42,7 +50,26 @@ public class PromptVersion
     public string? CreatedById { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public VersionStatus Status { get; set; } = VersionStatus.Draft;
+
+    /// <summary>Last time this version was promoted to production, and by whom.</summary>
+    public DateTime? PromotedAt { get; set; }
+    public string? PromotedBy { get; set; }
+
+    /// <summary>True when an admin promoted it although its evals were worse than production's.</summary>
+    public bool PromotedOverRegression { get; set; }
+
     public Prompt? Prompt { get; set; }
+}
+
+public enum VersionStatus
+{
+    /// <summary>Not proven yet.</summary>
+    Draft,
+    /// <summary>Passed every case of a completed eval (set automatically).</summary>
+    Tested,
+    /// <summary>The version the prompt's ProductionVersion points at; at most one per prompt.</summary>
+    Production
 }
 
 public class PromptRating

@@ -47,6 +47,8 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             e.Property(v => v.ChangeNote).HasMaxLength(FieldLimits.ChangeNote);
             e.Property(v => v.CreatedBy).IsRequired().HasMaxLength(FieldLimits.PersonName);
             e.Property(v => v.CreatedById).HasMaxLength(450);
+            e.Property(v => v.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(v => v.PromotedBy).HasMaxLength(FieldLimits.PersonName);
             e.HasOne(v => v.Prompt)
              .WithMany(p => p.Versions)
              .HasForeignKey(v => v.PromptId)

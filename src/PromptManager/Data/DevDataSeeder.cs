@@ -55,6 +55,7 @@ public static class DevDataSeeder
             AiTool = aiTool,
             Author = author,
             CurrentVersion = 1,
+            ProductionVersion = 1,
             CreatedAt = createdAt,
             UpdatedAt = createdAt,
             Versions =
@@ -65,7 +66,10 @@ public static class DevDataSeeder
                     PromptText = text,
                     ChangeNote = "Initial version",
                     CreatedBy = author,
-                    CreatedAt = createdAt
+                    CreatedAt = createdAt,
+                    Status = VersionStatus.Production,
+                    PromotedAt = createdAt,
+                    PromotedBy = author
                 }
             }
         };

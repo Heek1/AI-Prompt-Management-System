@@ -18,6 +18,7 @@ public sealed class EvalExecutor(
     IPromptRunner runner,
     EvalJudge judge,
     LlmCatalog catalog,
+    IVersionLifecycle lifecycle,
     ILogger<EvalExecutor> logger)
 {
     public async Task ExecuteAsync(int evalRunId, CancellationToken ct)
@@ -65,6 +66,9 @@ public sealed class EvalExecutor(
 
         eval.FinishedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(CancellationToken.None);
+
+        if (eval.Status == EvalRunStatus.Completed)
+            await lifecycle.MarkTestedIfPassedAsync(eval.Id);
     }
 
     private async Task<EvalResult> RunCaseAsync(EvalRun eval, EvalCase evalCase, string? judgeProblem, CancellationToken ct)

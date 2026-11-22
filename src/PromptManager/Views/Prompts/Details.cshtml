@@ -259,6 +259,20 @@
             </div>
         </div>
 
+        @if (Model.IsAdmin && Model.BlockedPromotion is { } blocked)
+        {
+            <div class="alert alert-warning d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-shield-exclamation"></i> As an admin you can promote v@(blocked) anyway. This is recorded on the version.</span>
+                <form asp-action="Promote" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@p.Id" />
+                    <input type="hidden" name="versionNumber" value="@blocked" />
+                    <input type="hidden" name="overrideRegression" value="true" />
+                    <button type="submit" class="btn btn-sm btn-warning" data-confirm="Promote v@(blocked) although its evals are worse?">Promote anyway</button>
+                </form>
+            </div>
+        }
+
         <!-- Versions History -->
         <div class="card shadow-sm">
             <div class="card-header">
@@ -277,14 +291,38 @@
                             <div class="list-group-item">
                                 <div class="d-flex justify-content-between">
                                     <div>
-                                        <span class="badge bg-primary me-2">v@(v.VersionNumber)</span>
-                                        <strong>@(string.IsNullOrEmpty(v.ChangeNote) ? "No change note" : v.ChangeNote)</strong>
+                                        <span class="badge bg-primary me-1">v@(v.VersionNumber)</span>
+                                        <partial name="_VersionStatusBadge" model="v.Status" />
+                                        <strong class="ms-1">@(string.IsNullOrEmpty(v.ChangeNote) ? "No change note" : v.ChangeNote)</strong>
                                         <div class="text-muted small mt-1">
                                             <i class="bi bi-person"></i> @v.CreatedBy &nbsp;
                                             <i class="bi bi-calendar"></i> @v.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                                            @if (v.Status == PromptManager.Models.VersionStatus.Production && v.PromotedAt is not null)
+                                            {
+                                                <span class="ms-2"><i class="bi bi-rocket-takeoff"></i> promoted @v.PromotedAt.Value.ToString("dd MMM yyyy") by @v.PromotedBy</span>
+                                            }
+                                            @if (v.PromotedOverRegression && v.Status == PromptManager.Models.VersionStatus.Production)
+                                            {
+                                                <span class="badge bg-danger ms-1" title="An admin promoted it although its evals were worse">over a regression</span>
+                                            }
                                         </div>
                                     </div>
-                                    <div class="btn-group">
+                                    <div class="btn-group align-items-start">
+                                        @if (Model.CanManage && !p.IsArchived && v.Status != PromptManager.Models.VersionStatus.Production)
+                                        {
+                                            var rollback = p.ProductionVersion is { } prod && v.VersionNumber < prod;
+                                            <form asp-action="Promote" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@p.Id" />
+                                                <input type="hidden" name="versionNumber" value="@v.VersionNumber" />
+                                                <button type="submit" class="btn btn-sm btn-outline-success"
+                                                        title="@(rollback ? "Roll back production to" : "Promote to production"): v@(v.VersionNumber)"
+                                                        data-confirm="@(rollback ? "Roll back" : "Promote") production to v@(v.VersionNumber)?">
+                                                    <i class="bi @(rollback ? "bi-arrow-counterclockwise" : "bi-rocket-takeoff")"></i>
+                                                    @(rollback ? "Roll back" : "Promote")
+                                                </button>
+                                            </form>
+                                        }
                                         @if (v.VersionNumber > 1)
                                         {
                                             <a class="btn btn-sm btn-outline-secondary" title="Compare with v@(v.VersionNumber - 1)"
@@ -357,8 +395,21 @@
                         <td class="small">@p.Author</td>
                     </tr>
                     <tr>
-                        <td class="text-muted small">Version</td>
+                        <td class="text-muted small">Latest</td>
                         <td><span class="badge bg-secondary">v@(p.CurrentVersion)</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted small">Production</td>
+                        <td>
+                            @if (p.ProductionVersion is { } production)
+                            {
+                                <span class="badge bg-success" data-testid="production-version">v@(production)</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">none</span>
+                            }
+                        </td>
                     </tr>
                     <tr>
                         <td class="text-muted small">Status</td>

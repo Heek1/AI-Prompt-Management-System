@@ -21,9 +21,12 @@ public class PromptsController : Controller
     private readonly LlmCatalog _catalog;
     private readonly IInputSetService _inputSets;
     private readonly ICurrentUser _user;
+    private readonly IVersionLifecycle _lifecycle;
 
-    public PromptsController(IPromptService service, IPromptRunner runner, LlmCatalog catalog, IInputSetService inputSets, ICurrentUser user)
+    public PromptsController(IPromptService service, IPromptRunner runner, LlmCatalog catalog, IInputSetService inputSets,
+        ICurrentUser user, IVersionLifecycle lifecycle)
     {
+        _lifecycle = lifecycle;
         _service = service;
         _runner = runner;
         _catalog = catalog;
@@ -110,7 +113,9 @@ public class PromptsController : Controller
             InputSets = inputSets,
             SelectedInputSet = inputSet is { } setId ? inputSets.FirstOrDefault(s => s.Id == setId) : null,
             IsSignedIn = _user.IsSignedIn,
-            CanManage = _user.CanManage(prompt.OwnerId)
+            CanManage = _user.CanManage(prompt.OwnerId),
+            IsAdmin = _user.IsAdmin,
+            BlockedPromotion = TempData["BlockedPromotion"] as int?
         });
     }
 
@@ -244,6 +249,26 @@ public class PromptsController : Controller
         var (success, error) = await _service.UsePromptAsync(dto);
         TempData[success ? "Success" : "Error"] = success ? "Prompt usage recorded!" : error;
         return RedirectToAction(nameof(Details), new { id = dto.PromptId });
+    }
+
+    // POST /Prompts/Promote  (also rolls back to an older version)
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Promote(int id, int versionNumber, bool overrideRegression = false)
+    {
+        var prompt = await _service.GetByIdAsync(id);
+        if (prompt == null) return NotFound();
+        if (!_user.CanManage(prompt.OwnerId)) return Forbid();
+
+        // Only admins may push a version whose evals are worse than production's.
+        var result = await _lifecycle.PromoteAsync(id, versionNumber, await _user.GetDisplayNameAsync(),
+            overrideRegression && _user.IsAdmin);
+
+        TempData[result.Promoted ? "Success" : "Error"] = result.Message;
+        if (result.BlockedByRegression)
+            TempData["BlockedPromotion"] = versionNumber;
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     // POST /Prompts/Archive

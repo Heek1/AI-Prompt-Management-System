@@ -25,6 +25,11 @@ public class PromptDetailsViewModel
 
     /// <summary>Author or admin: may edit, add versions, archive, delete.</summary>
     public bool CanManage { get; set; }
+
+    public bool IsAdmin { get; set; }
+
+    /// <summary>Set after a promotion was blocked by a regression, so admins can override it.</summary>
+    public int? BlockedPromotion { get; set; }
     public int TotalRuns { get; set; }
 }
 
