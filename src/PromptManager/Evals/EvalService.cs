@@ -21,6 +21,15 @@ public interface IEvalService
     /// <summary>Validates and queues an eval run. Returns its id, or an error when nothing was queued.</summary>
     Task<(int? Id, string? Error)> StartAsync(StartEvalDto dto);
 
+    /// <summary>
+    /// Queues one eval per model (2 to 4 models, same version and judge).
+    /// Everything is validated first, so either all are queued or none.
+    /// </summary>
+    Task<(List<int>? Ids, string? Error)> StartComparisonAsync(CompareModelsDto dto);
+
+    /// <summary>Rows for the given eval runs of one prompt, in the order given.</summary>
+    Task<List<ModelComparisonRowDto>> CompareAsync(IReadOnlyList<int> evalRunIds);
+
     Task<List<EvalRunListItemDto>> ListRunsAsync(int promptId, int take = 20);
     Task<EvalRunDetailsDto?> GetRunAsync(int id);
 }
@@ -122,6 +131,73 @@ public sealed class EvalService(AppDbContext db, LlmCatalog catalog, EvalQueue q
         return (eval.Id, null);
     }
 
+    public const int MaxModelsPerComparison = 4;
+
+    public async Task<(List<int>? Ids, string? Error)> StartComparisonAsync(CompareModelsDto dto)
+    {
+        var models = dto.Models.Where(m => !string.IsNullOrWhiteSpace(m)).Distinct(StringComparer.Ordinal).ToList();
+        if (models.Count < 2) return (null, "Choose at least two models to compare.");
+        if (models.Count > MaxModelsPerComparison) return (null, $"Compare at most {MaxModelsPerComparison} models at a time.");
+
+        // Validate every model before queuing any eval.
+        foreach (var model in models)
+            if (ModelError(model, dto.MayUsePaidModels) is { } error) return (null, $"{model}: {error}");
+
+        var ids = new List<int>();
+        foreach (var model in models)
+        {
+            var (id, error) = await StartAsync(new StartEvalDto
+            {
+                PromptId = dto.PromptId,
+                VersionNumber = dto.VersionNumber,
+                Model = model,
+                JudgeModel = dto.JudgeModel,
+                RunBy = dto.RunBy,
+                RunByUserId = dto.RunByUserId,
+                MayUsePaidModels = dto.MayUsePaidModels
+            });
+            // The remaining checks (cases, version, judge) are the same for every
+            // model, so only the first one can fail and nothing is queued yet.
+            if (id is null) return (null, error);
+            ids.Add(id.Value);
+        }
+        return (ids, null);
+    }
+
+    public async Task<List<ModelComparisonRowDto>> CompareAsync(IReadOnlyList<int> evalRunIds)
+    {
+        var evals = await db.EvalRuns.AsNoTracking()
+            .Where(r => evalRunIds.Contains(r.Id))
+            .Select(ListItem)
+            .ToListAsync();
+
+        var stats = await db.EvalResults.AsNoTracking()
+            .Where(r => evalRunIds.Contains(r.EvalRunId) && r.PromptRunId != null)
+            .Join(db.PromptRuns, r => r.PromptRunId, p => (int?)p.Id, (r, p) => new { r.EvalRunId, p.InputTokens, p.OutputTokens, p.DurationMs })
+            .GroupBy(x => x.EvalRunId)
+            .Select(g => new
+            {
+                EvalRunId = g.Key,
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                AverageMs = g.Average(x => (double)x.DurationMs)
+            })
+            .ToDictionaryAsync(x => x.EvalRunId);
+
+        return evalRunIds
+            .Select(id => evals.FirstOrDefault(e => e.Id == id))
+            .Where(e => e is not null)
+            .Select(e => new ModelComparisonRowDto
+            {
+                Eval = e!,
+                DisplayName = catalog.Find(e!.Model)?.DisplayName ?? e.Model,
+                InputTokens = stats.TryGetValue(e.Id, out var s) ? s.InputTokens : 0,
+                OutputTokens = s?.OutputTokens ?? 0,
+                AverageSeconds = s is null ? null : s.AverageMs / 1000.0
+            })
+            .ToList();
+    }
+
     public async Task<List<EvalRunListItemDto>> ListRunsAsync(int promptId, int take = 20) =>
         await db.EvalRuns.AsNoTracking()
             .Where(r => r.PromptId == promptId)
@@ -185,6 +261,7 @@ public sealed class EvalService(AppDbContext db, LlmCatalog catalog, EvalQueue q
     private static readonly System.Linq.Expressions.Expression<Func<EvalRun, EvalRunListItemDto>> ListItem = r => new EvalRunListItemDto
     {
         Id = r.Id,
+        PromptId = r.PromptId,
         VersionNumber = r.VersionNumber,
         Model = r.Model,
         JudgeModel = r.JudgeModel,

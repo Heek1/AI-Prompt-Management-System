@@ -1,0 +1,82 @@
+@using System.Globalization
+@using PromptManager.Models
+@using PromptManager.ViewModels
+@model ModelComparisonViewModel
+@{
+    ViewData["Title"] = "Model comparison";
+    var inv = CultureInfo.InvariantCulture;
+    var f = Model.First;
+    var finished = Model.Rows.Where(r => r.Eval.Status == EvalRunStatus.Completed).ToList();
+    var best = finished.Count == 0 ? null : finished.MaxBy(r => (r.Eval.PassRate ?? 0, -(double)r.Eval.CostUsd));
+}
+@section Head {
+    @if (!Model.AllFinished)
+    {
+        <meta http-equiv="refresh" content="2" />
+    }
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Details" asp-route-id="@f.PromptId">@f.PromptTitle</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index" asp-route-id="@f.PromptId">Evals</a></li>
+        <li class="breadcrumb-item active">Model comparison</li>
+    </ol>
+</nav>
+
+<h1 class="h4 mb-1">Model comparison <span class="badge bg-primary fs-6">v@(f.VersionNumber)</span></h1>
+<p class="text-muted small">
+    The same @f.TotalCases case(s) on each model@(f.JudgeModel is null ? "" : $", graded by {f.JudgeModel}").
+    @if (!Model.AllFinished)
+    {
+        <span>Still running; this page refreshes itself.</span>
+    }
+</p>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" data-testid="comparison-table">
+            <thead class="table-light">
+                <tr>
+                    <th>Model</th>
+                    <th class="text-end">Passed</th>
+                    <th class="text-end">Cost</th>
+                    <th class="text-end">Tokens in / out</th>
+                    <th class="text-end">Avg. time per answer</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    var e = row.Eval;
+                    <tr class="@(row == best && finished.Count > 1 ? "table-success" : "")">
+                        <td>
+                            <strong>@row.DisplayName</strong>
+                            <div class="small text-muted"><code>@e.Model</code></div>
+                        </td>
+                        <td class="text-end">
+                            @if (e.Status == EvalRunStatus.Completed)
+                            {
+                                <span class="fw-semibold">@e.PassedCases / @e.TotalCases</span>
+                                <div class="small text-muted">@(((e.PassRate ?? 0) * 100).ToString("0", inv))%</div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">@e.Status.ToString().ToLowerInvariant() (@e.CompletedCases/@e.TotalCases)</span>
+                            }
+                        </td>
+                        <td class="text-end">$@e.CostUsd.ToString("0.0000", inv)</td>
+                        <td class="text-end small">@row.InputTokens.ToString("N0") / @row.OutputTokens.ToString("N0")</td>
+                        <td class="text-end">@(row.AverageSeconds is { } s ? s.ToString("0.0", inv) + " s" : "-")</td>
+                        <td class="text-end"><a asp-action="Run" asp-route-id="@e.Id" class="small">details</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+@if (best is not null && finished.Count > 1)
+{
+    <p class="small text-muted mt-2">Highlighted: the highest pass rate, and the lower cost when pass rates tie.</p>
+}

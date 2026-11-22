@@ -24,6 +24,10 @@ public sealed class PromptManagerFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:DefaultConnection", _database.ConnectionString);
         builder.UseSetting("Auth:AdminEmails:0", AdminEmail);
+        // A second free model, so model comparison can be tested offline.
+        builder.UseSetting("Llm:Models:4:Id", "echo-2");
+        builder.UseSetting("Llm:Models:4:DisplayName", "Echo 2");
+        builder.UseSetting("Llm:Models:4:Provider", "Echo");
     }
 
     public AppDbContext CreateDbContext() => _database.CreateContext();

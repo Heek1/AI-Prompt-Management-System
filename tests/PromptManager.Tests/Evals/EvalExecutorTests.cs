@@ -236,4 +236,46 @@ public sealed class EvalExecutorTests : IDisposable
         await Service().SaveCaseAsync(saved);
         Assert.Equal("renamed", (await Service().ListCasesAsync(id)).Single().Name);
     }
+
+    // ---------- Model comparison ----------
+
+    [Fact]
+    public async Task Comparison_queues_one_eval_per_model_and_reports_tokens_and_time()
+    {
+        var id = await SeedPromptAsync();
+        // The echo model prefixes its answer with this sentence; the scripted one does not.
+        await AddCaseAsync(id, "hello", "hello", mustContain: "HELLO", mustNotContain: "no model was called");
+
+        var (ids, error) = await Service().StartComparisonAsync(new CompareModelsDto
+        {
+            PromptId = id, Models = ["paid", "echo", "paid"], MayUsePaidModels = true, RunBy = "t"
+        });
+        Assert.Null(error);
+        Assert.Equal(2, ids!.Count); // duplicates are dropped
+        foreach (var evalId in ids) await ExecuteAsync(evalId);
+
+        var rows = await Service().CompareAsync(ids);
+
+        Assert.Equal(new[] { "paid", "echo" }, rows.Select(r => r.Eval.Model));
+        Assert.Equal((1, 0), (rows[0].Eval.PassedCases, rows[1].Eval.PassedCases)); // echo does not upper-case
+        Assert.Equal((1_000, 1_000), (rows[0].InputTokens, rows[0].OutputTokens));
+        Assert.NotNull(rows[0].AverageSeconds);
+        Assert.Equal(0.002m, rows[0].Eval.CostUsd);
+    }
+
+    [Fact]
+    public async Task Comparison_is_all_or_nothing()
+    {
+        var id = await SeedPromptAsync();
+        await AddCaseAsync(id, "hello", "hello", mustContain: "HELLO");
+
+        Assert.Equal("Choose at least two models to compare.",
+            (await Service().StartComparisonAsync(new CompareModelsDto { PromptId = id, Models = ["echo"] })).Error);
+        Assert.StartsWith("paid:", (await Service().StartComparisonAsync(new CompareModelsDto { PromptId = id, Models = ["echo", "paid"] })).Error);
+        Assert.StartsWith("Compare at most",
+            (await Service().StartComparisonAsync(new CompareModelsDto { PromptId = id, Models = ["a", "b", "c", "d", "e"] })).Error);
+
+        using var db = _database.CreateContext();
+        Assert.Equal(0, await db.EvalRuns.CountAsync());
+    }
 }
