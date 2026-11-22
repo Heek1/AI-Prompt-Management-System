@@ -21,6 +21,12 @@
             <a asp-action="Rate" asp-route-id="@p.Id" class="btn btn-sm btn-outline-warning">
                 <i class="bi bi-star"></i> Rate
             </a>
+            @if (p.CurrentVersion > 1)
+            {
+                <a asp-action="Compare" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-file-diff"></i> Compare versions
+                </a>
+            }
             <form asp-action="Archive" method="post" class="d-inline">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@p.Id" />
@@ -241,12 +247,22 @@
                                             <i class="bi bi-calendar"></i> @v.CreatedAt.ToString("dd MMM yyyy HH:mm")
                                         </div>
                                     </div>
-                                    <button class="btn btn-sm btn-outline-secondary"
-                                            type="button"
-                                            data-bs-toggle="collapse"
-                                            data-bs-target="#version-@v.Id">
-                                        <i class="bi bi-code-square"></i>
-                                    </button>
+                                    <div class="btn-group">
+                                        @if (v.VersionNumber > 1)
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary" title="Compare with v@(v.VersionNumber - 1)"
+                                               asp-action="Compare" asp-route-id="@p.Id" asp-route-from="@(v.VersionNumber - 1)" asp-route-to="@v.VersionNumber">
+                                                <i class="bi bi-file-diff"></i>
+                                            </a>
+                                        }
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                                type="button"
+                                                title="Show text"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#version-@v.Id">
+                                            <i class="bi bi-code-square"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="collapse mt-2" id="version-@v.Id">
                                     <pre class="bg-light p-2 rounded small mb-0" style="white-space: pre-wrap;">@v.PromptText</pre>

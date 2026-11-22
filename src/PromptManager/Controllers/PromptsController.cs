@@ -219,6 +219,88 @@ public class PromptsController : Controller
         return RedirectToAction("Details", "Runs", new { id = runId });
     }
 
+    // GET /Prompts/Compare/5?from=1&to=3
+    public async Task<IActionResult> Compare(int id, int? from, int? to)
+    {
+        var prompt = await _service.GetByIdAsync(id);
+        if (prompt == null) return NotFound();
+        if (prompt.Versions.Count < 2)
+        {
+            TempData["Error"] = "This prompt has only one version.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var toVersion = prompt.Versions.FirstOrDefault(v => v.VersionNumber == (to ?? prompt.CurrentVersion));
+        var fromVersion = prompt.Versions.FirstOrDefault(v => v.VersionNumber == (from ?? (toVersion?.VersionNumber ?? 1) - 1));
+        if (fromVersion is null || toVersion is null) return NotFound();
+
+        return View(new CompareVersionsViewModel
+        {
+            Prompt = prompt,
+            From = fromVersion,
+            To = toVersion,
+            Diff = TextDiff.Compare(fromVersion.PromptText, toVersion.PromptText),
+            Models = _catalog.List(),
+            DefaultModel = _catalog.DefaultModel,
+            Variables = PromptTemplate.ExtractVariables(fromVersion.PromptText)
+                .Concat(PromptTemplate.ExtractVariables(toVersion.PromptText))
+                .Distinct(StringComparer.Ordinal)
+                .ToList()
+        });
+    }
+
+    // POST /Prompts/RunCompare
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RunCompare(CompareRunDto dto, CancellationToken ct)
+    {
+        var back = RedirectToAction(nameof(Compare), new { id = dto.PromptId, from = dto.FromVersion, to = dto.ToVersion });
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Choose a model to run both versions on.";
+            return back;
+        }
+
+        // Check both versions before running either, so a missing value for
+        // the second one cannot leave a lone, paid-for first run behind.
+        var prompt = await _service.GetByIdAsync(dto.PromptId);
+        if (prompt == null) return NotFound();
+        var values = dto.Variables.ToDictionary(kv => kv.Key, kv => kv.Value ?? string.Empty);
+        foreach (var number in new[] { dto.FromVersion, dto.ToVersion })
+        {
+            var version = prompt.Versions.FirstOrDefault(v => v.VersionNumber == number);
+            if (version is null) return NotFound();
+            var missing = PromptTemplate.Render(version.PromptText, values).Missing;
+            if (missing.Count > 0)
+            {
+                TempData["Error"] = $"Fill in a value for: {string.Join(", ", missing)}.";
+                return back;
+            }
+        }
+
+        var runIds = new List<int>();
+        foreach (var number in new[] { dto.FromVersion, dto.ToVersion })
+        {
+            var (runId, error) = await _runner.RunAsync(new RunPromptDto
+            {
+                PromptId = dto.PromptId,
+                VersionNumber = number,
+                Model = dto.Model,
+                RunBy = dto.RunBy,
+                Variables = dto.Variables
+            }, ct);
+
+            if (runId is null)
+            {
+                TempData["Error"] = error;
+                return runIds.Count == 0 ? back : RedirectToAction("Details", "Runs", new { id = runIds[0] });
+            }
+            runIds.Add(runId.Value);
+        }
+
+        return RedirectToAction("Compare", "Runs", new { left = runIds[0], right = runIds[1] });
+    }
+
     // POST /Prompts/DeleteInputSet
     [HttpPost]
     [ValidateAntiForgeryToken]

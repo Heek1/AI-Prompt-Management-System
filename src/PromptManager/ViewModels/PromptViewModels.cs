@@ -1,4 +1,5 @@
 using PromptManager.DTOs;
+using PromptManager.Infrastructure;
 using PromptManager.Llm;
 
 namespace PromptManager.ViewModels;
@@ -47,4 +48,24 @@ public class UsageHistoryDto
     public string AiTool { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public DateTime UsedAt { get; set; }
+}
+
+public class CompareVersionsViewModel
+{
+    public PromptDetailsDto Prompt { get; set; } = new();
+    public PromptVersionDto From { get; set; } = new();
+    public PromptVersionDto To { get; set; } = new();
+    public DiffResult Diff { get; set; } = new([], 0, 0, 0);
+    public IReadOnlyList<AvailableModel> Models { get; set; } = [];
+    public string DefaultModel { get; set; } = string.Empty;
+
+    /// <summary>Variables used by either version.</summary>
+    public IReadOnlyList<string> Variables { get; set; } = [];
+}
+
+public class CompareRunsViewModel
+{
+    public RunDetailsDto Left { get; set; } = new();
+    public RunDetailsDto Right { get; set; } = new();
+    public DiffResult OutputDiff { get; set; } = new([], 0, 0, 0);
 }
