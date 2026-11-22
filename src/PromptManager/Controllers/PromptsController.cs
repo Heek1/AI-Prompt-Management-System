@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PromptManager.DTOs;
 using PromptManager.Infrastructure;
+using PromptManager.Llm;
 using PromptManager.Services;
 using PromptManager.ViewModels;
 
@@ -8,10 +9,14 @@ namespace PromptManager.Controllers;
 public class PromptsController : Controller
 {
     private readonly IPromptService _service;
+    private readonly IPromptRunner _runner;
+    private readonly LlmCatalog _catalog;
 
-    public PromptsController(IPromptService service)
+    public PromptsController(IPromptService service, IPromptRunner runner, LlmCatalog catalog)
     {
         _service = service;
+        _runner = runner;
+        _catalog = catalog;
     }
 
     // GET /Prompts
@@ -64,12 +69,17 @@ public class PromptsController : Controller
         var prompt = await _service.GetByIdAsync(id);
         if (prompt == null) return NotFound();
 
+        var runs = await _runner.ListRunsAsync(id, page: 1, pageSize: 5);
         var vm = new PromptDetailsViewModel
         {
             Prompt = prompt,
             Versions = prompt.Versions,
             RateForm = new RatePromptDto { PromptId = id },
-            NewVersionForm = new CreatePromptVersionDto { PromptId = id }
+            NewVersionForm = new CreatePromptVersionDto { PromptId = id },
+            RunForm = new RunPromptDto { PromptId = id, VersionNumber = prompt.CurrentVersion, Model = _catalog.DefaultModel },
+            Models = _catalog.List(),
+            RecentRuns = runs.Runs,
+            TotalRuns = runs.TotalCount
         };
 
         return View(vm);
@@ -174,5 +184,28 @@ public class PromptsController : Controller
 
         TempData["Success"] = "Prompt archived.";
         return RedirectToAction(nameof(Index));
+    }
+
+    // POST /Prompts/Run
+    // Runs synchronously within the request; long evaluations will move to a
+    // background queue later. The run is stored even when the provider fails.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Run(RunPromptDto dto, CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Choose a model to run the prompt on.";
+            return RedirectToAction(nameof(Details), new { id = dto.PromptId });
+        }
+
+        var (runId, error) = await _runner.RunAsync(dto, ct);
+        if (runId is null)
+        {
+            TempData["Error"] = error;
+            return RedirectToAction(nameof(Details), new { id = dto.PromptId });
+        }
+
+        return RedirectToAction("Details", "Runs", new { id = runId });
     }
 }

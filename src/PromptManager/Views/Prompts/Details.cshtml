@@ -97,6 +97,71 @@
             </div>
         </div>
 
+        <!-- Run -->
+        @if (!p.IsArchived)
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-play-circle text-primary"></i> Run on a model</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Run" method="post" class="row g-2 align-items-end">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="PromptId" value="@p.Id" />
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold" for="run-model">Model</label>
+                            <select id="run-model" name="Model" class="form-select form-select-sm">
+                                @foreach (var m in Model.Models)
+                                {
+                                    <option value="@m.Model.Id" disabled="@(!m.IsAvailable)" selected="@(m.Model.Id == Model.RunForm.Model)">
+                                        @m.Model.DisplayName@(m.IsAvailable ? "" : $" - {m.UnavailableReason}")
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold" for="run-version">Version</label>
+                            <select id="run-version" name="VersionNumber" class="form-select form-select-sm">
+                                @foreach (var v in Model.Versions)
+                                {
+                                    <option value="@v.VersionNumber" selected="@(v.VersionNumber == p.CurrentVersion)">v@(v.VersionNumber)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold" for="run-by">Your name</label>
+                            <input id="run-by" name="RunBy" class="form-control form-control-sm" maxlength="100" placeholder="optional" />
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-play-fill"></i> Run</button>
+                        </div>
+                    </form>
+                    <div class="form-text">The prompt text is sent to the selected provider. Runs are saved with tokens, cost and timing.</div>
+                </div>
+            </div>
+        }
+
+        <!-- Recent runs -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-list-check"></i> Recent runs</h6>
+                @if (Model.TotalRuns > 0)
+                {
+                    <a asp-controller="Runs" asp-action="Index" asp-route-promptId="@p.Id" class="small">All @Model.TotalRuns runs</a>
+                }
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.RecentRuns.Any())
+                {
+                    <p class="text-muted p-3 mb-0 small">This prompt has not been run yet.</p>
+                }
+                else
+                {
+                    <partial name="~/Views/Runs/_RunTable.cshtml" model="(Model.RecentRuns, false)" />
+                }
+            </div>
+        </div>
+
         <!-- Versions History -->
         <div class="card shadow-sm">
             <div class="card-header">

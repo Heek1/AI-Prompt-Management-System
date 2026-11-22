@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<Prompt> Prompts => Set<Prompt>();
     public DbSet<PromptVersion> PromptVersions => Set<PromptVersion>();
     public DbSet<PromptRating> PromptRatings => Set<PromptRating>();
+    public DbSet<PromptRun> PromptRuns => Set<PromptRun>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -57,6 +58,26 @@ public class AppDbContext : DbContext
             // One rating per user per prompt. RateAsync relies on this index
             // instead of a check-then-insert, which two requests could both pass.
             e.HasIndex(r => new { r.PromptId, r.UserName }).IsUnique();
+        });
+
+        modelBuilder.Entity<PromptRun>(e =>
+        {
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Model).IsRequired().HasMaxLength(100);
+            e.Property(r => r.ServedByModel).HasMaxLength(100);
+            e.Property(r => r.Provider).IsRequired().HasMaxLength(50);
+            e.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(r => r.StopReason).HasMaxLength(50);
+            e.Property(r => r.RunBy).HasMaxLength(FieldLimits.PersonName);
+            e.Property(r => r.CostUsd).HasPrecision(18, 6);
+            e.HasOne(r => r.Prompt)
+             .WithMany()
+             .HasForeignKey(r => r.PromptId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            // Runs are listed newest first, per prompt and overall.
+            e.HasIndex(r => new { r.PromptId, r.CreatedAt });
+            e.HasIndex(r => r.CreatedAt);
         });
     }
 }
