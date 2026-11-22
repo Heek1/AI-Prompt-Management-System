@@ -267,4 +267,13 @@ public sealed class AuthorizationTests : IDisposable
         await using var db = _factory.CreateDbContext();
         Assert.Equal(1, await db.Users.CountAsync());
     }
+
+    [Fact]
+    public async Task Data_protection_keys_are_stored_in_the_database()
+    {
+        await NewClient().SignUpAsync("owner@test.local");
+
+        await using var db = _factory.CreateDbContext();
+        Assert.True(await db.DataProtectionKeys.AnyAsync());
+    }
 }

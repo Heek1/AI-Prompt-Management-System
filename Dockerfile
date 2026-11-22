@@ -18,14 +18,9 @@ RUN dotnet publish src/PromptManager/PromptManager.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
-# The data-protection keys live in /data, which is meant to be a volume.
-# The base image's non-root "app" user must own it. The database is
-# PostgreSQL, configured with ConnectionStrings__DefaultConnection.
-RUN mkdir -p /data/keys && chown -R $APP_UID /data
-VOLUME /data
-
-ENV ASPNETCORE_HTTP_PORTS=8080 \
-    DataProtection__KeysPath=/data/keys
+# All state, including the data-protection keys, lives in PostgreSQL
+# (ConnectionStrings__DefaultConnection), so the container needs no volume.
+ENV ASPNETCORE_HTTP_PORTS=8080
 
 COPY --from=build /app .
 

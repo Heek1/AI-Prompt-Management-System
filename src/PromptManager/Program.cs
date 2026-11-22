@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using PromptManager.Data;
 using PromptManager.Evals;
 using PromptManager.Llm;
@@ -19,13 +18,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
         "ConnectionStrings:DefaultConnection is not set. For local development run `docker compose up db`; " +
         "elsewhere set the ConnectionStrings__DefaultConnection environment variable.");
 
-// Kerberos/GSS is never used here, and probing for it logs a libgssapi error
-// in the slim runtime image, so turn it off unless the string says otherwise.
-var npgsql = new NpgsqlConnectionStringBuilder(connectionString);
-if (!connectionString.Contains("GSS", StringComparison.OrdinalIgnoreCase))
-    npgsql.GssEncryptionMode = GssEncryptionMode.Disable;
-
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(npgsql.ConnectionString));
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(ConnectionStrings.ToNpgsql(connectionString)));
 
 builder.Services
     .AddIdentity<AppUser, IdentityRole>(options =>
@@ -68,15 +61,13 @@ builder.Services.AddScoped<IEvalService, EvalService>();
 builder.Services.AddHostedService<EvalWorker>();
 builder.Services.AddLlmClients(builder.Configuration);
 
-// Antiforgery tokens are encrypted with data-protection keys. In a container
-// the default key folder is lost on restart, which would break every open
-// form, so keep the keys on the data volume when a path is configured.
-if (builder.Configuration["DataProtection:KeysPath"] is { Length: > 0 } keysPath)
-{
-    builder.Services.AddDataProtection()
-        .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
-        .SetApplicationName("PromptManager");
-}
+// Antiforgery tokens and sign-in cookies are encrypted with data-protection
+// keys. They are kept in the database, so they survive restarts and new
+// deployments on hosts without a persistent disk (such as Render's free plan);
+// otherwise every deploy would sign everyone out and break open forms.
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<AppDbContext>()
+    .SetApplicationName("PromptManager");
 
 var app = builder.Build();
 
