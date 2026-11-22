@@ -3,6 +3,7 @@ using Npgsql;
 using Microsoft.EntityFrameworkCore;
 using PromptManager.Data;
 using PromptManager.DTOs;
+using PromptManager.Infrastructure;
 using PromptManager.Models;
 using PromptManager.ViewModels;
 
@@ -114,6 +115,7 @@ public class PromptService : IPromptService
         {
             Id = prompt.Id,
             Title = prompt.Title,
+            Slug = prompt.Slug,
             Description = prompt.Description,
             CurrentText = prompt.CurrentText,
             Category = prompt.Category,
@@ -144,9 +146,11 @@ public class PromptService : IPromptService
 
     public async Task<int> CreateAsync(CreatePromptDto dto)
     {
+        var slug = await Slugs.UniqueAsync(dto.Title, s => _db.Prompts.AnyAsync(p => p.Slug == s));
         var prompt = new Prompt
         {
             Title = dto.Title,
+            Slug = slug,
             Description = dto.Description ?? string.Empty,
             CurrentText = dto.PromptText,
             Category = dto.Category,

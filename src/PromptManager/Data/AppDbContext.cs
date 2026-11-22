@@ -18,6 +18,7 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
     public DbSet<EvalCase> EvalCases => Set<EvalCase>();
     public DbSet<EvalRun> EvalRuns => Set<EvalRun>();
     public DbSet<EvalResult> EvalResults => Set<EvalResult>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
 
     /// <summary>Data-protection keys (cookies, antiforgery tokens), see Program.cs.</summary>
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
@@ -37,6 +38,8 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             e.Property(p => p.Author).IsRequired().HasMaxLength(FieldLimits.PersonName);
             e.Property(p => p.ConcurrencyStamp).IsRequired().HasMaxLength(36).IsConcurrencyToken();
             e.Property(p => p.OwnerId).HasMaxLength(450);
+            e.Property(p => p.Slug).IsRequired().HasMaxLength(Slugs.MaxLength);
+            e.HasIndex(p => p.Slug).IsUnique();
             e.HasIndex(p => p.OwnerId);
         });
 
@@ -108,6 +111,19 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
 
             // Saving under an existing name replaces that set.
             e.HasIndex(s => new { s.PromptId, s.Name }).IsUnique();
+        });
+
+        modelBuilder.Entity<ApiKey>(e =>
+        {
+            e.HasKey(k => k.Id);
+            e.Property(k => k.Name).IsRequired().HasMaxLength(100);
+            e.Property(k => k.Prefix).IsRequired().HasMaxLength(16);
+            e.Property(k => k.Hash).IsRequired().HasMaxLength(64);
+            e.Property(k => k.OwnerId).IsRequired().HasMaxLength(450);
+            e.Ignore(k => k.IsActive);
+            // Every API request looks its key up by hash.
+            e.HasIndex(k => k.Hash).IsUnique();
+            e.HasIndex(k => k.OwnerId);
         });
 
         modelBuilder.Entity<EvalCase>(e =>
