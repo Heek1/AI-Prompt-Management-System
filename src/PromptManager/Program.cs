@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using PromptManager.Data;
+using PromptManager.Evals;
 using PromptManager.Llm;
 using PromptManager.Middleware;
 using PromptManager.Models;
@@ -56,6 +57,11 @@ builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IPromptService, PromptService>();
 builder.Services.AddScoped<IPromptRunner, PromptRunner>();
 builder.Services.AddScoped<IInputSetService, InputSetService>();
+builder.Services.AddSingleton<EvalQueue>();
+builder.Services.AddScoped<EvalJudge>();
+builder.Services.AddScoped<EvalExecutor>();
+builder.Services.AddScoped<IEvalService, EvalService>();
+builder.Services.AddHostedService<EvalWorker>();
 builder.Services.AddLlmClients(builder.Configuration);
 
 // Antiforgery tokens are encrypted with data-protection keys. In a container

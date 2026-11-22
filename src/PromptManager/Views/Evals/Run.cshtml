@@ -1,0 +1,122 @@
+@using System.Globalization
+@using PromptManager.DTOs
+@using PromptManager.Models
+@model EvalRunDetailsDto
+@{
+    ViewData["Title"] = $"Eval #{Model.Id}";
+    var inv = CultureInfo.InvariantCulture;
+    var percent = Model.TotalCases == 0 ? 0 : (int)Math.Round(100.0 * Model.CompletedCases / Model.TotalCases);
+}
+@section Head {
+    @if (!Model.IsFinished)
+    {
+        @* Plain reload keeps the page free of scripts; stops once the eval is finished. *@
+        <meta http-equiv="refresh" content="2" />
+    }
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.PromptId">@Model.PromptTitle</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index" asp-route-id="@Model.PromptId">Evals</a></li>
+        <li class="breadcrumb-item active">#@Model.Id</li>
+    </ol>
+</nav>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h1 class="h4 mb-1">
+                    <span class="badge bg-primary">v@(Model.VersionNumber)</span>
+                    <code class="fs-6">@Model.Model</code>
+                </h1>
+                <div class="small text-muted">
+                    @(Model.JudgeModel is null ? "No judge" : $"Judge: {Model.JudgeModel}")
+                    &middot; by @Model.RunBy &middot; $@Model.CostUsd.ToString("0.0000", inv)
+                </div>
+            </div>
+            <div class="text-end">
+                @if (Model.Status == EvalRunStatus.Completed)
+                {
+                    <div class="display-6 fw-bold @(Model.PassedCases == Model.TotalCases ? "text-success" : "text-warning")" data-testid="pass-rate">
+                        @Model.PassedCases / @Model.TotalCases
+                    </div>
+                    <div class="small text-muted">cases passed</div>
+                }
+                else
+                {
+                    <div class="fw-semibold" data-testid="eval-status">@Model.Status</div>
+                }
+            </div>
+        </div>
+
+        @if (!Model.IsFinished)
+        {
+            <div class="progress mt-3" role="progressbar" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: @percent%">@Model.CompletedCases / @Model.TotalCases</div>
+            </div>
+        }
+
+        @if (Model.Error is not null)
+        {
+            <div class="alert alert-danger mt-3 mb-0">@Model.Error</div>
+        }
+
+        @if (Model.Previous is { } prev && Model.Status == EvalRunStatus.Completed)
+        {
+            <div class="alert @(Model.IsRegression ? "alert-danger" : "alert-success") mt-3 mb-0" data-testid="comparison">
+                @if (Model.IsRegression)
+                {
+                    <i class="bi bi-arrow-down-circle"></i> <strong>Worse than v@(prev.VersionNumber)</strong>
+                }
+                else
+                {
+                    <i class="bi bi-check-circle"></i> <span>Not worse than v@(prev.VersionNumber)</span>
+                }
+                on this model: @prev.PassedCases/@prev.TotalCases before, @Model.PassedCases/@Model.TotalCases now
+                (<a asp-action="Run" asp-route-id="@prev.Id">eval #@prev.Id</a>).
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header"><h6 class="mb-0"><i class="bi bi-list-check"></i> Cases</h6></div>
+    <ul class="list-group list-group-flush">
+        @foreach (var r in Model.Results)
+        {
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between">
+                    <strong>
+                        @if (r.Passed)
+                        {
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-x-circle-fill text-danger"></i>
+                        }
+                        @r.CaseName
+                    </strong>
+                    @if (r.PromptRunId is not null)
+                    {
+                        <a asp-controller="Runs" asp-action="Details" asp-route-id="@r.PromptRunId" class="small">answer</a>
+                    }
+                </div>
+                <ul class="small mb-0 mt-1">
+                    @foreach (var check in r.Checks)
+                    {
+                        <li class="@(check.Passed ? "text-success" : "text-danger")">
+                            @check.Name: <span class="text-body">@check.Detail</span>
+                        </li>
+                    }
+                </ul>
+            </li>
+        }
+        @if (!Model.Results.Any())
+        {
+            <li class="list-group-item text-muted small">No results yet.</li>
+        }
+    </ul>
+</div>

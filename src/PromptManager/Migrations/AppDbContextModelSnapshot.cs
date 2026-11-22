@@ -222,6 +222,168 @@ namespace PromptManager.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("PromptManager.Models.EvalCase", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("JsonSchema")
+                        .HasColumnType("text");
+
+                    b.Property<string>("JudgeRubric")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MustContain")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MustNotContain")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("PromptId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Regex")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("VariablesJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PromptId");
+
+                    b.ToTable("EvalCases");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.EvalResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CaseName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ChecksJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("EvalCaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EvalRunId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Passed")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("PromptRunId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EvalCaseId");
+
+                    b.HasIndex("EvalRunId");
+
+                    b.HasIndex("PromptRunId");
+
+                    b.ToTable("EvalResults");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.EvalRun", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompletedCases")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("CostUsd")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("JudgeModel")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("MayUsePaidModels")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("PassedCases")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PromptId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RunBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("RunByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("TotalCases")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("PromptId", "Model", "VersionNumber");
+
+                    b.ToTable("EvalRuns");
+                });
+
             modelBuilder.Entity("PromptManager.Models.Prompt", b =>
                 {
                     b.Property<int>("Id")
@@ -549,6 +711,49 @@ namespace PromptManager.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("PromptManager.Models.EvalCase", b =>
+                {
+                    b.HasOne("PromptManager.Models.Prompt", "Prompt")
+                        .WithMany()
+                        .HasForeignKey("PromptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prompt");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.EvalResult", b =>
+                {
+                    b.HasOne("PromptManager.Models.EvalCase", null)
+                        .WithMany()
+                        .HasForeignKey("EvalCaseId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("PromptManager.Models.EvalRun", "EvalRun")
+                        .WithMany("Results")
+                        .HasForeignKey("EvalRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PromptManager.Models.PromptRun", null)
+                        .WithMany()
+                        .HasForeignKey("PromptRunId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("EvalRun");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.EvalRun", b =>
+                {
+                    b.HasOne("PromptManager.Models.Prompt", "Prompt")
+                        .WithMany()
+                        .HasForeignKey("PromptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prompt");
+                });
+
             modelBuilder.Entity("PromptManager.Models.PromptInputSet", b =>
                 {
                     b.HasOne("PromptManager.Models.Prompt", "Prompt")
@@ -591,6 +796,11 @@ namespace PromptManager.Migrations
                         .IsRequired();
 
                     b.Navigation("Prompt");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.EvalRun", b =>
+                {
+                    b.Navigation("Results");
                 });
 
             modelBuilder.Entity("PromptManager.Models.Prompt", b =>

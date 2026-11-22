@@ -80,3 +80,24 @@ public class CompareRunsViewModel
     public RunDetailsDto Right { get; set; } = new();
     public DiffResult OutputDiff { get; set; } = new([], 0, 0, 0);
 }
+
+public class EvalsIndexViewModel
+{
+    public PromptDetailsDto Prompt { get; set; } = new();
+    public List<EvalCaseDto> Cases { get; set; } = [];
+    public List<EvalRunListItemDto> Runs { get; set; } = [];
+    public IReadOnlyList<AvailableModel> Models { get; set; } = [];
+    public string DefaultModel { get; set; } = string.Empty;
+    public bool IsSignedIn { get; set; }
+    public bool CanManage { get; set; }
+    public bool NeedsJudge => Cases.Any(c => !string.IsNullOrWhiteSpace(c.JudgeRubric));
+}
+
+public class EvalCaseViewModel
+{
+    public PromptDetailsDto Prompt { get; set; } = new();
+    public EvalCaseDto Case { get; set; } = new();
+
+    /// <summary>Variables used by any version of the prompt.</summary>
+    public IReadOnlyList<string> Variables { get; set; } = [];
+}
