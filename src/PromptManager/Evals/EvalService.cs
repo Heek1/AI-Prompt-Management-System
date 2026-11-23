@@ -19,6 +19,13 @@ public interface IEvalService
 
     Task<bool> DeleteCaseAsync(int promptId, int caseId);
 
+    /// <summary>
+    /// Adds the standard prompt-injection cases, attacking through
+    /// <paramref name="variable"/>. Replaces injection cases added before, so
+    /// the canary is fresh. Returns how many cases were added, or an error.
+    /// </summary>
+    Task<(int Added, string? Error)> AddInjectionPackAsync(int promptId, string variable);
+
     /// <summary>Validates and queues an eval run. Returns its id, or an error when nothing was queued.</summary>
     Task<(int? Id, string? Error)> StartAsync(StartEvalDto dto);
 
@@ -89,6 +96,33 @@ public sealed class EvalService(AppDbContext db, LlmCatalog catalog, EvalQueue q
 
         await db.SaveChangesAsync();
         return (entity.Id, null);
+    }
+
+    public async Task<(int Added, string? Error)> AddInjectionPackAsync(int promptId, string variable)
+    {
+        var prompt = await db.Prompts.AsNoTracking().FirstOrDefaultAsync(p => p.Id == promptId);
+        if (prompt is null) return (0, "Prompt not found.");
+
+        var texts = await db.PromptVersions.AsNoTracking().Where(v => v.PromptId == promptId).Select(v => v.PromptText).ToListAsync();
+        var variables = texts.SelectMany(PromptTemplate.ExtractVariables).Distinct(StringComparer.Ordinal).ToList();
+        if (variables.Count == 0)
+            return (0, "The injection cases attack through a variable that carries user input, and this prompt has none. Add one such as {{user_message}} first.");
+        if (!variables.Contains(variable, StringComparer.Ordinal))
+            return (0, $"Unknown variable '{variable}'.");
+
+        await db.EvalCases.Where(c => c.PromptId == promptId && c.Name.StartsWith(InjectionPack.NamePrefix)).ExecuteDeleteAsync();
+
+        var pack = InjectionPack.Build(promptId, prompt.CurrentText, variable, variables, InjectionPack.NewCanary());
+        var existing = await db.EvalCases.CountAsync(c => c.PromptId == promptId);
+        if (existing + pack.Count > MaxCasesPerPrompt)
+            return (0, $"A prompt can have at most {MaxCasesPerPrompt} cases; there is no room for {pack.Count} more.");
+
+        foreach (var c in pack)
+        {
+            var (_, error) = await SaveCaseAsync(c);
+            if (error is not null) return (0, error);
+        }
+        return (pack.Count, null);
     }
 
     public async Task<bool> DeleteCaseAsync(int promptId, int caseId) =>
