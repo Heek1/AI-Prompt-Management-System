@@ -276,4 +276,19 @@ public sealed class AuthorizationTests : IDisposable
         await using var db = _factory.CreateDbContext();
         Assert.True(await db.DataProtectionKeys.AnyAsync());
     }
+
+    [Fact]
+    public async Task Costs_page_is_for_admins_only()
+    {
+        var user = NewClient();
+        await user.SignUpAsync("owner@test.local");
+        Assert.Contains("/Account/AccessDenied", (await user.GetAsync("/Costs")).Headers.Location!.OriginalString);
+        Assert.DoesNotContain("/Costs\"", await user.GetStringAsync("/Prompts"));
+
+        var admin = NewClient();
+        await admin.SignUpAsync(PromptManagerFactory.AdminEmail, "Admin");
+        var html = await admin.GetStringAsync("/Costs");
+        Assert.Contains("data-testid=\"daily-chart\"", html);
+        Assert.Contains("data-testid=\"cost-month\">$0.00<", html);
+    }
 }

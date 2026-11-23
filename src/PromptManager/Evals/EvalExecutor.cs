@@ -19,6 +19,7 @@ public sealed class EvalExecutor(
     EvalJudge judge,
     LlmCatalog catalog,
     IVersionLifecycle lifecycle,
+    ICostService costs,
     ILogger<EvalExecutor> logger)
 {
     public async Task ExecuteAsync(int evalRunId, CancellationToken ct)
@@ -114,9 +115,17 @@ public sealed class EvalExecutor(
             }
             else
             {
-                var (judged, cost) = await judge.GradeAsync(eval.JudgeModel!, evalCase.JudgeRubric, run.PromptText, run.Output, ct);
-                eval.CostUsd += cost;
-                checks.Add(judged);
+                if (await costs.BudgetProblemAsync() is { } budget && catalog.Find(eval.JudgeModel!)?.IsPaid == true)
+                {
+                    checks.Add(new(EvalJudge.CheckName, false, budget));
+                }
+                else
+                {
+                    var (judged, cost) = await judge.GradeAsync(eval.JudgeModel!, evalCase.JudgeRubric, run.PromptText, run.Output, ct);
+                    eval.CostUsd += cost;
+                    eval.JudgeCostUsd += cost;
+                    checks.Add(judged);
+                }
             }
         }
 

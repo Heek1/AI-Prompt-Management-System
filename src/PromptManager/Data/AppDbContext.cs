@@ -141,6 +141,7 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             e.Property(r => r.JudgeModel).HasMaxLength(100);
             e.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
             e.Property(r => r.CostUsd).HasPrecision(18, 6);
+            e.Property(r => r.JudgeCostUsd).HasPrecision(18, 6);
             e.Property(r => r.RunBy).HasMaxLength(FieldLimits.PersonName);
             e.Property(r => r.RunByUserId).HasMaxLength(450);
             e.Ignore(r => r.PassRate);

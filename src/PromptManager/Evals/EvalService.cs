@@ -5,6 +5,7 @@ using PromptManager.DTOs;
 using PromptManager.Infrastructure;
 using PromptManager.Llm;
 using PromptManager.Models;
+using PromptManager.Services;
 
 namespace PromptManager.Evals;
 
@@ -34,7 +35,7 @@ public interface IEvalService
     Task<EvalRunDetailsDto?> GetRunAsync(int id);
 }
 
-public sealed class EvalService(AppDbContext db, LlmCatalog catalog, EvalQueue queue) : IEvalService
+public sealed class EvalService(AppDbContext db, LlmCatalog catalog, EvalQueue queue, ICostService costs) : IEvalService
 {
     public const int MaxCasesPerPrompt = 50;
 
@@ -112,6 +113,9 @@ public sealed class EvalService(AppDbContext db, LlmCatalog catalog, EvalQueue q
         var judge = string.IsNullOrWhiteSpace(dto.JudgeModel) ? null : dto.JudgeModel;
         if (needsJudge && judge is null) return (null, "Some cases have a rubric: choose a judge model.");
         if (judge is not null && ModelError(judge, dto.MayUsePaidModels) is { } judgeError) return (null, $"Judge: {judgeError}");
+
+        var usesPaid = catalog.Find(dto.Model)?.IsPaid == true || (needsJudge && catalog.Find(judge!)?.IsPaid == true);
+        if (usesPaid && await costs.BudgetProblemAsync() is { } budget) return (null, budget);
 
         var eval = new EvalRun
         {

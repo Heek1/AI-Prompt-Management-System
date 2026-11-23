@@ -61,6 +61,8 @@ builder.Services.AddScoped<IPromptService, PromptService>();
 builder.Services.AddScoped<IPromptRunner, PromptRunner>();
 builder.Services.AddScoped<IInputSetService, InputSetService>();
 builder.Services.AddScoped<IVersionLifecycle, VersionLifecycle>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<ICostService, CostService>();
 builder.Services.AddPromptApi();
 
 // Liveness says the process answers; readiness also needs the database.

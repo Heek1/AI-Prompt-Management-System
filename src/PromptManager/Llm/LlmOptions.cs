@@ -19,6 +19,13 @@ public sealed class LlmOptions
     /// The offline echo model is always open to signed-in users.
     /// </summary>
     public string PaidModelsAccess { get; set; } = PaidAccess.Admins;
+
+    /// <summary>
+    /// Monthly spend limit in USD for paid models (runs plus judge calls), per
+    /// UTC calendar month; 0 means no limit. Checked before each paid call, so
+    /// the last call that crosses the limit still completes.
+    /// </summary>
+    public decimal MonthlyBudgetUsd { get; set; }
 }
 
 public static class PaidAccess

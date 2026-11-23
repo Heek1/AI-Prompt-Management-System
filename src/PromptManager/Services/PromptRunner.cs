@@ -23,7 +23,7 @@ public interface IPromptRunner
     Task<RunPageDto> ListRunsAsync(int? promptId, int page, int pageSize = 25);
 }
 
-public sealed class PromptRunner(AppDbContext db, LlmCatalog catalog, ILogger<PromptRunner> logger) : IPromptRunner
+public sealed class PromptRunner(AppDbContext db, LlmCatalog catalog, ICostService costs, ILogger<PromptRunner> logger) : IPromptRunner
 {
     public async Task<(int? RunId, string? Error)> RunAsync(RunPromptDto dto, CancellationToken ct)
     {
@@ -40,6 +40,8 @@ public sealed class PromptRunner(AppDbContext db, LlmCatalog catalog, ILogger<Pr
         if (model is null || client is null) return (null, modelError);
         if (model.IsPaid && !dto.MayUsePaidModels)
             return (null, $"{model.DisplayName} costs money to run; on this instance only admins can use it. Try the echo model.");
+        if (model.IsPaid && await costs.BudgetProblemAsync() is { } budget)
+            return (null, budget);
 
         var (values, variablesError) = ValuesFor(version.PromptText, dto.Variables);
         if (variablesError is not null) return (null, variablesError);

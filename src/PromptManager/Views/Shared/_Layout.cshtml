@@ -61,6 +61,12 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="ApiKeys" asp-action="Index"><i class="bi bi-key"></i> API keys</a>
                         </li>
+                        @if (CurrentUser.IsAdmin)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Costs" asp-action="Index"><i class="bi bi-cash-coin"></i> Costs</a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                 <button type="submit" class="btn btn-link nav-link">Sign out</button>
