@@ -51,7 +51,7 @@ public sealed class PromptRunnerTests : IDisposable
     private async Task<int> SeedPromptAsync(bool withSecondVersion = false)
     {
         using var db = _database.CreateContext();
-        var service = new PromptService(db, new ConfigurationBuilder().Build(), NullLogger<PromptService>.Instance);
+        var service = new PromptService(db, NullLogger<PromptService>.Instance);
         var id = await service.CreateAsync(new CreatePromptDto
         {
             Title = "Runnable", PromptText = "Version one text of the prompt.", Category = "Testing", AiTool = "Claude", Author = "alice"
@@ -137,7 +137,7 @@ public sealed class PromptRunnerTests : IDisposable
     {
         var id = await SeedPromptAsync();
         using (var db = _database.CreateContext())
-            await new PromptService(db, new ConfigurationBuilder().Build(), NullLogger<PromptService>.Instance).ArchiveAsync(id);
+            await new PromptService(db, NullLogger<PromptService>.Instance).ArchiveAsync(id);
 
         var (runId, error) = await Runner(Answering("x")).RunAsync(new RunPromptDto { PromptId = id, Model = "model-a" }, CancellationToken.None);
 

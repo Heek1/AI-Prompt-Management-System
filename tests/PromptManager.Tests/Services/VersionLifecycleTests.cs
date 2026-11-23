@@ -17,7 +17,7 @@ public sealed class VersionLifecycleTests : IDisposable
     private VersionLifecycle Lifecycle() => new(_database.CreateContext(), NullLogger<VersionLifecycle>.Instance);
 
     private PromptService Prompts() =>
-        new(_database.CreateContext(), new ConfigurationBuilder().Build(), NullLogger<PromptService>.Instance);
+        new(_database.CreateContext(),  NullLogger<PromptService>.Instance);
 
     /// <summary>A prompt with <paramref name="versions"/> versions; v1 is production.</summary>
     private async Task<int> SeedAsync(int versions = 2)

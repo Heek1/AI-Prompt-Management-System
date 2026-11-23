@@ -45,11 +45,6 @@
                             <i class="bi bi-play-circle"></i> Runs
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="History" asp-action="Index">
-                            <i class="bi bi-clock-history"></i> Usage History
-                        </a>
-                    </li>
                 </ul>
                 <ul class="navbar-nav ms-auto me-3 align-items-lg-center">
                     @if (CurrentUser.IsSignedIn)
@@ -78,11 +73,6 @@
                         <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Register">Create account</a></li>
                     }
                 </ul>
-                <span class="navbar-text text-muted small">
-                    <a href="/health" target="_blank" class="text-muted text-decoration-none">
-                        <i class="bi bi-heart-pulse text-success"></i> Health
-                    </a>
-                </span>
             </div>
         </div>
     </nav>

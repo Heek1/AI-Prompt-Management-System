@@ -39,7 +39,7 @@ public sealed class PromptRunnerVariablesTests : IDisposable
     private async Task<int> SeedAsync(string text)
     {
         using var db = _database.CreateContext();
-        return await new PromptService(db, new ConfigurationBuilder().Build(), NullLogger<PromptService>.Instance)
+        return await new PromptService(db, NullLogger<PromptService>.Instance)
             .CreateAsync(new CreatePromptDto { Title = "T", PromptText = text, Category = "Testing", AiTool = "Claude", Author = "a" });
     }
 

@@ -161,11 +161,3 @@ public class RatePromptDto
     [BindNever]
     public string UserId { get; set; } = string.Empty;
 }
-
-public class UsePromptDto
-{
-    public int PromptId { get; set; }
-
-    [BindNever]
-    public string? UserName { get; set; }
-}
