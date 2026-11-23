@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\PromptManager\PromptManager.csproj" />
+    <ProjectReference Include="..\..\examples\PromptClient\PromptClient.csproj" />
   </ItemGroup>
 
   <ItemGroup>

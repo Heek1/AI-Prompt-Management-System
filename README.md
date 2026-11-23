@@ -213,13 +213,25 @@ curl -H "X-Api-Key: pm_..." -H "Content-Type: application/json"      -d '{"varia
 - Errors are `application/problem+json`; a missing or revoked key gets `401`.
 - The OpenAPI description is at `/openapi/v1.json`.
 
+### Example client
+
+[`examples/PromptClient`](examples/PromptClient) is a small console app that
+reads its prompt from here instead of hard-coding it. It keeps the last answer
+and revalidates it with `If-None-Match`, so repeated reads cost a `304` until a
+new version is promoted, and it fills in variables through `/render`. An
+integration test runs it against the real app.
+
+```bash
+PROMPT_MANAGER_URL=https://<host> PROMPT_MANAGER_KEY=pm_...   dotnet run --project examples/PromptClient -- support-reply-en customer=Olena "topic=a refund"
+```
+
 ## Tests
 
 ```bash
 dotnet test
 ```
 
-257 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
+261 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
 
 - **All database tests use real PostgreSQL** in a container started by
   [Testcontainers](https://dotnet.testcontainers.org/), so Docker must be
@@ -287,10 +299,28 @@ tests/PromptManager.Tests/
 - **Warnings are errors**, including NuGet vulnerability audits of transitive
   packages ([`Directory.Build.props`](Directory.Build.props)).
 
+## How it compares
+
+There are mature tools in this space; this project is a small, self-hosted
+ASP.NET Core app that covers one workflow end to end.
+
+| | This project | [Langfuse](https://langfuse.com) | [promptfoo](https://www.promptfoo.dev) | [PromptLayer](https://www.promptlayer.com) |
+|---|---|---|---|---|
+| What it is | Web app: prompt library with versions, runs, evals and an API | Open-source LLM engineering platform: tracing, prompt management, evaluations | Open-source CLI and library for testing prompts and red-teaming | Hosted platform: prompt registry, request logging, evaluations |
+| Where prompts live | In the app (PostgreSQL), fetched over HTTP | In the platform, fetched through its SDKs | In config files in your repository | In the platform |
+| Observing production traffic | No: only runs started from the app | Yes, tracing is its core | No | Yes, request logging |
+| Gating a release on eval results | Yes: a version that does worse than production cannot be promoted without an admin | Not as a built-in promotion rule | Yes, by failing a CI run | Through its own evaluation features |
+
+Use this project to see how such a workflow fits together in a few thousand
+lines of C#, or as a starting point for a team that wants a small self-hosted
+tool. For tracing production traffic or many providers, the tools above go much
+further.
+
 ## Roadmap
 
 Next steps: an assistant that proposes a better version from eval results,
-and a small example application that reads its prompt through the API.
+more providers behind `ILlmClient` (OpenAI, Gemini), and tracing with
+OpenTelemetry.
 
 ## License
 
