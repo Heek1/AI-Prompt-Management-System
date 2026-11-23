@@ -59,6 +59,7 @@ builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IPromptService, PromptService>();
 builder.Services.AddScoped<IPromptRunner, PromptRunner>();
 builder.Services.AddScoped<IInputSetService, InputSetService>();
+builder.Services.AddScoped<IVersionLifecycle, VersionLifecycle>();
 builder.Services.AddSingleton<EvalQueue>();
 builder.Services.AddScoped<EvalJudge>();
 builder.Services.AddScoped<EvalExecutor>();

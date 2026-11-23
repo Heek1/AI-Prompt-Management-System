@@ -120,6 +120,7 @@ public class PromptService : IPromptService
             AiTool = prompt.AiTool,
             Author = prompt.Author,
             OwnerId = prompt.OwnerId,
+            ProductionVersion = prompt.ProductionVersion,
             AverageRating = prompt.AverageRating,
             CurrentVersion = prompt.CurrentVersion,
             CreatedAt = prompt.CreatedAt,
@@ -132,7 +133,11 @@ public class PromptService : IPromptService
                 PromptText = v.PromptText,
                 ChangeNote = v.ChangeNote,
                 CreatedBy = v.CreatedBy,
-                CreatedAt = v.CreatedAt
+                CreatedAt = v.CreatedAt,
+                Status = v.Status,
+                PromotedAt = v.PromotedAt,
+                PromotedBy = v.PromotedBy,
+                PromotedOverRegression = v.PromotedOverRegression
             }).ToList()
         };
     }
@@ -148,7 +153,8 @@ public class PromptService : IPromptService
             AiTool = dto.AiTool,
             Author = dto.Author,
             OwnerId = dto.OwnerId,
-            CurrentVersion = 1
+            CurrentVersion = 1,
+            ProductionVersion = 1
         };
 
         // Adding the version through the navigation property lets EF insert both
@@ -160,6 +166,11 @@ public class PromptService : IPromptService
             ChangeNote = "Initial version",
             CreatedBy = dto.Author,
             CreatedById = dto.OwnerId,
+            // The first version has nothing to regress against, so it goes
+            // straight to production; later versions start as drafts.
+            Status = VersionStatus.Production,
+            PromotedAt = prompt.CreatedAt,
+            PromotedBy = dto.Author,
             CreatedAt = prompt.CreatedAt
         });
 

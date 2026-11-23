@@ -458,6 +458,9 @@ namespace PromptManager.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
+                    b.Property<int?>("ProductionVersion")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -660,6 +663,16 @@ namespace PromptManager.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
+                    b.Property<DateTime?>("PromotedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PromotedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("PromotedOverRegression")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("PromptId")
                         .HasColumnType("integer");
 
@@ -667,6 +680,11 @@ namespace PromptManager.Migrations
                         .IsRequired()
                         .HasMaxLength(20000)
                         .HasColumnType("character varying(20000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("VersionNumber")
                         .HasColumnType("integer");
