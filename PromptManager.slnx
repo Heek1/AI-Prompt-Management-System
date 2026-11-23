@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/examples/">
+    <Project Path="examples/PromptClient/PromptClient.csproj" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/tests/">
     <Project Path="tests/PromptManager.Tests/PromptManager.Tests.csproj" />
