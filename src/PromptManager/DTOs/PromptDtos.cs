@@ -73,6 +73,11 @@ public class PromptListDto
     public int CurrentVersion { get; set; }
     public bool IsArchived { get; set; }
     public string? OwnerId { get; set; }
+    public int? ProductionVersion { get; set; }
+    public DateTime UpdatedAt { get; set; }
+
+    /// <summary>The start of the current text, for the library list.</summary>
+    public string Excerpt { get; set; } = string.Empty;
 }
 
 public class PromptPageDto

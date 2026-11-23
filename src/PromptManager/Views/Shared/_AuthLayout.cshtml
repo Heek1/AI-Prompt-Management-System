@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#121a2e" />
+    <title>@ViewData["Title"] | Prompt Manager</title>
+    <link rel="preload" href="~/fonts/instrument-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="~/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body>
+    <div class="pm-auth">
+        <section class="pm-auth-art" aria-label="About Prompt Manager">
+            <a class="pm-wordmark" asp-controller="Prompts" asp-action="Index" aria-label="Prompt Manager, library">
+                <span class="pm-braces" aria-hidden="true">{{ }}</span>promptmanager
+            </a>
+
+            <div class="pm-auth-stack" aria-hidden="true">
+            <figure class="pm-auth-sheet">
+                <figcaption><span>support-reply</span><span class="pm-status pm-status-production">v3 live</span></figcaption>
+                <pre class="pm-lines"><span class="pm-line">You answer customers of <span class="pm-var">{{shop}}</span>.</span><span class="pm-line">Reply to <span class="pm-var">{{question}}</span> politely,</span><span class="pm-line">in under 120 words, and never</span><span class="pm-line">promise a refund you cannot give.</span></pre>
+                <div class="pm-auth-signal"><span class="is-pass"></span><span class="is-pass"></span><span class="is-pass"></span><span class="is-pass"></span><span class="is-pass"></span><span class="is-fail"></span><span class="is-pass"></span><span class="is-pass"></span></div>
+            </figure>
+            </div>
+
+            <p class="pm-auth-note">Write a prompt once. Version it, run it on real models, test it with evals, and ship only the version that passed.</p>
+        </section>
+
+        <main class="pm-auth-form" id="main">
+            <div class="pm-auth-inner">
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
+                }
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -6,49 +6,53 @@
     var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";
 }
 
-<h1 class="h3 mb-3"><i class="bi bi-key"></i> API keys</h1>
-<p class="text-muted">
-    Applications use a key to fetch prompts from <code>@baseUrl/api/prompts/{slug}</code>.
-    The API is described at <a href="/openapi/v1.json"><code>/openapi/v1.json</code></a>.
-    Each key may make @PromptApi.RequestsPerMinute requests per minute.
-</p>
+<header class="pm-head">
+    <div>
+        <h1>API keys</h1>
+        <p class="pm-sub">
+            Applications use a key to fetch the production version of a prompt from <code>@baseUrl/api/prompts/{slug}</code>.
+            The API is described at <a href="/openapi/v1.json"><code>/openapi/v1.json</code></a>.
+            Each key may make @PromptApi.RequestsPerMinute requests per minute.
+        </p>
+    </div>
+</header>
 
 @if (newKey is not null)
 {
     <div class="alert alert-success" role="alert">
         <strong>Your new key.</strong> Copy it now: it is not stored and cannot be shown again.
         <div class="d-flex gap-2 mt-2">
-            <code id="new-key" class="fs-6 p-2 bg-white border rounded flex-fill" data-testid="new-key">@newKey</code>
-            <button type="button" class="btn btn-outline-success btn-sm" data-copy-target="#new-key"><i class="bi bi-clipboard"></i> Copy</button>
+            <code id="new-key" class="pm-key flex-fill" data-testid="new-key">@newKey</code>
+            <button type="button" class="btn btn-outline-success btn-sm" data-copy-target="#new-key">Copy</button>
         </div>
-        <pre class="small bg-white border rounded p-2 mt-3 mb-0">curl -H "X-Api-Key: @newKey" @baseUrl/api/prompts/&lt;slug&gt;</pre>
+        <pre class="pm-key mt-3 mb-0">curl -H "X-Api-Key: @newKey" @baseUrl/api/prompts/&lt;slug&gt;</pre>
     </div>
 }
 
-<div class="card shadow-sm mb-4">
+<div class="card mb-4">
     <div class="card-body">
         <form asp-action="Create" method="post" class="row g-2 align-items-end">
             <div class="col-md-8">
-                <label class="form-label small fw-semibold" for="key-name">Name</label>
-                <input id="key-name" name="name" class="form-control form-control-sm" maxlength="100" required placeholder="e.g. support-bot production" />
+                <label class="form-label" for="key-name">Name</label>
+                <input id="key-name" name="name" class="form-control" maxlength="100" required placeholder="e.g. support-bot production" />
             </div>
             <div class="col-md-4 d-grid">
-                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus"></i> Create key</button>
+                <button type="submit" class="btn btn-marker">Create key</button>
             </div>
         </form>
     </div>
 </div>
 
-<div class="card shadow-sm">
+<div class="card">
     <div class="card-body p-0">
         @if (!Model.Any())
         {
-            <p class="text-muted small p-3 mb-0">No keys yet.</p>
+            <p class="text-muted p-4 mb-0">No keys yet. Create one for each application, so you can revoke it alone.</p>
         }
         else
         {
-            <table class="table table-sm align-middle mb-0">
-                <thead class="table-light"><tr><th>Name</th><th>Key</th><th>Created</th><th>Last used</th><th></th></tr></thead>
+            <table class="table align-middle mb-0 pm-table">
+                <thead><tr><th>Name</th><th>Key</th><th>Created</th><th>Last used</th><th></th></tr></thead>
                 <tbody>
                     @foreach (var k in Model)
                     {
@@ -67,7 +71,7 @@
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">revoked</span>
+                                    <span class="pm-status pm-status-draft">revoked</span>
                                 }
                             </td>
                         </tr>

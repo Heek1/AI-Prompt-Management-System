@@ -6,93 +6,83 @@
     var diffModel = (Model.Diff, $"v{Model.From.VersionNumber}", $"v{Model.To.VersionNumber}");
 }
 
-<nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a asp-action="Index">Library</a></li>
-        <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@p.Id">@p.Title</a></li>
-        <li class="breadcrumb-item active">Compare versions</li>
-    </ol>
+<nav class="pm-crumbs" aria-label="Breadcrumb">
+    <a asp-action="Index">Library</a><span aria-hidden="true">/</span><a asp-action="Details" asp-route-id="@p.Id">@p.Title</a><span aria-hidden="true">/</span><span>Compare versions</span>
 </nav>
 
-<form method="get" asp-action="Compare" asp-route-id="@p.Id" class="row g-2 align-items-end mb-3">
-    <div class="col-auto">
-        <label class="form-label small fw-semibold" for="from">From</label>
-        <select id="from" name="from" class="form-select form-select-sm">
-            @foreach (var v in p.Versions)
-            {
-                <option value="@v.VersionNumber" selected="@(v.VersionNumber == Model.From.VersionNumber)">v@(v.VersionNumber)</option>
-            }
-        </select>
+<header class="pm-head">
+    <div>
+        <h1>v@(Model.From.VersionNumber) to v@(Model.To.VersionNumber)</h1>
+        <p class="pm-sub">@(string.IsNullOrEmpty(Model.To.ChangeNote) ? "No change note on the newer version." : Model.To.ChangeNote)</p>
     </div>
-    <div class="col-auto">
-        <label class="form-label small fw-semibold" for="to">To</label>
-        <select id="to" name="to" class="form-select form-select-sm">
-            @foreach (var v in p.Versions)
-            {
-                <option value="@v.VersionNumber" selected="@(v.VersionNumber == Model.To.VersionNumber)">v@(v.VersionNumber)</option>
-            }
-        </select>
-    </div>
-    <div class="col-auto">
-        <button class="btn btn-outline-primary btn-sm" type="submit"><i class="bi bi-arrow-left-right"></i> Compare</button>
-    </div>
-</form>
+    <form method="get" asp-action="Compare" asp-route-id="@p.Id" class="pm-actions align-items-end">
+        <div>
+            <label class="form-label small" for="from">From</label>
+            <select id="from" name="from" class="form-select form-select-sm">
+                @foreach (var v in p.Versions)
+                {
+                    <option value="@v.VersionNumber" selected="@(v.VersionNumber == Model.From.VersionNumber)">v@(v.VersionNumber)</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label small" for="to">To</label>
+            <select id="to" name="to" class="form-select form-select-sm">
+                @foreach (var v in p.Versions)
+                {
+                    <option value="@v.VersionNumber" selected="@(v.VersionNumber == Model.To.VersionNumber)">v@(v.VersionNumber)</option>
+                }
+            </select>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" type="submit">Compare</button>
+    </form>
+</header>
 
-<div class="card shadow-sm mb-4">
-    <div class="card-header">
-        <h6 class="mb-0"><i class="bi bi-file-diff"></i> v@(Model.From.VersionNumber) &rarr; v@(Model.To.VersionNumber)
-            @if (!string.IsNullOrEmpty(Model.To.ChangeNote))
-            {
-                <span class="text-muted fw-normal small">: @Model.To.ChangeNote</span>
-            }
-        </h6>
-    </div>
-    <div class="card-body">
-        <partial name="_Diff" model="diffModel" />
-    </div>
-</div>
+<section class="pm-sheet mb-4" aria-label="Changes">
+    <partial name="_Diff" model="diffModel" />
+</section>
 
 @if (!p.IsArchived && !Model.IsSignedIn)
 {
-    <div class="alert alert-light border">
+    <div class="alert alert-info">
         <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Sign in</a> to run both versions side by side.
     </div>
 }
 @if (!p.IsArchived && Model.IsSignedIn)
 {
-    <div class="card shadow-sm">
+    <section class="card" aria-labelledby="run-both-heading">
         <div class="card-header">
-            <h6 class="mb-0"><i class="bi bi-layout-split"></i> Run both versions side by side</h6>
+            <h2 class="h6 mb-0" id="run-both-heading">Run both versions side by side</h2>
         </div>
         <div class="card-body">
-            <form asp-action="RunCompare" method="post" class="row g-2 align-items-end">
+            <form asp-action="RunCompare" method="post" class="row g-3 align-items-end">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="PromptId" value="@p.Id" />
                 <input type="hidden" name="FromVersion" value="@Model.From.VersionNumber" />
                 <input type="hidden" name="ToVersion" value="@Model.To.VersionNumber" />
-                <div class="col-md-10">
-                    <label class="form-label small fw-semibold" for="cmp-model">Model</label>
-                    <select id="cmp-model" name="Model" class="form-select form-select-sm">
+                @foreach (var name in Model.Variables)
+                {
+                    <div class="col-md-6">
+                        <label class="form-label" for="cmp-var-@name"><span class="pm-var">{{@name}}</span></label>
+                        <textarea id="cmp-var-@name" name="Variables[@name]" class="form-control" rows="2" maxlength="20000"></textarea>
+                    </div>
+                }
+                <div class="col-md-9">
+                    <label class="form-label" for="cmp-model">Model</label>
+                    <select id="cmp-model" name="Model" class="form-select">
                         @foreach (var m in Model.Models)
                         {
                             <option value="@m.Model.Id" disabled="@(!m.IsAvailable)" selected="@(m.Model.Id == Model.DefaultModel)">
-                                @m.Model.DisplayName@(m.IsAvailable ? "" : $" - {m.UnavailableReason}")
+                                @m.Model.DisplayName@(m.IsAvailable ? "" : $" ({m.UnavailableReason})")
                             </option>
                         }
                     </select>
                 </div>
-                <div class="col-md-2 d-grid">
-                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-play-fill"></i> Run both</button>
+                <div class="col-md-3 d-grid">
+                    <button type="submit" class="btn btn-marker">Run both</button>
                 </div>
-                @foreach (var name in Model.Variables)
-                {
-                    <div class="col-12">
-                        <label class="form-label small mb-0" for="cmp-var-@name"><code>{{@name}}</code></label>
-                        <textarea id="cmp-var-@name" name="Variables[@name]" class="form-control form-control-sm" rows="2" maxlength="20000"></textarea>
-                    </div>
-                }
             </form>
-            <div class="form-text">Both versions get the same model and the same values. This makes two calls and two runs.</div>
+            <p class="form-text mb-0 mt-2">Both versions get the same model and the same values. This makes two calls and two runs.</p>
         </div>
-    </div>
+    </section>
 }

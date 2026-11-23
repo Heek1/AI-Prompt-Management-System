@@ -9,47 +9,47 @@
     var diffModel = (Model.OutputDiff, $"Run #{Model.Left.Id} (v{Model.Left.VersionNumber})", $"Run #{Model.Right.Id} (v{Model.Right.VersionNumber})");
 }
 
-<nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Index">Library</a></li>
-        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.Left.PromptId">@Model.Left.PromptTitle</a></li>
-        <li class="breadcrumb-item active">Compare runs</li>
-    </ol>
+<nav class="pm-crumbs" aria-label="Breadcrumb">
+    <a asp-controller="Prompts" asp-action="Index">Library</a><span aria-hidden="true">/</span>
+    <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.Left.PromptId">@Model.Left.PromptTitle</a><span aria-hidden="true">/</span>
+    <span>Compare runs</span>
 </nav>
+
+<header class="pm-head">
+    <div>
+        <h1>Two answers, side by side</h1>
+        <p class="pm-sub">Run #@Model.Left.Id on v@(Model.Left.VersionNumber) and run #@Model.Right.Id on v@(Model.Right.VersionNumber), same values.</p>
+    </div>
+</header>
 
 <div class="row g-4 mb-4">
     @foreach (var r in runs)
     {
         <div class="col-lg-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">
-                        <a asp-action="Details" asp-route-id="@r.Id">Run #@r.Id</a>
-                        <span class="badge bg-primary ms-1">v@(r.VersionNumber)</span>
-                        <code class="small ms-1">@(r.ServedByModel ?? r.Model)</code>
-                    </h6>
+            <section class="pm-sheet h-100">
+                <div class="pm-sheet-head">
+                    <div>
+                        <a class="pm-sheet-title" asp-action="Details" asp-route-id="@r.Id">Run #@r.Id</a>
+                        <span class="pm-sheet-meta ms-2">v@(r.VersionNumber), <code>@(r.ServedByModel ?? r.Model)</code></span>
+                    </div>
                     <partial name="_RunStatusBadge" model="r.Status" />
                 </div>
-                <div class="card-body">
-                    <p class="small text-muted mb-2">
-                        @r.InputTokens.ToString("N0") in / @r.OutputTokens.ToString("N0") out
-                        &middot; $@r.CostUsd.ToString("0.0000", inv)
-                        &middot; @((r.DurationMs / 1000.0).ToString("0.0", inv)) s
-                    </p>
-                    @if (r.Error is not null)
-                    {
-                        <div class="alert alert-danger small py-1">@r.Error</div>
-                    }
-                    <pre class="mb-0" style="white-space: pre-wrap;">@r.Output</pre>
+                <div class="pm-run-meta pm-num">
+                    <span>@r.InputTokens.ToString("N0") in / @r.OutputTokens.ToString("N0") out</span>
+                    <span>$@r.CostUsd.ToString("0.0000", inv)</span>
+                    <span>@((r.DurationMs / 1000.0).ToString("0.0", inv)) s</span>
                 </div>
-            </div>
+                @if (r.Error is not null)
+                {
+                    <div class="alert alert-danger small mx-3">@r.Error</div>
+                }
+                <pre class="pm-output">@r.Output</pre>
+            </section>
         </div>
     }
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-header"><h6 class="mb-0"><i class="bi bi-file-diff"></i> Output differences</h6></div>
-    <div class="card-body">
-        <partial name="_Diff" model="diffModel" />
-    </div>
-</div>
+<h2 class="pm-section-title">What differs</h2>
+<section class="pm-sheet">
+    <partial name="_Diff" model="diffModel" />
+</section>

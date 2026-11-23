@@ -83,7 +83,10 @@ public class PromptService : IPromptService
             AverageRating = p.AverageRating,
             CurrentVersion = p.CurrentVersion,
             IsArchived = p.IsArchived,
-            OwnerId = p.OwnerId
+            OwnerId = p.OwnerId,
+            ProductionVersion = p.ProductionVersion,
+            UpdatedAt = p.UpdatedAt,
+            Excerpt = p.CurrentText.Length > 160 ? p.CurrentText.Substring(0, 160) : p.CurrentText
         });
 
     public async Task<PromptDetailsDto?> GetByIdAsync(int id)
