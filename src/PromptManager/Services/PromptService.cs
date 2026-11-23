@@ -22,7 +22,7 @@ public class PromptService : IPromptService
     }
 
     public Task<List<PromptListDto>> GetAllAsync(string? search, string? category, string? aiTool, string sortBy, string? tag = null) =>
-        Project(Filter(search, category, aiTool, sortBy, includeArchived: true, tag)).ToListAsync();
+        Project(Filter(search, category, aiTool, sortBy, includeArchived: true, tag), search).ToListAsync();
 
     public async Task<PromptPageDto> GetPageAsync(string? search, string? category, string? aiTool, string sortBy,
         bool includeArchived, int page, int pageSize, string? tag = null)
@@ -32,7 +32,7 @@ public class PromptService : IPromptService
         return new PromptPageDto
         {
             TotalCount = await query.CountAsync(),
-            Prompts = await Project(query.Skip((page - 1) * pageSize).Take(pageSize)).ToListAsync(),
+            Prompts = await Project(query.Skip((page - 1) * pageSize).Take(pageSize), search).ToListAsync(),
             Page = page,
             PageSize = pageSize
         };
@@ -59,13 +59,18 @@ public class PromptService : IPromptService
         if (!includeArchived)
             query = query.Where(p => !p.IsArchived);
 
-        if (!string.IsNullOrWhiteSpace(search))
+        var searching = !string.IsNullOrWhiteSpace(search);
+        if (searching)
         {
-            // ILIKE keeps search case-insensitive, as it was on SQLite. % and _
-            // in the input are escaped so they match literally.
-            var pattern = "%" + search.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_") + "%";
-            // Npgsql emits ESCAPE '' unless an escape character is given.
-            query = query.Where(p => EF.Functions.ILike(p.Title, pattern, @"\")
+            // Full-text search finds the words in any order and ranks the
+            // results (websearch syntax: "quoted phrase", -excluded, or). The
+            // ILIKE fallback keeps substring matches such as a half-typed word,
+            // which full-text search, matching whole words only, would miss.
+            // % and _ in the input are escaped so they match literally; Npgsql
+            // emits ESCAPE '' unless an escape character is given.
+            var pattern = "%" + search!.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_") + "%";
+            query = query.Where(p => p.SearchVector!.Matches(EF.Functions.WebSearchToTsQuery(SearchConfig, search))
+                || EF.Functions.ILike(p.Title, pattern, @"\")
                 || EF.Functions.ILike(p.Description, pattern, @"\")
                 || EF.Functions.ILike(p.CurrentText, pattern, @"\"));
         }
@@ -82,6 +87,9 @@ public class PromptService : IPromptService
         // Id as the last key keeps paging stable when the main key ties.
         return sortBy switch
         {
+            "relevance" when searching => query
+                .OrderByDescending(p => p.SearchVector!.Rank(EF.Functions.WebSearchToTsQuery(SearchConfig, search!)))
+                .ThenByDescending(p => p.AverageRating).ThenByDescending(p => p.Id),
             "title" => query.OrderBy(p => p.Title).ThenBy(p => p.Id),
             "date" => query.OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
             "version" => query.OrderByDescending(p => p.CurrentVersion).ThenByDescending(p => p.Id),
@@ -89,8 +97,21 @@ public class PromptService : IPromptService
         };
     }
 
-    private static IQueryable<PromptListDto> Project(IQueryable<Prompt> query) =>
-        query.Select(p => new PromptListDto
+    /// <summary>The text-search configuration of the SearchVector column.</summary>
+    private const string SearchConfig = "simple";
+
+    /// <summary>
+    /// ts_headline options: the found words are wrapped in control characters,
+    /// not HTML, because the text is not encoded yet; PromptMarkup turns them
+    /// into &lt;mark&gt; after encoding.
+    /// </summary>
+    private const string HeadlineOptions =
+        "StartSel=\u0001, StopSel=\u0002, MinWords=10, MaxWords=26, ShortWord=2, MaxFragments=1, FragmentDelimiter=\" … \"";
+
+    private static IQueryable<PromptListDto> Project(IQueryable<Prompt> query, string? search = null)
+    {
+        var searching = !string.IsNullOrWhiteSpace(search);
+        return query.Select(p => new PromptListDto
         {
             Id = p.Id,
             Title = p.Title,
@@ -103,9 +124,12 @@ public class PromptService : IPromptService
             OwnerId = p.OwnerId,
             ProductionVersion = p.ProductionVersion,
             UpdatedAt = p.UpdatedAt,
-            Excerpt = p.CurrentText.Length > 160 ? p.CurrentText.Substring(0, 160) : p.CurrentText,
+            Excerpt = searching
+                ? EF.Functions.WebSearchToTsQuery(SearchConfig, search!).GetResultHeadline(SearchConfig, p.CurrentText, HeadlineOptions)
+                : p.CurrentText.Length > 160 ? p.CurrentText.Substring(0, 160) : p.CurrentText,
             Tags = p.PromptTags.OrderBy(pt => pt.Tag!.Name).Select(pt => new TagDto(pt.Tag!.Name, pt.Tag.Slug)).ToList()
         });
+    }
 
     public async Task<PromptDetailsDto?> GetByIdAsync(int id)
     {

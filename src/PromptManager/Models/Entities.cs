@@ -39,6 +39,12 @@ public class Prompt
     // xmin) that the service replaces on every change to the prompt row.
     public string ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString();
 
+    /// <summary>
+    /// Full-text index of title, description and text, computed by PostgreSQL
+    /// (see AppDbContext); never set from code.
+    /// </summary>
+    public NpgsqlTypes.NpgsqlTsVector? SearchVector { get; set; }
+
     public ICollection<PromptVersion> Versions { get; set; } = new List<PromptVersion>();
     public ICollection<PromptRating> Ratings { get; set; } = new List<PromptRating>();
     public ICollection<PromptTag> PromptTags { get; set; } = new List<PromptTag>();

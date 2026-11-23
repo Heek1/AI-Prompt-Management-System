@@ -45,7 +45,7 @@
     }
     <div class="pm-search">
         <label class="form-label small" for="search">Search</label>
-        <input type="search" id="search" name="search" value="@Model.SearchQuery" class="form-control" placeholder="Title, description or text" />
+        <input type="search" id="search" name="search" value="@Model.SearchQuery" class="form-control" placeholder="Words, &quot;a phrase&quot; or -excluded" />
     </div>
     <div>
         <label class="form-label small" for="category">Category</label>
@@ -70,6 +70,10 @@
     <div>
         <label class="form-label small" for="sortBy">Sort by</label>
         <select id="sortBy" name="sortBy" class="form-select">
+            @if (!string.IsNullOrWhiteSpace(Model.SearchQuery))
+            {
+                <option value="relevance" selected="@(Model.SortBy == "relevance")">Best match</option>
+            }
             <option value="rating" selected="@(Model.SortBy == "rating")">Rating</option>
             <option value="date" selected="@(Model.SortBy == "date")">Newest</option>
             <option value="title" selected="@(Model.SortBy == "title")">Title</option>

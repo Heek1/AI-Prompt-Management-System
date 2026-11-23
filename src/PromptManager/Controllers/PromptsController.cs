@@ -39,8 +39,10 @@ public class PromptsController : Controller
 
     // GET /Prompts?search=&category=&aiTool=&tag=&sortBy=&showArchived=&page=
     public async Task<IActionResult> Index(string? search, string? category, string? aiTool, string? tag,
-        string sortBy = "rating", bool showArchived = false, int page = 1)
+        string? sortBy = null, bool showArchived = false, int page = 1)
     {
+        // A search is ordered by how well prompts match unless another order was picked.
+        sortBy ??= string.IsNullOrWhiteSpace(search) ? "rating" : "relevance";
         var result = await _service.GetPageAsync(search, category, aiTool, sortBy, showArchived, page, PageSize, tag);
         var tagCounts = await _service.TagCountsAsync(showArchived);
 

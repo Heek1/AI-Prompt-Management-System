@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using NpgsqlTypes;
 using PromptManager.Data;
 
 #nullable disable
@@ -618,6 +619,11 @@ namespace PromptManager.Migrations
                     b.Property<int?>("ProductionVersion")
                         .HasColumnType("integer");
 
+                    b.Property<NpgsqlTsVector>("SearchVector")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasComputedColumnSql("setweight(to_tsvector('simple', coalesce(\"Title\", '')), 'A') || setweight(to_tsvector('simple', coalesce(\"Description\", '')), 'B') || setweight(to_tsvector('simple', coalesce(\"CurrentText\", '')), 'C')", true);
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -634,6 +640,10 @@ namespace PromptManager.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
+
+                    b.HasIndex("SearchVector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
 
                     b.HasIndex("Slug")
                         .IsUnique();

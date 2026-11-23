@@ -44,6 +44,17 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             e.Property(p => p.Slug).IsRequired().HasMaxLength(Slugs.MaxLength);
             e.HasIndex(p => p.Slug).IsUnique();
             e.HasIndex(p => p.OwnerId);
+
+            // Weighted so a match in the title ranks above one in the text.
+            // The 'simple' configuration does no stemming: prompts mix English
+            // and Ukrainian, and a stemmer for one language mangles the other.
+            e.Property(p => p.SearchVector)
+             .HasComputedColumnSql(
+                 "setweight(to_tsvector('simple', coalesce(\"Title\", '')), 'A') || " +
+                 "setweight(to_tsvector('simple', coalesce(\"Description\", '')), 'B') || " +
+                 "setweight(to_tsvector('simple', coalesce(\"CurrentText\", '')), 'C')",
+                 stored: true);
+            e.HasIndex(p => p.SearchVector).HasMethod("GIN");
         });
 
         modelBuilder.Entity<LookupValue>(e =>
