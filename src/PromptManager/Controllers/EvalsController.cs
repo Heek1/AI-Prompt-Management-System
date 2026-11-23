@@ -49,7 +49,11 @@ public class EvalsController : Controller
             DefaultModel = models.FirstOrDefault(m => m.IsAvailable && m.Model.Id == _catalog.DefaultModel)?.Model.Id
                 ?? models.FirstOrDefault(m => m.IsAvailable)?.Model.Id ?? "",
             IsSignedIn = _user.IsSignedIn,
-            CanManage = _user.CanManage(prompt.OwnerId)
+            CanManage = _user.CanManage(prompt.OwnerId),
+            Variables = prompt.Versions
+                .SelectMany(v => PromptTemplate.ExtractVariables(v.PromptText))
+                .Distinct(StringComparer.Ordinal)
+                .ToList()
         });
     }
 
@@ -88,6 +92,24 @@ public class EvalsController : Controller
         }
 
         return View(CaseViewModel(prompt, dto));
+    }
+
+    // POST /Evals/AddInjectionPack
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddInjectionPack(int promptId, string variable)
+    {
+        var prompt = await _prompts.GetByIdAsync(promptId);
+        if (prompt == null) return NotFound();
+        if (!_user.CanManage(prompt.OwnerId)) return Forbid();
+
+        var (added, error) = await _evals.AddInjectionPackAsync(promptId, variable ?? "");
+        if (error is null)
+            TempData["Success"] = $"Added {added} prompt-injection cases attacking through {{{{{variable}}}}}. Run an eval to see how the prompt holds up.";
+        else
+            TempData["Error"] = error;
+        return RedirectToAction(nameof(Index), new { id = promptId });
     }
 
     // POST /Evals/DeleteCase

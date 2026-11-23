@@ -71,6 +71,42 @@
                 }
             </div>
         </div>
+        @if (Model.CanManage && !p.IsArchived)
+        {
+            <div class="card shadow-sm">
+                <div class="card-header"><h6 class="mb-0"><i class="bi bi-shield-exclamation"></i> Prompt-injection check</h6></div>
+                <div class="card-body">
+                    <p class="small text-muted mb-2">
+                        Adds six standard attacks (instruction override, "developer mode", asking for the prompt itself,
+                        a fake end of input, another language, a base64-encoded order) as cases. Each passes when the answer
+                        contains neither a random canary word nor a piece of your prompt.
+                        @(Model.HasInjectionCases ? "Adding again replaces the earlier injection cases with a new canary." : "")
+                    </p>
+                    @if (Model.Variables.Any())
+                    {
+                        <form asp-action="AddInjectionPack" method="post" class="row g-2 align-items-end">
+                            <input type="hidden" name="promptId" value="@p.Id" />
+                            <div class="col-md-8">
+                                <label class="form-label small fw-semibold" for="inj-var">Variable that carries user input</label>
+                                <select id="inj-var" name="variable" class="form-select form-select-sm">
+                                    @foreach (var v in Model.Variables)
+                                    {
+                                        <option value="@v">{{@v}}</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-grid">
+                                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-plus"></i> Add attacks</button>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <p class="small mb-0">This prompt has no <code>{{variables}}</code>, so there is no user input to attack. Add one, e.g. <code>{{user_message}}</code>, in a new version.</p>
+                    }
+                </div>
+            </div>
+        }
     </div>
 
     <div class="col-lg-5">

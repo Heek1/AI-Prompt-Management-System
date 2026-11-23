@@ -80,6 +80,11 @@ public class EvalsIndexViewModel
     public bool IsSignedIn { get; set; }
     public bool CanManage { get; set; }
     public bool NeedsJudge => Cases.Any(c => !string.IsNullOrWhiteSpace(c.JudgeRubric));
+
+    /// <summary>Variables used by any version; the injection pack attacks through one of them.</summary>
+    public IReadOnlyList<string> Variables { get; set; } = [];
+
+    public bool HasInjectionCases => Cases.Any(c => c.Name.StartsWith(PromptManager.Evals.InjectionPack.NamePrefix));
 }
 
 public class EvalCaseViewModel

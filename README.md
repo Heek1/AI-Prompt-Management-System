@@ -37,6 +37,11 @@ Built with ASP.NET Core 10 MVC, EF Core and PostgreSQL.
   a judge model). Run any version on any model; the eval runs in the
   background, keeps every answer as a run, and flags a version that passes
   fewer cases than the previous one on the same model.
+- **Prompt-injection check.** One click adds six standard attacks as eval
+  cases, sent through the variable that carries user input: instruction
+  override, "developer mode", asking for the prompt itself, a fake end of
+  input, another language and a base64-encoded order. A case passes when the
+  answer contains neither a fresh random canary nor a piece of the prompt.
 - **Compare models.** Run the same version and cases on two to four models
   and see pass rate, cost, tokens and average answer time side by side.
 - **Version statuses.** Draft, tested (passed all cases of an eval) and
@@ -214,7 +219,7 @@ curl -H "X-Api-Key: pm_..." -H "Content-Type: application/json"      -d '{"varia
 dotnet test
 ```
 
-246 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
+257 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
 
 - **All database tests use real PostgreSQL** in a container started by
   [Testcontainers](https://dotnet.testcontainers.org/), so Docker must be
@@ -284,9 +289,8 @@ tests/PromptManager.Tests/
 
 ## Roadmap
 
-Next steps: a cost dashboard, a set of prompt-injection test inputs, an
-assistant that proposes a better version from eval results, and a small example
-application that reads its prompt through the API.
+Next steps: an assistant that proposes a better version from eval results,
+and a small example application that reads its prompt through the API.
 
 ## License
 
