@@ -17,8 +17,8 @@ public class DtoValidationTests
     {
         Title = "Title",
         PromptText = new string('x', FieldLimits.PromptTextMin),
-        Category = PromptCategories.All[0],
-        AiTool = AiTools.All[0],
+        Category = "Testing",
+        AiTool = "Claude",
         Author = "alice"
     };
 
@@ -28,23 +28,8 @@ public class DtoValidationTests
         Assert.Empty(Errors(ValidPrompt()));
     }
 
-    [Fact]
-    public void Category_outside_the_list_is_rejected()
-    {
-        var dto = ValidPrompt();
-        dto.Category = "Poetry";
-
-        Assert.Equal(new[] { nameof(CreatePromptDto.Category) }, Errors(dto));
-    }
-
-    [Fact]
-    public void Ai_tool_outside_the_list_is_rejected()
-    {
-        var dto = ValidPrompt();
-        dto.AiTool = "SomeOtherTool";
-
-        Assert.Equal(new[] { nameof(CreatePromptDto.AiTool) }, Errors(dto));
-    }
+    // Category and tool lists live in the database now; the controller checks
+    // them (see PromptsEndpointsTests and ListsTests).
 
     [Theory]
     [InlineData(nameof(CreatePromptDto.Title), FieldLimits.Title)]

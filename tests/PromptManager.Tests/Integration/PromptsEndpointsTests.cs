@@ -124,6 +124,8 @@ public sealed class PromptsEndpointsTests : IDisposable, IAsyncLifetime
     [InlineData("Category", "Poetry")]
     [InlineData("AiTool", "UnknownTool")]
     [InlineData("PromptText", "too short")]
+    [InlineData("Tags", "a, b, c, d, e, f, g, h, i")]
+    [InlineData("Tags", "this-tag-is-much-longer-than-thirty-characters")]
     public async Task Create_with_invalid_field_redisplays_the_form_and_stores_nothing(string field, string value)
     {
         var form = ValidPromptForm();

@@ -1,0 +1,51 @@
+@using PromptManager.Models
+@using PromptManager.ViewModels
+@model ListsViewModel
+@{
+    ViewData["Title"] = "Lists";
+    var sections = new (string Title, LookupKind Kind, List<LookupValue> Items, Dictionary<string, int> Usage, string Placeholder)[]
+    {
+        ("Categories", LookupKind.Category, Model.Categories, Model.CategoryUsage, "Data Analysis"),
+        ("Tools", LookupKind.Tool, Model.Tools, Model.ToolUsage, "DeepSeek")
+    };
+}
+
+<header class="pm-head">
+    <div>
+        <h1>Lists</h1>
+        <p class="pm-sub">What the prompt forms offer as category and tool. Removing an entry keeps it on the prompts that already use it.</p>
+    </div>
+</header>
+
+<div class="row g-4">
+    @foreach (var s in sections)
+    {
+        <div class="col-lg-6">
+            <section class="pm-list" aria-labelledby="list-@s.Kind">
+                <div class="pm-sheet-head">
+                    <h2 class="h6 mb-0" id="list-@s.Kind">@s.Title <span class="text-muted fw-normal">@s.Items.Count</span></h2>
+                </div>
+                <ul class="pm-lookup" data-testid="list-@s.Kind.ToString().ToLowerInvariant()">
+                    @foreach (var item in s.Items)
+                    {
+                        var used = s.Usage.GetValueOrDefault(item.Name);
+                        <li>
+                            <span>@item.Name <span class="pm-num ms-2">@used @(used == 1 ? "prompt" : "prompts")</span></span>
+                            <form asp-action="Remove" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        data-confirm="Remove &quot;@item.Name&quot; from the list?">Remove</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+                <form asp-action="Add" method="post" class="d-flex gap-2 p-3 border-top">
+                    <input type="hidden" name="kind" value="@s.Kind" />
+                    <label class="visually-hidden" for="add-@s.Kind">New entry for @s.Title.ToLowerInvariant()</label>
+                    <input id="add-@s.Kind" name="name" class="form-control" maxlength="50" required placeholder="@s.Placeholder" />
+                    <button type="submit" class="btn btn-primary text-nowrap">Add</button>
+                </form>
+            </section>
+        </div>
+    }
+</div>

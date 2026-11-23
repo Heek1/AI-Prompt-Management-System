@@ -41,6 +41,7 @@ public class Prompt
 
     public ICollection<PromptVersion> Versions { get; set; } = new List<PromptVersion>();
     public ICollection<PromptRating> Ratings { get; set; } = new List<PromptRating>();
+    public ICollection<PromptTag> PromptTags { get; set; } = new List<PromptTag>();
 }
 
 public class PromptVersion

@@ -25,12 +25,14 @@ public class CreatePromptDto
     public string PromptText { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Category is required.")]
-    [AllowedListValue(AllowedList.Categories)]
     public string Category { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "AI Tool is required.")]
-    [AllowedListValue(AllowedList.AiTools)]
     public string AiTool { get; set; } = string.Empty;
+
+    /// <summary>Comma-separated; parsed by <see cref="TagNames"/>.</summary>
+    [StringLength(400, ErrorMessage = "Tags cannot exceed {1} characters in total.")]
+    public string? Tags { get; set; }
 
     [BindNever]
     [StringLength(FieldLimits.PersonName)]
@@ -54,12 +56,14 @@ public class EditPromptDto
     public string? Description { get; set; }
 
     [Required(ErrorMessage = "Category is required.")]
-    [AllowedListValue(AllowedList.Categories)]
     public string Category { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "AI Tool is required.")]
-    [AllowedListValue(AllowedList.AiTools)]
     public string AiTool { get; set; } = string.Empty;
+
+    /// <summary>Comma-separated; parsed by <see cref="TagNames"/>.</summary>
+    [StringLength(400, ErrorMessage = "Tags cannot exceed {1} characters in total.")]
+    public string? Tags { get; set; }
 }
 
 public class PromptListDto
@@ -78,6 +82,8 @@ public class PromptListDto
 
     /// <summary>The start of the current text, for the library list.</summary>
     public string Excerpt { get; set; } = string.Empty;
+
+    public List<TagDto> Tags { get; set; } = [];
 }
 
 public class PromptPageDto
@@ -90,8 +96,14 @@ public class PromptPageDto
     public int PageCount => Math.Max(1, (TotalCount + PageSize - 1) / PageSize);
 }
 
+public record TagDto(string Name, string Slug);
+
+/// <summary>A tag with the number of visible prompts that carry it.</summary>
+public record TagCountDto(string Name, string Slug, int Count);
+
 public class PromptDetailsDto
 {
+    public List<TagDto> Tags { get; set; } = [];
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Slug { get; set; } = string.Empty;
