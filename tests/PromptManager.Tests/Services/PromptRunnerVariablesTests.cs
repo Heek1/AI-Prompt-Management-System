@@ -34,6 +34,7 @@ public sealed class PromptRunnerVariablesTests : IDisposable
     private PromptRunner Runner() =>
         new(_database.CreateContext(),
             new LlmCatalog(Options.Create(new LlmOptions { Models = [new() { Id = "m", Provider = "Rec" }] }), [_client]),
+            TestCosts.For(_database),
             NullLogger<PromptRunner>.Instance);
 
     private async Task<int> SeedAsync(string text)

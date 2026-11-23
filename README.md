@@ -43,6 +43,9 @@ Built with ASP.NET Core 10 MVC, EF Core and PostgreSQL.
   production. Promoting a version, or rolling back to an older one, is refused
   when its evals are worse than production's on the same model; only an admin
   can override that, and the override is recorded.
+- **Costs.** Admins see spend today, over 7 days and this month, a daily chart
+  for the last 30 days, and spend by prompt and by model (judge calls
+  included). `Llm:MonthlyBudgetUsd` caps paid calls per UTC month.
 - **HTTP API.** Applications fetch the production version of a prompt by its
   slug, or fill in its variables, with an API key. See [API](#api).
 - **Compare versions.** A side-by-side diff with changed words highlighted,
@@ -63,6 +66,9 @@ Known limitations:
   180 s by default). Evals use an in-process background queue, which is lost
   if the app restarts mid-eval (the eval is then marked failed with its
   partial results) and does not spread over several app instances.
+- **The monthly budget is checked before each paid call**, so the call that
+  crosses it still completes; with several calls at once the overshoot can be
+  a few calls.
 - **Prices are configuration.** Cost is computed from the per-million-token
   prices in `appsettings.json`, which must be kept up to date by hand.
 - **The real Anthropic API path has not been exercised by the automated
@@ -208,7 +214,7 @@ curl -H "X-Api-Key: pm_..." -H "Content-Type: application/json"      -d '{"varia
 dotnet test
 ```
 
-243 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
+246 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
 
 - **All database tests use real PostgreSQL** in a container started by
   [Testcontainers](https://dotnet.testcontainers.org/), so Docker must be

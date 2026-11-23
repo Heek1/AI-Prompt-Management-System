@@ -400,6 +400,10 @@ namespace PromptManager.Migrations
                     b.Property<DateTime?>("FinishedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("JudgeCostUsd")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
                     b.Property<string>("JudgeModel")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");

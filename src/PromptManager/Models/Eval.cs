@@ -61,6 +61,9 @@ public class EvalRun
     /// <summary>Answers plus judge calls.</summary>
     public decimal CostUsd { get; set; }
 
+    /// <summary>The judge calls' part of CostUsd; they are not stored as runs.</summary>
+    public decimal JudgeCostUsd { get; set; }
+
     public string? Error { get; set; }
     public string RunBy { get; set; } = string.Empty;
     public string? RunByUserId { get; set; }

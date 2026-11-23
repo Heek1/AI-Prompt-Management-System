@@ -46,6 +46,7 @@ public sealed class PromptRunnerTests : IDisposable
                     new() { Id = "offline", Provider = "Nobody" }
                 ]
             }), [client]),
+            TestCosts.For(_database),
             NullLogger<PromptRunner>.Instance);
 
     private async Task<int> SeedPromptAsync(bool withSecondVersion = false)

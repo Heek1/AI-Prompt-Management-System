@@ -50,16 +50,17 @@ public sealed class EvalExecutorTests : IDisposable
         ]
     }), [_client, new EchoLlmClient()]);
 
-    private EvalService Service() => new(_database.CreateContext(), Catalog(), _queue);
+    private EvalService Service() => new(_database.CreateContext(), Catalog(), _queue, TestCosts.For(_database));
 
     private async Task ExecuteAsync(int evalId)
     {
         var db = _database.CreateContext();
         var catalog = Catalog();
         var executor = new EvalExecutor(db,
-            new PromptRunner(db, catalog, NullLogger<PromptRunner>.Instance),
+            new PromptRunner(db, catalog, TestCosts.For(_database), NullLogger<PromptRunner>.Instance),
             new EvalJudge(catalog), catalog,
             new VersionLifecycle(db, NullLogger<VersionLifecycle>.Instance),
+            TestCosts.For(_database),
             NullLogger<EvalExecutor>.Instance);
         await executor.ExecuteAsync(evalId, CancellationToken.None);
     }

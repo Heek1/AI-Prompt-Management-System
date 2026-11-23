@@ -1,0 +1,184 @@
+@using System.Globalization
+@using PromptManager.Services
+@model CostSummary
+@{
+    ViewData["Title"] = "Costs";
+    var inv = CultureInfo.InvariantCulture;
+    // Four decimals for small amounts (a single call costs fractions of a cent), two otherwise.
+    string Usd(decimal v) => "$" + v.ToString(v == 0 || v >= 1 ? "0.00" : "0.0000", inv);
+
+    // Bar chart geometry (SVG units). One series, so no legend: the title names it.
+    const int width = 720, height = 180, left = 44, right = 8, top = 16, bottom = 24;
+    var days = Model.Last30Days;
+    var max = days.Count == 0 ? 0m : days.Max(d => d.CostUsd);
+    var scaleMax = max <= 0 ? 1m : max * 1.15m;
+    var slot = (double)(width - left - right) / Math.Max(1, days.Count);
+    var barWidth = Math.Min(16, slot - 2); // capped thickness, the rest is air
+    double Y(decimal v) => top + (height - top - bottom) * (1 - (double)(v / scaleMax));
+    var baseline = height - bottom;
+    var peak = days.Where(d => d.CostUsd > 0).OrderByDescending(d => d.CostUsd).FirstOrDefault();
+}
+
+<h1 class="h3 mb-3"><i class="bi bi-cash-coin"></i> Costs</h1>
+<p class="text-muted small">Paid model calls: runs (including eval answers) and judge calls. Days are UTC.</p>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="text-muted small">Today</div>
+            <div class="fs-3 fw-semibold" data-testid="cost-today">@Usd(Model.Today)</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="text-muted small">Last 7 days</div>
+            <div class="fs-3 fw-semibold">@Usd(Model.Last7Days)</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="text-muted small">This month</div>
+            <div class="fs-3 fw-semibold" data-testid="cost-month">@Usd(Model.MonthToDate)</div>
+            @if (Model.JudgeMonthToDate > 0)
+            {
+                <div class="small text-muted">of which judges @Usd(Model.JudgeMonthToDate)</div>
+            }
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="text-muted small">Monthly budget</div>
+            @if (Model.HasBudget)
+            {
+                <div class="fs-3 fw-semibold">@Usd(Model.Remaining) <span class="fs-6 text-muted fw-normal">left of @Usd(Model.MonthlyBudget)</span></div>
+                <div class="progress mt-2" style="height: 6px" role="progressbar" aria-label="Budget used"
+                     aria-valuenow="@((int)(Model.BudgetUsed * 100))" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar @(Model.BudgetUsed >= 1 ? "bg-danger" : Model.BudgetUsed >= 0.8 ? "bg-warning" : "")"
+                         style="width: @(Math.Min(100, (int)(Model.BudgetUsed * 100)))%"></div>
+                </div>
+                @if (Model.BudgetUsed >= 1)
+                {
+                    <div class="small text-danger mt-1"><i class="bi bi-exclamation-octagon"></i> Used up: paid calls are refused until the 1st.</div>
+                }
+            }
+            else
+            {
+                <div class="fs-6 text-muted mt-2">No limit. Set <code>Llm:MonthlyBudgetUsd</code>.</div>
+            }
+        </div></div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header"><h6 class="mb-0">Spend per day, last 30 days</h6></div>
+    <div class="card-body">
+        <svg viewBox="0 0 @width @height" class="w-100" role="img" aria-label="Spend per day for the last 30 days; the table below lists the same numbers" data-testid="daily-chart">
+            @* Recessive grid: baseline and the top value only. *@
+            <line x1="@left" x2="@(width - right)" y1="@baseline" y2="@baseline" stroke="#d0d0cc" stroke-width="1" />
+            <line x1="@left" x2="@(width - right)" y1="@Y(scaleMax).ToString(inv)" y2="@Y(scaleMax).ToString(inv)" stroke="#ececea" stroke-width="1" />
+            <text x="@(left - 6)" y="@((Y(scaleMax) + 4).ToString(inv))" text-anchor="end" font-size="10" fill="#6c757d">@Usd(scaleMax)</text>
+            <text x="@(left - 6)" y="@(baseline + 4)" text-anchor="end" font-size="10" fill="#6c757d">$0</text>
+
+            @for (var i = 0; i < days.Count; i++)
+            {
+                var d = days[i];
+                var x = left + i * slot + (slot - barWidth) / 2;
+                var y = Y(d.CostUsd);
+                var h = baseline - y;
+                <g>
+                    @* Hit target: the whole slot, taller than the bar, carries the tooltip. *@
+                    <rect x="@((left + i * slot).ToString(inv))" y="@top" width="@slot.ToString(inv)" height="@(height - top - bottom)" fill="transparent">
+                        <title>@d.Day.ToString("dd MMM", inv): @Usd(d.CostUsd), @d.Runs run(s)</title>
+                    </rect>
+                    @if (h >= 1)
+                    {
+                        var r = Math.Min(4, Math.Min(barWidth / 2, h));
+                        @* Rounded data end, square at the baseline. *@
+                        <path pointer-events="none" fill="#2a78d6"
+                              d="M@(x.ToString(inv)),@(baseline) V@((y + r).ToString(inv)) Q@(x.ToString(inv)),@(y.ToString(inv)) @((x + r).ToString(inv)),@(y.ToString(inv)) H@((x + barWidth - r).ToString(inv)) Q@((x + barWidth).ToString(inv)),@(y.ToString(inv)) @((x + barWidth).ToString(inv)),@((y + r).ToString(inv)) V@(baseline) Z" />
+                    }
+                    @* Every 7th day counted back from today, so the last tick never crowds another. *@
+                    @if ((days.Count - 1 - i) % 7 == 0)
+                    {
+                        @:<text x="@((x + barWidth / 2).ToString(inv))" y="@(height - 6)" text-anchor="middle" font-size="10" fill="#6c757d">@d.Day.ToString("dd MMM", inv)</text>
+                    }
+                </g>
+            }
+            @if (peak is not null)
+            {
+                var pi = days.IndexOf(peak);
+                var px = left + pi * slot + slot / 2;
+                @:<text x="@px.ToString(inv)" y="@((Y(peak.CostUsd) - 4).ToString(inv))" text-anchor="middle" font-size="10" fill="#212529">@Usd(peak.CostUsd)</text>
+            }
+        </svg>
+        <details class="mt-2 small">
+            <summary class="text-muted">Show as a table</summary>
+            <table class="table table-sm mt-2 mb-0">
+                <thead><tr><th>Day</th><th class="text-end">Runs</th><th class="text-end">Cost</th></tr></thead>
+                <tbody>
+                    @foreach (var d in days.Where(d => d.Runs > 0 || d.CostUsd > 0))
+                    {
+                        <tr><td>@d.Day.ToString("dd MMM yyyy", inv)</td><td class="text-end">@d.Runs</td><td class="text-end">@Usd(d.CostUsd)</td></tr>
+                    }
+                </tbody>
+            </table>
+        </details>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header"><h6 class="mb-0">This month by prompt (top 10)</h6></div>
+            <div class="card-body p-0">
+                @if (!Model.ByPrompt.Any())
+                {
+                    <p class="text-muted small p-3 mb-0">No runs this month.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light"><tr><th>Prompt</th><th class="text-end">Runs</th><th class="text-end">Cost</th></tr></thead>
+                        <tbody>
+                            @foreach (var p in Model.ByPrompt)
+                            {
+                                <tr>
+                                    <td><a asp-controller="Prompts" asp-action="Details" asp-route-id="@p.PromptId">@p.Name</a></td>
+                                    <td class="text-end">@p.Runs</td>
+                                    <td class="text-end">@Usd(p.CostUsd)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header"><h6 class="mb-0">This month by model</h6></div>
+            <div class="card-body p-0">
+                @if (!Model.ByModel.Any())
+                {
+                    <p class="text-muted small p-3 mb-0">No calls this month.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0" data-testid="by-model">
+                        <thead class="table-light"><tr><th>Model</th><th class="text-end">Calls</th><th class="text-end">Cost</th></tr></thead>
+                        <tbody>
+                            @foreach (var m in Model.ByModel)
+                            {
+                                <tr><td><code>@m.Name</code></td><td class="text-end">@m.Runs</td><td class="text-end">@Usd(m.CostUsd)</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                @if (Model.FailedRunsMonthToDate > 0)
+                {
+                    <p class="small text-muted px-3 py-2 mb-0">@Model.FailedRunsMonthToDate failed run(s) this month (no cost recorded).</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
