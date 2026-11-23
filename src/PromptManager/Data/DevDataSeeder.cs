@@ -49,6 +49,7 @@ public static class DevDataSeeder
         return new Prompt
         {
             Title = title,
+            Slug = PromptManager.Infrastructure.Slugs.From(title),
             Description = description,
             CurrentText = text,
             Category = category,

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using PromptManager.Api;
 using PromptManager.Data;
 using PromptManager.Evals;
 using PromptManager.Llm;
@@ -60,6 +61,7 @@ builder.Services.AddScoped<IPromptService, PromptService>();
 builder.Services.AddScoped<IPromptRunner, PromptRunner>();
 builder.Services.AddScoped<IInputSetService, InputSetService>();
 builder.Services.AddScoped<IVersionLifecycle, VersionLifecycle>();
+builder.Services.AddPromptApi();
 builder.Services.AddSingleton<EvalQueue>();
 builder.Services.AddScoped<EvalJudge>();
 builder.Services.AddScoped<EvalExecutor>();
@@ -114,8 +116,11 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.UseRequestLogging();
+
+app.MapPromptApi();
 
 app.MapControllerRoute(
     name: "default",

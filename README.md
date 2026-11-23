@@ -39,6 +39,12 @@ Built with ASP.NET Core 10 MVC, EF Core and PostgreSQL.
   fewer cases than the previous one on the same model.
 - **Compare models.** Run the same version and cases on two to four models
   and see pass rate, cost, tokens and average answer time side by side.
+- **Version statuses.** Draft, tested (passed all cases of an eval) and
+  production. Promoting a version, or rolling back to an older one, is refused
+  when its evals are worse than production's on the same model; only an admin
+  can override that, and the override is recorded.
+- **HTTP API.** Applications fetch the production version of a prompt by its
+  slug, or fill in its variables, with an API key. See [API](#api).
 - **Compare versions.** A side-by-side diff with changed words highlighted,
   and a button that runs both versions on the same model and inputs, then
   shows the two answers and their differences.
@@ -178,13 +184,45 @@ dotnet user-secrets --project src/PromptManager set "Azure:StorageConnectionStri
 For local development, [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite)
 works with `UseDevelopmentStorage=true`.
 
+## API
+
+Create a key under **API keys** (it is shown once; only its hash is stored),
+then:
+
+```bash
+# The production version (?label=latest for the newest, ?version=3 for a specific one)
+curl -H "X-Api-Key: pm_..." https://<host>/api/prompts/support-reply-en
+
+# The text with {{variables}} filled in (no model is called)
+curl -H "X-Api-Key: pm_..." -H "Content-Type: application/json"      -d '{"variables": {"customer": "Olena", "topic": "a refund"}}'      https://<host>/api/prompts/support-reply-en/render
+```
+
+```json
+{
+  "slug": "support-reply-en",
+  "title": "Support reply (EN)",
+  "version": 2,
+  "status": "production",
+  "text": "Reply politely to {{customer}} about {{topic}}.",
+  "variables": ["customer", "topic"],
+  "updatedAt": "2026-11-22T21:40:00Z"
+}
+```
+
+- Responses carry an `ETag`; send it back in `If-None-Match` to get a cheap
+  `304` while the version is unchanged. `Cache-Control: no-cache` makes clients
+  revalidate, so a promotion is picked up on the next request.
+- Each key may make 60 requests per minute (`429` above that).
+- Errors are `application/problem+json`; a missing or revoked key gets `401`.
+- The OpenAPI description is at `/openapi/v1.json`.
+
 ## Tests
 
 ```bash
 dotnet test
 ```
 
-193 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
+243 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
 
 - **All database tests use real PostgreSQL** in a container started by
   [Testcontainers](https://dotnet.testcontainers.org/), so Docker must be
@@ -254,10 +292,9 @@ tests/PromptManager.Tests/
 
 ## Roadmap
 
-Next steps: version statuses (draft, tested, production) with a gate that
-blocks publishing a version that regressed, an HTTP API for applications to
-fetch the production version of a prompt, a cost dashboard, and a set of
-prompt-injection test inputs.
+Next steps: a cost dashboard, a set of prompt-injection test inputs, an
+assistant that proposes a better version from eval results, and a small example
+application that reads its prompt through the API.
 
 ## License
 

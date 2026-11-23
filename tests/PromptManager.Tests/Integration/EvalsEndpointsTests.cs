@@ -136,13 +136,16 @@ public sealed class EvalsEndpointsTests : IDisposable, IAsyncLifetime
         var url = response.Headers.Location!.OriginalString;
         Assert.StartsWith("/Evals/Compare?ids=", url);
 
+        // The worker runs the two evals one after the other, so wait until the
+        // page no longer refreshes itself (both finished), not for the first result.
         string html = "";
-        for (var i = 0; i < 50 && !html.Contains("100%"); i++)
+        for (var i = 0; i < 100; i++)
         {
             html = await _client.GetStringAsync(url);
-            if (html.Split("100%").Length - 1 >= 2) break;
+            if (!html.Contains("http-equiv=\"refresh\"")) break;
             await Task.Delay(200);
         }
+        Assert.DoesNotContain("http-equiv=\"refresh\"", html);
         Assert.Contains("Echo (offline, no model call)", html);
         Assert.Contains("Echo 2", html);
         Assert.True(html.Split("100%").Length - 1 >= 2, "both models should pass the case");

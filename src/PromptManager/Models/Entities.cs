@@ -4,6 +4,10 @@ public class Prompt
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
+
+    /// <summary>Stable, URL-safe id used by the API; set once from the title.</summary>
+    public string Slug { get; set; } = string.Empty;
+
     public string Description { get; set; } = string.Empty;
     public string CurrentText { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
