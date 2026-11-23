@@ -637,3 +637,9 @@ details > summary { cursor: pointer; }
     .pm-row-meta .small.mt-1 { margin: 0 !important; }
     .pm-head { flex-direction: column; align-items: flex-start; }
 }
+/* Medium screens: the sidebar takes room, so search gets its own row
+   and the selects share the next one with the buttons. */
+@media (min-width: 992px) and (max-width: 1299.98px) {
+    .pm-filters { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
+    .pm-filters .pm-search { grid-column: 1 / -1; }
+}
