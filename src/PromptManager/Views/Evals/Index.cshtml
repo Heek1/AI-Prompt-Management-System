@@ -61,7 +61,7 @@
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="promptId" value="@p.Id" />
                                             <input type="hidden" name="caseId" value="@c.Id" />
-                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete" onclick="return confirm('Delete this case?')"><i class="bi bi-trash"></i></button>
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete" data-confirm="Delete this case?"><i class="bi bi-trash"></i></button>
                                         </form>
                                     </div>
                                 }
