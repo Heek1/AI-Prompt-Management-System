@@ -325,20 +325,7 @@ public class PromptService : IPromptService
         return true;
     }
 
-    /// <summary>
-    /// The tags named in the form, existing ones reused by slug and new ones
-    /// created (but not saved) here. Invalid input was rejected by the
-    /// controller; anything left over is cut to the limit.
-    /// </summary>
-    private async Task<List<Tag>> ResolveTagsAsync(string? input)
-    {
-        var parsed = TagNames.Parse(input).Tags.Take(TagNames.MaxTags).ToList();
-        if (parsed.Count == 0) return [];
-
-        var slugs = parsed.Select(t => t.Slug).ToList();
-        var existing = await _db.Tags.Where(t => slugs.Contains(t.Slug)).ToDictionaryAsync(t => t.Slug);
-        return parsed.Select(t => existing.TryGetValue(t.Slug, out var tag) ? tag : new Tag { Name = t.Name, Slug = t.Slug }).ToList();
-    }
+    private Task<List<Tag>> ResolveTagsAsync(string? input) => TagStore.ResolveAsync(_db, input);
 
     public async Task<bool> UnarchiveAsync(int id) =>
         await _db.Prompts

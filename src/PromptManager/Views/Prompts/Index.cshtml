@@ -17,12 +17,21 @@
             @Model.TotalCount @(Model.TotalCount == 1 ? "prompt" : "prompts")@(filtered ? " match these filters" : "")@(Model.PageCount > 1 ? $", page {Model.Page} of {Model.PageCount}" : "").
         </p>
     </div>
-    @if (CurrentUser.IsSignedIn)
-    {
-        <div class="pm-actions">
-            <a asp-action="Create" class="btn btn-marker">New prompt</a>
+    <div class="pm-actions">
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Export</button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/Prompts/Export?format=yaml">All prompts, YAML</a></li>
+                <li><a class="dropdown-item" href="/Prompts/Export?format=json">All prompts, JSON</a></li>
+                <li><a class="dropdown-item" href="/Prompts/ExportFolder">Folder for git (.zip)</a></li>
+            </ul>
         </div>
-    }
+        @if (CurrentUser.IsSignedIn)
+        {
+            <a href="/Prompts/Import" class="btn btn-outline-secondary">Import</a>
+            <a asp-action="Create" class="btn btn-marker">New prompt</a>
+        }
+    </div>
 </header>
 
 @if (Model.TagCounts.Any())

@@ -1,0 +1,84 @@
+@using PromptManager.Controllers
+@using PromptManager.Services.Transfer
+@model ImportViewModel
+@{
+    ViewData["Title"] = "Import";
+}
+
+<nav class="pm-crumbs" aria-label="Breadcrumb">
+    <a asp-controller="Prompts" asp-action="Index">Library</a><span aria-hidden="true">/</span><span>Import</span>
+</nav>
+
+<header class="pm-head">
+    <div>
+        <h1>Import</h1>
+        <p class="pm-sub">
+            YAML or JSON files from an export, a zip of a <code>prompts/</code> folder, or files you wrote by hand.
+            A prompt whose slug you already own gets the file's text as a new draft version; anything else becomes a new prompt.
+        </p>
+    </div>
+    <div class="pm-actions">
+        <a class="btn btn-outline-secondary" href="/Prompts/ExportFolder">Export as folder (.zip)</a>
+    </div>
+</header>
+
+@foreach (var error in Model.Errors)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+@if (Model.Lines.Any())
+{
+    <h2 class="pm-section-title mt-0">Result</h2>
+    <div class="pm-list mb-4">
+        <table class="table align-middle mb-0 pm-table" data-testid="import-result">
+            <thead><tr><th>Prompt</th><th>What happened</th><th>Details</th></tr></thead>
+            <tbody>
+                @foreach (var line in Model.Lines)
+                {
+                    var (css, label) = line.Outcome switch
+                    {
+                        ImportOutcome.Created => ("production", "created"),
+                        ImportOutcome.NewVersion => ("tested", "new version"),
+                        ImportOutcome.Unchanged => ("draft", "unchanged"),
+                        _ => ("failed", "skipped")
+                    };
+                    <tr>
+                        <td>
+                            @if (line.PromptId is { } id)
+                            {
+                                <a asp-controller="Prompts" asp-action="Details" asp-route-id="@id">@line.Title</a>
+                            }
+                            else
+                            {
+                                @line.Title
+                            }
+                        </td>
+                        <td><span class="pm-status pm-status-@css">@label</span></td>
+                        <td>@line.Detail</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <form method="post" enctype="multipart/form-data" class="card">
+            @Html.AntiForgeryToken()
+            <div class="card-body">
+                <label class="form-label" for="files">Files</label>
+                <input id="files" name="files" type="file" class="form-control" multiple accept=".yaml,.yml,.json,.zip" />
+                <div class="form-text">Up to 5 MB in total and 500 prompts. Categories and tools must be in the Lists.</div>
+                <button type="submit" class="btn btn-marker mt-3">Import</button>
+            </div>
+        </form>
+    </div>
+    <div class="col-lg-6">
+        <section class="pm-sheet" aria-label="Smallest file">
+            <div class="pm-sheet-head"><span class="pm-sheet-title">The smallest file that imports</span><span class="pm-sheet-meta">support-reply.yaml</span></div>
+            <pre class="pm-lines"><span class="pm-line">title: Support reply</span><span class="pm-line">category: Business Analysis</span><span class="pm-line">tool: Claude</span><span class="pm-line">tags: [support, email]</span><span class="pm-line">text: |</span><span class="pm-line">  Reply to <span class="pm-var">{{question}}</span> politely,</span><span class="pm-line">  in under 120 words.</span></pre>
+        </section>
+    </div>
+</div>
