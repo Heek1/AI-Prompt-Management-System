@@ -67,7 +67,7 @@ public sealed class EvalExecutorTests : IDisposable
     private async Task<int> SeedPromptAsync(string text = "Translate {{text}} into Ukrainian, please.")
     {
         using var db = _database.CreateContext();
-        return await new PromptService(db, new ConfigurationBuilder().Build(), NullLogger<PromptService>.Instance)
+        return await new PromptService(db, NullLogger<PromptService>.Instance)
             .CreateAsync(new CreatePromptDto { Title = "T", PromptText = text, Category = "Testing", AiTool = "Claude", Author = "a" });
     }
 
@@ -167,7 +167,7 @@ public sealed class EvalExecutorTests : IDisposable
         await ExecuteAsync(v1);
 
         using (var db = _database.CreateContext())
-            await new PromptService(db, new ConfigurationBuilder().Build(), NullLogger<PromptService>.Instance)
+            await new PromptService(db, NullLogger<PromptService>.Instance)
                 .CreateVersionAsync(new CreatePromptVersionDto { PromptId = id, PromptText = "Render {{text}} in Ukrainian, please.", CreatedBy = "a" });
         var v2 = await StartAsync(id);
         await ExecuteAsync(v2);

@@ -239,18 +239,6 @@ public class PromptsController : Controller
         return RedirectToAction(nameof(Details), new { id = dto.PromptId });
     }
 
-    // POST /Prompts/UsePrompt
-    [HttpPost]
-    [Authorize]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UsePrompt(UsePromptDto dto)
-    {
-        dto.UserName = await _user.GetDisplayNameAsync();
-        var (success, error) = await _service.UsePromptAsync(dto);
-        TempData[success ? "Success" : "Error"] = success ? "Prompt usage recorded!" : error;
-        return RedirectToAction(nameof(Details), new { id = dto.PromptId });
-    }
-
     // POST /Prompts/Promote  (also rolls back to an older version)
     [HttpPost]
     [Authorize]

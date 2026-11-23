@@ -59,7 +59,6 @@ public sealed class PromptsEndpointsTests : IDisposable, IAsyncLifetime
     [InlineData("/")]
     [InlineData("/Prompts")]
     [InlineData("/Prompts/Create")]
-    [InlineData("/History")]
     public async Task Pages_render(string url)
     {
         var response = await _client.GetAsync(url);
@@ -77,16 +76,25 @@ public sealed class PromptsEndpointsTests : IDisposable, IAsyncLifetime
         Assert.Contains("does not exist", await response.Content.ReadAsStringAsync());
     }
 
-    [Fact]
-    public async Task Health_returns_json_with_prompt_count()
+    [Theory]
+    [InlineData("/health/live")]
+    [InlineData("/health/ready")]
+    [InlineData("/health")]
+    public async Task Health_endpoints_report_status_only(string url)
     {
-        await CreatePromptViaFormAsync();
-
-        var response = await _client.GetAsync("/health");
+        var response = await _client.GetAsync(url);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Equal(1, json.RootElement.GetProperty("totalPrompts").GetInt32());
+        // Nothing about the environment or the data, unlike the old /health.
+        Assert.Equal("Healthy", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Usage_history_and_use_prompt_are_gone()
+    {
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync("/History")).StatusCode);
+        var id = await CreatePromptViaFormAsync();
+        Assert.DoesNotContain("UsePrompt", await _client.GetStringAsync($"/Prompts/Details/{id}"));
     }
 
     // ---------- Create ----------
@@ -212,7 +220,7 @@ public sealed class PromptsEndpointsTests : IDisposable, IAsyncLifetime
     // ---------- Archive and use ----------
 
     [Fact]
-    public async Task Archive_marks_the_prompt_and_hides_the_use_form()
+    public async Task Archive_marks_the_prompt_and_hides_the_archive_button()
     {
         var id = await CreatePromptViaFormAsync();
 
@@ -223,23 +231,9 @@ public sealed class PromptsEndpointsTests : IDisposable, IAsyncLifetime
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         var details = await _client.GetStringAsync($"/Prompts/Details/{id}");
-        Assert.DoesNotContain("action=\"/Prompts/UsePrompt\"", details);
+        Assert.DoesNotContain("action=\"/Prompts/Archive\"", details);
         await using var db = _factory.CreateDbContext();
         Assert.True((await db.Prompts.SingleAsync(p => p.Id == id)).IsArchived);
-    }
-
-    [Fact]
-    public async Task UsePrompt_redirects_back_to_details()
-    {
-        var id = await CreatePromptViaFormAsync();
-
-        var response = await _client.PostFormAsync($"/Prompts/Details/{id}", "/Prompts/UsePrompt", new Dictionary<string, string>
-        {
-            ["PromptId"] = id.ToString(), ["UserName"] = "bob"
-        });
-
-        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.EndsWith($"/Prompts/Details/{id}", response.Headers.Location!.OriginalString);
     }
 
     // ---------- Filters ----------

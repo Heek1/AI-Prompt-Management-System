@@ -50,9 +50,8 @@ Built with ASP.NET Core 10 MVC, EF Core and PostgreSQL.
   shows the two answers and their differences.
 - **Ratings** from 1 to 5 with an optional comment, one per user name per prompt.
 - **Archive.** Archived prompts can no longer be edited or used.
-- **Usage history** (optional). "Use prompt" events can be written to
-  Azure Table Storage and are listed on the History page.
-- **`/health`** returns a JSON status with prompt and usage counts.
+- **Health checks.** `/health/live` (the process answers) and `/health/ready`
+  (the database answers); `/health` is the same as ready.
 
 ## What it does not do (yet)
 
@@ -72,8 +71,6 @@ Known limitations:
   registration, and there is no admin page for managing users and roles.
 - Categories and AI tools are fixed lists in
   [`Constants.cs`](src/PromptManager/Infrastructure/Constants.cs).
-- Usage history is stored only if an Azure Storage connection string is set;
-  the Azure path is not covered by automated tests.
 
 ## Run it
 
@@ -173,17 +170,6 @@ Free-plan limits: the Render service sleeps after 15 minutes without traffic
 (the next request takes a while), and a free Supabase project is paused after
 a week without activity.
 
-### Optional: usage history in Azure Table Storage
-
-Set the connection string with user secrets (never in `appsettings.json`):
-
-```bash
-dotnet user-secrets --project src/PromptManager set "Azure:StorageConnectionString" "<connection string>"
-```
-
-For local development, [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite)
-works with `UseDevelopmentStorage=true`.
-
 ## API
 
 Create a key under **API keys** (it is shown once; only its hash is stored),
@@ -254,12 +240,12 @@ through `compose.yaml` on every pull request.
 ```
 src/PromptManager/
   Controllers/      Prompts, History, Health, Home (redirect + error page)
-  Services/         PromptService (prompts, versions, ratings, archive, usage),
+  Services/         PromptService (prompts, versions, ratings, archive),
                     PromptRunner (runs), InputSetService
   Llm/              ILlmClient, Anthropic and Echo clients, model catalogue
   Evals/            Checks, judge, executor, background worker, eval service
   Data/             AppDbContext, DevDataSeeder
-  Models/           EF entities and the Azure Table entity
+  Models/           EF entities
   DTOs/             Form and view DTOs with validation attributes
   Infrastructure/   Category and tool lists, field limits, templates, diff
   Migrations/       EF Core migrations (applied automatically at startup)

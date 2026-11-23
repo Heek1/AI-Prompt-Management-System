@@ -20,7 +20,7 @@ public sealed class PromptServiceConcurrencyTests : IDisposable
     public void Dispose() => _database.Dispose();
 
     private static PromptService CreateService(AppDbContext db) =>
-        new(db, new ConfigurationBuilder().Build(), NullLogger<PromptService>.Instance);
+        new(db, NullLogger<PromptService>.Instance);
 
     private async Task<int> SeedPromptAsync()
     {

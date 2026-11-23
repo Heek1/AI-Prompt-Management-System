@@ -18,7 +18,7 @@ public sealed class PromptServiceTests : IDisposable
     // read what was persisted rather than what is cached in a change tracker.
     private PromptService CreateService(AppDbContext? db = null) =>
         new(db ?? _database.CreateContext(),
-            new ConfigurationBuilder().Build(),
+             
             NullLogger<PromptService>.Instance);
 
     private static CreatePromptDto NewPrompt(
@@ -268,41 +268,6 @@ public sealed class PromptServiceTests : IDisposable
         var result = await CreateService().GetAllAsync(null, null, null, "date");
 
         Assert.Equal(new[] { "New", "Old" }, result.Select(p => p.Title));
-    }
-
-    // ---------- Usage history without Azure ----------
-
-    [Fact]
-    public async Task UsePromptAsync_succeeds_without_azure_storage()
-    {
-        var id = await CreatePromptAsync();
-
-        var (success, _) = await CreateService().UsePromptAsync(new UsePromptDto { PromptId = id, UserName = "bob" });
-
-        Assert.True(success);
-        Assert.Empty(await CreateService().GetUsageHistoryAsync());
-    }
-
-    [Fact]
-    public async Task UsePromptAsync_rejects_archived_and_unknown_prompts()
-    {
-        var id = await CreatePromptAsync();
-        await CreateService().ArchiveAsync(id);
-
-        var archived = await CreateService().UsePromptAsync(new UsePromptDto { PromptId = id });
-        var unknown = await CreateService().UsePromptAsync(new UsePromptDto { PromptId = 999 });
-
-        Assert.Equal((false, "Cannot use an archived prompt."), archived);
-        Assert.Equal((false, "Prompt not found."), unknown);
-    }
-
-    [Fact]
-    public async Task GetHealthStatsAsync_counts_prompts()
-    {
-        await CreatePromptAsync();
-        await CreatePromptAsync(NewPrompt(title: "Second"));
-
-        Assert.Equal((2, 0), await CreateService().GetHealthStatsAsync());
     }
 
     // ---------- Paging, edit, restore, delete ----------

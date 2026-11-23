@@ -1,4 +1,3 @@
-using Azure.Data.Tables;
 using Npgsql;
 using Microsoft.EntityFrameworkCore;
 using PromptManager.Data;
@@ -12,30 +11,14 @@ namespace PromptManager.Services;
 public class PromptService : IPromptService
 {
     private readonly AppDbContext _db;
-    private readonly TableClient? _tableClient;
     private readonly ILogger<PromptService> _logger;
 
     private const int MaxConcurrencyAttempts = 3;
 
-    public PromptService(AppDbContext db, IConfiguration config, ILogger<PromptService> logger)
+    public PromptService(AppDbContext db, ILogger<PromptService> logger)
     {
         _db = db;
         _logger = logger;
-
-        var connString = config["Azure:StorageConnectionString"];
-        if (!string.IsNullOrEmpty(connString))
-        {
-            try
-            {
-                var serviceClient = new TableServiceClient(connString);
-                serviceClient.CreateTableIfNotExists("PromptUsageHistory");
-                _tableClient = serviceClient.GetTableClient("PromptUsageHistory");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Could not connect to Azure Table Storage. Usage history will not be persisted.");
-            }
-        }
     }
 
     public Task<List<PromptListDto>> GetAllAsync(string? search, string? category, string? aiTool, string sortBy) =>
@@ -299,83 +282,6 @@ public class PromptService : IPromptService
                 .SetProperty(p => p.ConcurrencyStamp, Guid.NewGuid().ToString()));
 
         return updated > 0;
-    }
-
-    public async Task<(bool success, string error)> UsePromptAsync(UsePromptDto dto)
-    {
-        var prompt = await _db.Prompts.FindAsync(dto.PromptId);
-        if (prompt == null) return (false, "Prompt not found.");
-        if (prompt.IsArchived) return (false, "Cannot use an archived prompt.");
-
-        if (_tableClient != null)
-        {
-            var entity = new PromptUsageHistoryEntity
-            {
-                PartitionKey = prompt.Category,
-                RowKey = Guid.NewGuid().ToString(),
-                PromptId = dto.PromptId.ToString(),
-                PromptTitle = prompt.Title,
-                UserName = dto.UserName ?? string.Empty,
-                AiTool = prompt.AiTool,
-                Category = prompt.Category,
-                UsedAt = DateTime.UtcNow
-            };
-
-            try
-            {
-                await _tableClient.AddEntityAsync(entity);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to save usage history to Azure Table Storage.");
-            }
-        }
-
-        return (true, string.Empty);
-    }
-
-    public async Task<List<UsageHistoryDto>> GetUsageHistoryAsync()
-    {
-        if (_tableClient == null)
-            return new List<UsageHistoryDto>();
-
-        var results = new List<UsageHistoryDto>();
-
-        await foreach (var entity in _tableClient.QueryAsync<PromptUsageHistoryEntity>())
-        {
-            results.Add(new UsageHistoryDto
-            {
-                PromptId = entity.PromptId,
-                PromptTitle = entity.PromptTitle,
-                UserName = entity.UserName,
-                AiTool = entity.AiTool,
-                Category = entity.Category,
-                UsedAt = entity.UsedAt
-            });
-        }
-
-        return results.OrderByDescending(u => u.UsedAt).ToList();
-    }
-
-    public async Task<(int totalPrompts, int totalUsages)> GetHealthStatsAsync()
-    {
-        var totalPrompts = await _db.Prompts.CountAsync();
-        var totalUsages = 0;
-
-        if (_tableClient != null)
-        {
-            try
-            {
-                await foreach (var _ in _tableClient.QueryAsync<PromptUsageHistoryEntity>(select: new[] { "RowKey" }))
-                    totalUsages++;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to count usage history.");
-            }
-        }
-
-        return (totalPrompts, totalUsages);
     }
 
     // PostgreSQL unique_violation. Provider-specific on purpose: if the app moves

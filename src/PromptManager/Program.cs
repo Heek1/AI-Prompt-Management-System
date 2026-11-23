@@ -62,6 +62,10 @@ builder.Services.AddScoped<IPromptRunner, PromptRunner>();
 builder.Services.AddScoped<IInputSetService, InputSetService>();
 builder.Services.AddScoped<IVersionLifecycle, VersionLifecycle>();
 builder.Services.AddPromptApi();
+
+// Liveness says the process answers; readiness also needs the database.
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>("database", tags: ["ready"]);
 builder.Services.AddSingleton<EvalQueue>();
 builder.Services.AddScoped<EvalJudge>();
 builder.Services.AddScoped<EvalExecutor>();
@@ -121,6 +125,12 @@ app.UseRateLimiter();
 app.UseRequestLogging();
 
 app.MapPromptApi();
+
+// Status only (Healthy/Unhealthy as text); no environment name or counts.
+app.MapHealthChecks("/health/live", new() { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new() { Predicate = c => c.Tags.Contains("ready") });
+// Kept for Render's health check setting.
+app.MapHealthChecks("/health", new() { Predicate = c => c.Tags.Contains("ready") });
 
 app.MapControllerRoute(
     name: "default",

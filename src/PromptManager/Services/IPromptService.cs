@@ -23,7 +23,4 @@ public interface IPromptService
     Task<bool> CreateVersionAsync(CreatePromptVersionDto dto);
     Task<(bool success, string error)> RateAsync(RatePromptDto dto);
     Task<bool> ArchiveAsync(int id);
-    Task<(bool success, string error)> UsePromptAsync(UsePromptDto dto);
-    Task<List<UsageHistoryDto>> GetUsageHistoryAsync();
-    Task<(int totalPrompts, int totalUsages)> GetHealthStatsAsync();
 }
