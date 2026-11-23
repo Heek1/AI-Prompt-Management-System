@@ -16,30 +16,32 @@
     }
 }
 
-<nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Details" asp-route-id="@f.PromptId">@f.PromptTitle</a></li>
-        <li class="breadcrumb-item"><a asp-action="Index" asp-route-id="@f.PromptId">Evals</a></li>
-        <li class="breadcrumb-item active">Model comparison</li>
-    </ol>
+<nav class="pm-crumbs" aria-label="Breadcrumb">
+    <a asp-controller="Prompts" asp-action="Details" asp-route-id="@f.PromptId">@f.PromptTitle</a><span aria-hidden="true">/</span>
+    <a asp-action="Index" asp-route-id="@f.PromptId">Evals</a><span aria-hidden="true">/</span>
+    <span>Model comparison</span>
 </nav>
 
-<h1 class="h4 mb-1">Model comparison <span class="badge bg-primary fs-6">v@(f.VersionNumber)</span></h1>
-<p class="text-muted small">
-    The same @f.TotalCases case(s) on each model@(f.JudgeModel is null ? "" : $", graded by {f.JudgeModel}").
-    @if (!Model.AllFinished)
-    {
-        <span>Still running; this page refreshes itself.</span>
-    }
-</p>
+<header class="pm-head">
+    <div>
+        <h1>Which model, for v@(f.VersionNumber)?</h1>
+        <p class="pm-sub">
+            The same @f.TotalCases @(f.TotalCases == 1 ? "case" : "cases") on each model@(f.JudgeModel is null ? "" : $", graded by {f.JudgeModel}").
+            @if (!Model.AllFinished)
+            {
+                <span>Still running; this page refreshes itself.</span>
+            }
+        </p>
+    </div>
+</header>
 
-<div class="card shadow-sm">
+<div class="pm-list">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" data-testid="comparison-table">
-            <thead class="table-light">
+        <table class="table table-hover align-middle mb-0 pm-table" data-testid="comparison-table">
+            <thead>
                 <tr>
                     <th>Model</th>
-                    <th class="text-end">Passed</th>
+                    <th>Passed</th>
                     <th class="text-end">Cost</th>
                     <th class="text-end">Tokens in / out</th>
                     <th class="text-end">Avg. time per answer</th>
@@ -50,26 +52,30 @@
                 @foreach (var row in Model.Rows)
                 {
                     var e = row.Eval;
-                    <tr class="@(row == best && finished.Count > 1 ? "table-success" : "")">
+                    var isBest = row == best && finished.Count > 1;
+                    <tr class="@(isBest ? "pm-best" : "")">
                         <td>
-                            <strong>@row.DisplayName</strong>
+                            <div class="fw-semibold">@row.DisplayName @if (isBest) { <span class="pm-status pm-status-production ms-1">best</span> }</div>
                             <div class="small text-muted"><code>@e.Model</code></div>
                         </td>
-                        <td class="text-end">
+                        <td>
                             @if (e.Status == EvalRunStatus.Completed)
                             {
-                                <span class="fw-semibold">@e.PassedCases / @e.TotalCases</span>
-                                <div class="small text-muted">@(((e.PassRate ?? 0) * 100).ToString("0", inv))%</div>
+                                <span class="pm-pass pm-num">
+                                    <span class="fw-semibold">@e.PassedCases / @e.TotalCases</span>
+                                    <span class="pm-gauge @(e.PassedCases == e.TotalCases ? "is-pass" : "is-fail")" aria-hidden="true"><i style="width: @(((e.PassRate ?? 0) * 100).ToString("0", inv))%"></i></span>
+                                    <span class="small text-muted">@(((e.PassRate ?? 0) * 100).ToString("0", inv))%</span>
+                                </span>
                             }
                             else
                             {
                                 <span class="text-muted">@e.Status.ToString().ToLowerInvariant() (@e.CompletedCases/@e.TotalCases)</span>
                             }
                         </td>
-                        <td class="text-end">$@e.CostUsd.ToString("0.0000", inv)</td>
-                        <td class="text-end small">@row.InputTokens.ToString("N0") / @row.OutputTokens.ToString("N0")</td>
-                        <td class="text-end">@(row.AverageSeconds is { } s ? s.ToString("0.0", inv) + " s" : "-")</td>
-                        <td class="text-end"><a asp-action="Run" asp-route-id="@e.Id" class="small">details</a></td>
+                        <td class="text-end pm-num">$@e.CostUsd.ToString("0.0000", inv)</td>
+                        <td class="text-end pm-num">@row.InputTokens.ToString("N0") / @row.OutputTokens.ToString("N0")</td>
+                        <td class="text-end pm-num">@(row.AverageSeconds is { } s ? s.ToString("0.0", inv) + " s" : "-")</td>
+                        <td class="text-end"><a asp-action="Run" asp-route-id="@e.Id" class="small">Details</a></td>
                     </tr>
                 }
             </tbody>
@@ -78,5 +84,5 @@
 </div>
 @if (best is not null && finished.Count > 1)
 {
-    <p class="small text-muted mt-2">Highlighted: the highest pass rate, and the lower cost when pass rates tie.</p>
+    <p class="small text-muted mt-2">Best: the highest pass rate, and the lower cost when pass rates tie.</p>
 }

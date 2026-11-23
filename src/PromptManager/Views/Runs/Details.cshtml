@@ -1,5 +1,6 @@
 @using System.Globalization
 @using PromptManager.DTOs
+@using PromptManager.Infrastructure
 @using PromptManager.Models
 @model RunDetailsDto
 @{
@@ -7,88 +8,87 @@
     var inv = CultureInfo.InvariantCulture;
 }
 
-<nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Index">Library</a></li>
-        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.PromptId">@Model.PromptTitle</a></li>
-        <li class="breadcrumb-item"><a asp-action="Index" asp-route-promptId="@Model.PromptId">Runs</a></li>
-        <li class="breadcrumb-item active">#@Model.Id</li>
-    </ol>
+<nav class="pm-crumbs" aria-label="Breadcrumb">
+    <a asp-controller="Prompts" asp-action="Index">Library</a><span aria-hidden="true">/</span>
+    <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.PromptId">@Model.PromptTitle</a><span aria-hidden="true">/</span>
+    <a asp-action="Index" asp-route-promptId="@Model.PromptId">Runs</a><span aria-hidden="true">/</span>
+    <span>#@Model.Id</span>
 </nav>
 
+<header class="pm-head">
+    <div>
+        <h1>Run #@Model.Id</h1>
+        <p class="pm-sub">v@(Model.VersionNumber) of @Model.PromptTitle on <code>@Model.Model</code>, by @Model.RunBy.</p>
+    </div>
+    <div class="pm-actions"><partial name="_RunStatusBadge" model="Model.Status" /></div>
+</header>
+
 <div class="row g-4">
-    <div class="col-lg-8">
+    <div class="col-xl-8">
         @if (Model.Status == PromptRunStatus.Failed)
         {
-            <div class="alert alert-danger"><i class="bi bi-x-circle"></i> @Model.Error</div>
+            <div class="alert alert-danger">@Model.Error</div>
         }
         @if (!string.IsNullOrEmpty(Model.Note))
         {
-            <div class="alert alert-secondary"><i class="bi bi-info-circle"></i> @Model.Note</div>
+            <div class="alert alert-secondary">@Model.Note</div>
         }
         @if (Model.Status == PromptRunStatus.Truncated)
         {
-            <div class="alert alert-warning"><i class="bi bi-scissors"></i> The answer stopped at the token limit and is incomplete.</div>
+            <div class="alert alert-warning">The answer stopped at the token limit and is incomplete.</div>
         }
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-header"><h6 class="mb-0"><i class="bi bi-chat-left-text"></i> Output</h6></div>
-            <div class="card-body">
-                @if (string.IsNullOrEmpty(Model.Output))
-                {
-                    <p class="text-muted mb-0">No output.</p>
-                }
-                else
-                {
-                    <pre class="mb-0" style="white-space: pre-wrap;" data-testid="run-output">@Model.Output</pre>
-                }
-            </div>
-        </div>
+        <section class="pm-sheet mb-4" aria-label="Output">
+            <div class="pm-sheet-head"><span class="pm-sheet-title">Answer</span></div>
+            @if (string.IsNullOrEmpty(Model.Output))
+            {
+                <p class="text-muted m-0 p-4">No output.</p>
+            }
+            else
+            {
+                <pre class="pm-output" data-testid="run-output">@Model.Output</pre>
+            }
+        </section>
 
         @if (Model.Variables.Any())
         {
-            <div class="card shadow-sm mb-4">
-                <div class="card-header"><h6 class="mb-0"><i class="bi bi-braces"></i> Variables</h6></div>
-                <div class="card-body">
-                    <dl class="row mb-0 small">
-                        @foreach (var (name, value) in Model.Variables)
-                        {
-                            <dt class="col-sm-3"><code>{{@name}}</code></dt>
-                            <dd class="col-sm-9" style="white-space: pre-wrap;">@value</dd>
-                        }
-                    </dl>
-                </div>
-            </div>
+            <h2 class="pm-section-title">Values</h2>
+            <dl class="pm-values">
+                @foreach (var (name, value) in Model.Variables)
+                {
+                    <dt><span class="pm-var">{{@name}}</span></dt>
+                    <dd>@value</dd>
+                }
+            </dl>
         }
 
-        <div class="card shadow-sm">
-            <div class="card-header"><h6 class="mb-0"><i class="bi bi-send"></i> Prompt sent (v@(Model.VersionNumber))</h6></div>
-            <div class="card-body">
-                <pre class="bg-light p-2 rounded small mb-0" style="white-space: pre-wrap;">@Model.PromptText</pre>
-            </div>
-        </div>
+        <h2 class="pm-section-title">Text sent</h2>
+        <section class="pm-sheet" aria-label="Prompt sent">
+            <div class="pm-sheet-head"><span class="pm-sheet-title">v@(Model.VersionNumber), values filled in</span></div>
+            <pre class="pm-lines pm-lines-plain">@PromptMarkup.Lines(Model.PromptText)</pre>
+        </section>
     </div>
 
-    <div class="col-lg-4">
-        <div class="card shadow-sm">
-            <div class="card-header"><h6 class="mb-0"><i class="bi bi-speedometer2"></i> Run</h6></div>
+    <aside class="col-xl-4">
+        <section class="card">
             <div class="card-body">
-                <table class="table table-sm table-borderless mb-0">
-                    <tr><td class="text-muted small">Status</td><td><partial name="_RunStatusBadge" model="Model.Status" /></td></tr>
-                    <tr><td class="text-muted small">Model</td><td><code>@Model.Model</code></td></tr>
+                <div class="pm-stat-label">Cost</div>
+                <div class="pm-figure mb-3">$@Model.CostUsd.ToString("0.000000", inv)</div>
+                <dl class="pm-facts">
+                    <dt>Status</dt><dd>@Model.Status</dd>
+                    <dt>Model</dt><dd><code>@Model.Model</code></dd>
                     @if (Model.ServedByModel is not null)
                     {
-                        <tr><td class="text-muted small">Answered by</td><td><code>@Model.ServedByModel</code> <span class="small text-muted">(fallback)</span></td></tr>
+                        <dt>Answered by</dt><dd><code>@Model.ServedByModel</code> (fallback)</dd>
                     }
-                    <tr><td class="text-muted small">Input tokens</td><td>@Model.InputTokens.ToString("N0")</td></tr>
-                    <tr><td class="text-muted small">Output tokens</td><td>@Model.OutputTokens.ToString("N0")</td></tr>
-                    <tr><td class="text-muted small">Cost</td><td>$@Model.CostUsd.ToString("0.000000", inv)</td></tr>
-                    <tr><td class="text-muted small">Duration</td><td>@((Model.DurationMs / 1000.0).ToString("0.00", inv)) s</td></tr>
-                    <tr><td class="text-muted small">Stop reason</td><td class="small">@(Model.StopReason ?? "-")</td></tr>
-                    <tr><td class="text-muted small">Run by</td><td class="small">@Model.RunBy</td></tr>
-                    <tr><td class="text-muted small">At</td><td class="small">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss", inv) UTC</td></tr>
-                </table>
+                    <dt>Input tokens</dt><dd class="pm-num">@Model.InputTokens.ToString("N0")</dd>
+                    <dt>Output tokens</dt><dd class="pm-num">@Model.OutputTokens.ToString("N0")</dd>
+                    <dt>Duration</dt><dd class="pm-num">@((Model.DurationMs / 1000.0).ToString("0.00", inv)) s</dd>
+                    <dt>Stop reason</dt><dd>@(Model.StopReason ?? "none")</dd>
+                    <dt>Run by</dt><dd>@Model.RunBy</dd>
+                    <dt>At</dt><dd class="pm-num">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss", inv) UTC</dd>
+                </dl>
             </div>
-        </div>
-    </div>
+        </section>
+    </aside>
 </div>

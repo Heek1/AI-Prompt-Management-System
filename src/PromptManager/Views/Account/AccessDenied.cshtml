@@ -2,10 +2,9 @@
     ViewData["Title"] = "Not allowed";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-8 text-center py-5">
-        <h1 class="display-6 fw-bold">403</h1>
-        <p class="lead">Only the prompt's author or an admin can do that.</p>
-        <a class="btn btn-primary" asp-controller="Prompts" asp-action="Index">Back to the library</a>
-    </div>
-</div>
+<section class="pm-error">
+    <div class="pm-error-code" aria-hidden="true">403</div>
+    <h1>Not yours to change</h1>
+    <p class="pm-sub">Only the prompt's author or an admin can do that.</p>
+    <a class="btn btn-primary mt-3" asp-controller="Prompts" asp-action="Index">Back to the library</a>
+</section>

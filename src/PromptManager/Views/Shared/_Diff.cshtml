@@ -10,35 +10,24 @@
         _ => ""
     };
 }
-<style>
-    .diff-table { font-family: var(--bs-font-monospace); font-size: .8rem; table-layout: fixed; }
-    .diff-table td { white-space: pre-wrap; word-break: break-word; vertical-align: top; padding: 1px 6px; }
-    .diff-table td.num { color: var(--bs-secondary-color); text-align: right; user-select: none; }
-    .diff-del { background: #ffebe9; }
-    .diff-ins { background: #e6ffec; }
-    .diff-mod { background: #fff8c5; }
-    .diff-empty { background: #f6f8fa; }
-    .diff-del mark, .diff-mod.old mark { background: #ffc1c0; padding: 0; }
-    .diff-ins mark, .diff-mod.new mark { background: #abf2bc; padding: 0; }
-</style>
-<p class="small text-muted mb-2">
+<p class="pm-diff-summary">
     @if (Model.Diff.HasChanges)
     {
-        <span class="text-success">+@Model.Diff.Added added</span>
-        <span class="text-danger ms-2">-@Model.Diff.Removed removed</span>
-        <span class="text-warning ms-2">~@Model.Diff.Modified changed</span>
+        <span class="is-added">+@Model.Diff.Added added</span>
+        <span class="is-removed">-@Model.Diff.Removed removed</span>
+        <span class="is-changed">~@Model.Diff.Modified changed</span>
     }
     else
     {
         <span>No differences.</span>
     }
 </p>
-<div class="table-responsive border rounded">
+<div class="table-responsive">
     <table class="table table-sm diff-table mb-0" aria-label="Differences between @Model.LeftLabel and @Model.RightLabel">
         <colgroup>
             <col style="width: 3.5rem" /><col /><col style="width: 3.5rem" /><col />
         </colgroup>
-        <thead class="table-light">
+        <thead>
             <tr>
                 <th colspan="2">@Model.LeftLabel</th>
                 <th colspan="2">@Model.RightLabel</th>

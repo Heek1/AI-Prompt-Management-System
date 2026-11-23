@@ -1,11 +1,3 @@
 @using PromptManager.Models
 @model VersionStatus
-@{
-    var (css, label) = Model switch
-    {
-        VersionStatus.Production => ("bg-success", "production"),
-        VersionStatus.Tested => ("bg-info text-dark", "tested"),
-        _ => ("bg-light text-dark border", "draft")
-    };
-}
-<span class="badge @css" data-status="@Model">@label</span>
+<span class="pm-status pm-status-@Model.ToString().ToLowerInvariant()" data-status="@Model">@Model.ToString().ToLowerInvariant()</span>

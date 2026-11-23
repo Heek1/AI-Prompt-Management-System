@@ -1,105 +1,106 @@
 @inject PromptManager.Services.ICurrentUser CurrentUser
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    string? Current(string c, string? a = null) =>
+        string.Equals(controller, c, StringComparison.OrdinalIgnoreCase)
+        && (a is null || string.Equals(action, a, StringComparison.OrdinalIgnoreCase)) ? "page" : null;
+    var onLibrary = Current("Prompts") is not null && action != "Create" || Current("Evals") is not null;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - AI Prompt Manager</title>
+    <meta name="theme-color" content="#121a2e" />
+    <title>@ViewData["Title"] | Prompt Manager</title>
     @await RenderSectionAsync("Head", required: false)
+    <link rel="preload" href="~/fonts/instrument-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="~/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet" asp-append-version="true" />
-    <style>
-        body { background-color: #f8f9fa; }
-        .navbar-brand { font-weight: 700; letter-spacing: 0.5px; }
-        .badge-tool { font-size: 0.75rem; }
-        .star-rating span { color: #ffc107; }
-        .version-badge { font-size: 0.7rem; }
-        .prompt-card { transition: box-shadow 0.2s; }
-        .prompt-card:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .archived-overlay { opacity: 0.6; }
-    </style>
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" asp-controller="Prompts" asp-action="Index">
-                <i class="bi bi-lightning-charge-fill text-warning"></i> Prompt Manager
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Prompts" asp-action="Index">
-                            <i class="bi bi-collection"></i> Library
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Prompts" asp-action="Create">
-                            <i class="bi bi-plus-circle"></i> New Prompt
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Runs" asp-action="Index">
-                            <i class="bi bi-play-circle"></i> Runs
-                        </a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav ms-auto me-3 align-items-lg-center">
+    <a class="visually-hidden-focusable btn btn-marker position-absolute m-2" href="#main" style="z-index: 10">Skip to content</a>
+    <div class="pm-shell">
+        <aside class="pm-side" data-side>
+            <div class="pm-topbar">
+                <a class="pm-wordmark" asp-controller="Prompts" asp-action="Index" aria-label="Prompt Manager, library">
+                    <span class="pm-braces" aria-hidden="true">{{ }}</span>promptmanager
+                </a>
+                <button type="button" class="pm-menu-button" data-menu-toggle aria-expanded="false" aria-controls="pm-side-body">Menu</button>
+            </div>
+
+            <div class="pm-side-body" id="pm-side-body">
+                <nav aria-label="Main">
+                    <ul class="pm-nav">
+                        <li><a asp-controller="Prompts" asp-action="Index" aria-current="@(onLibrary ? "page" : null)">Library</a></li>
+                        <li><a asp-controller="Runs" asp-action="Index" aria-current="@Current("Runs")">Runs</a></li>
+                        @if (CurrentUser.IsSignedIn)
+                        {
+                            <li><a asp-controller="Prompts" asp-action="Create" aria-current="@Current("Prompts", "Create")">New prompt</a></li>
+                        }
+                    </ul>
+
                     @if (CurrentUser.IsSignedIn)
                     {
-                        <li class="nav-item">
-                            <span class="navbar-text small me-2">
-                                <i class="bi bi-person-circle"></i> @await CurrentUser.GetDisplayNameAsync()
-                                @if (CurrentUser.IsAdmin)
-                                {
-                                    <span class="badge bg-warning text-dark ms-1">admin</span>
-                                }
-                            </span>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="ApiKeys" asp-action="Index"><i class="bi bi-key"></i> API keys</a>
-                        </li>
-                        @if (CurrentUser.IsAdmin)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Costs" asp-action="Index"><i class="bi bi-cash-coin"></i> Costs</a>
-                            </li>
-                        }
-                        <li class="nav-item">
-                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-link nav-link">Sign out</button>
-                            </form>
-                        </li>
+                        <div class="pm-nav-group">Workspace</div>
+                        <ul class="pm-nav">
+                            <li><a asp-controller="ApiKeys" asp-action="Index" aria-current="@Current("ApiKeys")">API keys</a></li>
+                            @if (CurrentUser.IsAdmin)
+                            {
+                                <li><a asp-controller="Costs" asp-action="Index" aria-current="@Current("Costs")">Costs</a></li>
+                            }
+                        </ul>
+                    }
+                </nav>
+
+                <div class="pm-side-foot">
+                    @if (CurrentUser.IsSignedIn)
+                    {
+                        <div class="pm-user">
+                            <span>@await CurrentUser.GetDisplayNameAsync()</span>
+                            @if (CurrentUser.IsAdmin)
+                            {
+                                <span class="pm-role">admin</span>
+                            }
+                        </div>
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="mt-1">
+                            <button type="submit" class="btn btn-link">Sign out</button>
+                        </form>
                     }
                     else
                     {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Sign in</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Register">Create account</a></li>
+                        <div class="d-grid gap-2">
+                            <a class="btn btn-marker btn-sm" asp-controller="Account" asp-action="Register">Create account</a>
+                            <a asp-controller="Account" asp-action="Login" class="text-center">Sign in</a>
+                        </div>
                     }
-                </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+        </aside>
 
-    <div class="container mb-5">
-        @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle-fill"></i> @TempData["Success"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle-fill"></i> @TempData["Error"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
+        <main class="pm-main" id="main">
+            <div class="pm-content">
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="status">
+                        @TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button>
+                    </div>
+                }
 
-        @RenderBody()
+                @RenderBody()
+            </div>
+        </main>
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>

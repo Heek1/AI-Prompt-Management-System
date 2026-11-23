@@ -10,6 +10,15 @@ document.addEventListener('click', function (event) {
     }
 });
 
+// Mobile: the sidebar's menu button opens and closes the navigation.
+document.addEventListener('click', function (event) {
+    const toggle = event.target.closest('[data-menu-toggle]');
+    if (!toggle) return;
+    const side = toggle.closest('[data-side]');
+    const open = side.classList.toggle('is-open');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+
 // <button data-copy-target="#id"> copies that element's text.
 document.addEventListener('click', function (event) {
     const button = event.target.closest('[data-copy-target]');

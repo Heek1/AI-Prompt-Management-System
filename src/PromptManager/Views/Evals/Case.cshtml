@@ -5,76 +5,78 @@
     ViewData["Title"] = c.Id == 0 ? "New eval case" : "Edit eval case";
 }
 
-<nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.Prompt.Id">@Model.Prompt.Title</a></li>
-        <li class="breadcrumb-item"><a asp-action="Index" asp-route-id="@Model.Prompt.Id">Evals</a></li>
-        <li class="breadcrumb-item active">@ViewData["Title"]</li>
-    </ol>
+<nav class="pm-crumbs" aria-label="Breadcrumb">
+    <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.Prompt.Id">@Model.Prompt.Title</a><span aria-hidden="true">/</span>
+    <a asp-action="Index" asp-route-id="@Model.Prompt.Id">Evals</a><span aria-hidden="true">/</span>
+    <span>@(c.Id == 0 ? "New case" : c.Name)</span>
 </nav>
 
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <form asp-action="Case" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="Id" value="@c.Id" />
-                    <input type="hidden" name="PromptId" value="@c.PromptId" />
-                    <div asp-validation-summary="All" class="alert alert-danger small"></div>
+<header class="pm-head">
+    <div>
+        <h1>@(c.Id == 0 ? "New case" : "Edit case")</h1>
+        <p class="pm-sub">An input, and what a good answer must or must not contain. The case passes only when every check passes.</p>
+    </div>
+</header>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold" for="Name">Name</label>
-                        <input id="Name" name="Name" value="@c.Name" class="form-control" maxlength="100" placeholder="e.g. short English sentence" />
-                    </div>
+<form asp-action="Case" method="post" class="pm-form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="Id" value="@c.Id" />
+    <input type="hidden" name="PromptId" value="@c.PromptId" />
 
-                    @if (Model.Variables.Any())
-                    {
-                        <h6 class="mt-4">Input</h6>
-                        @foreach (var name in Model.Variables)
-                        {
-                            <div class="mb-2">
-                                <label class="form-label small mb-0" for="var-@name"><code>{{@name}}</code></label>
-                                <textarea id="var-@name" name="Variables[@name]" class="form-control form-control-sm" rows="2" maxlength="20000">@c.Variables.GetValueOrDefault(name)</textarea>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <p class="small text-muted">This prompt has no <code>{{variables}}</code>, so every case sends the same text; the checks are what differ.</p>
-                    }
+    <div class="pm-form-main">
+        <div asp-validation-summary="All" class="alert alert-danger small"></div>
 
-                    <h6 class="mt-4">Checks <span class="text-muted fw-normal small">(a case passes when all of them pass)</span></h6>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label small fw-semibold" for="MustContain">Must contain (one per line)</label>
-                            <textarea id="MustContain" name="MustContain" class="form-control form-control-sm font-monospace" rows="3">@c.MustContain</textarea>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label small fw-semibold" for="MustNotContain">Must not contain (one per line)</label>
-                            <textarea id="MustNotContain" name="MustNotContain" class="form-control form-control-sm font-monospace" rows="3">@c.MustNotContain</textarea>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold" for="Regex">Must match regular expression</label>
-                        <input id="Regex" name="Regex" value="@c.Regex" class="form-control form-control-sm font-monospace" maxlength="1000" placeholder="e.g. ^\d+ items$" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold" for="JsonSchema">Must be JSON matching this schema</label>
-                        <textarea id="JsonSchema" name="JsonSchema" class="form-control form-control-sm font-monospace" rows="4" placeholder='{"type": "object", "required": ["title"]}'>@c.JsonSchema</textarea>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label small fw-semibold" for="JudgeRubric">Judge rubric</label>
-                        <textarea id="JudgeRubric" name="JudgeRubric" class="form-control form-control-sm" rows="3" placeholder="e.g. The translation is natural Ukrainian and keeps the polite tone.">@c.JudgeRubric</textarea>
-                        <div class="form-text">Graded by a judge model you choose when running the eval; this costs one extra call per case.</div>
-                    </div>
+        <div class="mb-4">
+            <label class="form-label" for="Name">Name</label>
+            <input id="Name" name="Name" value="@c.Name" class="form-control form-control-lg" maxlength="100" placeholder="Short English sentence" />
+        </div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save case</button>
-                        <a asp-action="Index" asp-route-id="@Model.Prompt.Id" class="btn btn-outline-secondary">Cancel</a>
-                    </div>
-                </form>
+        <h2 class="pm-section-title mt-0">Input</h2>
+        @if (Model.Variables.Any())
+        {
+            @foreach (var name in Model.Variables)
+            {
+                <div class="mb-3">
+                    <label class="form-label" for="var-@name"><span class="pm-var">{{@name}}</span></label>
+                    <textarea id="var-@name" name="Variables[@name]" class="form-control" rows="2" maxlength="20000">@c.Variables.GetValueOrDefault(name)</textarea>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="text-muted">This prompt has no <code>{{variables}}</code>, so every case sends the same text; the checks are what differ.</p>
+        }
+
+        <h2 class="pm-section-title">Checks</h2>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label" for="MustContain">Must contain, one per line</label>
+                <textarea id="MustContain" name="MustContain" class="form-control pm-editor" rows="4">@c.MustContain</textarea>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label" for="MustNotContain">Must not contain, one per line</label>
+                <textarea id="MustNotContain" name="MustNotContain" class="form-control pm-editor" rows="4">@c.MustNotContain</textarea>
             </div>
         </div>
+        <div class="mb-3">
+            <label class="form-label" for="Regex">Must match regular expression</label>
+            <input id="Regex" name="Regex" value="@c.Regex" class="form-control pm-editor" maxlength="1000" placeholder="^\d+ items$" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="JsonSchema">Must be JSON matching this schema</label>
+            <textarea id="JsonSchema" name="JsonSchema" class="form-control pm-editor" rows="4" placeholder='{"type": "object", "required": ["title"]}'>@c.JsonSchema</textarea>
+        </div>
     </div>
-</div>
+
+    <aside class="pm-form-side">
+        <div class="mb-4">
+            <label class="form-label" for="JudgeRubric">Judge rubric</label>
+            <textarea id="JudgeRubric" name="JudgeRubric" class="form-control" rows="6" placeholder="The translation is natural Ukrainian and keeps the polite tone.">@c.JudgeRubric</textarea>
+            <div class="form-text">Graded by a judge model you choose when running the eval; this costs one extra call per case.</div>
+        </div>
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-marker">Save case</button>
+            <a asp-action="Index" asp-route-id="@Model.Prompt.Id" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </aside>
+</form>

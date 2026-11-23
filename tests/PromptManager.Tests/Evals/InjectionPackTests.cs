@@ -168,8 +168,9 @@ public sealed class InjectionPackEndpointsTests : IDisposable, IAsyncLifetime
         // Echo repeats the attack, canary included, so every plain-text attack
         // succeeds. It cannot decode base64, so that one attack fails on it.
         Assert.Matches(new Regex(@"1\s*/\s*6"), html);
-        // The pass/fail icon is rendered just before the case name.
-        var at = html.IndexOf("Injection: encoded instruction", StringComparison.Ordinal);
+        // The pass/fail icon is rendered just before the case name in the case
+        // list; the name also appears earlier, in the signal strip's tooltips.
+        var at = html.LastIndexOf("Injection: encoded instruction", StringComparison.Ordinal);
         Assert.Contains("bi-check-circle-fill", html[Math.Max(0, at - 250)..at]);
     }
 

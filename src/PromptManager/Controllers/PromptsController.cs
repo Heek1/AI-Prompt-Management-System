@@ -170,7 +170,8 @@ public class PromptsController : Controller
         if (!_user.CanManage(prompt.OwnerId)) return Forbid();
 
         ViewBag.Prompt = prompt;
-        return View(new CreatePromptVersionDto { PromptId = id });
+        // Start from the current text: most versions are small edits of it.
+        return View(new CreatePromptVersionDto { PromptId = id, PromptText = prompt.CurrentText });
     }
 
     // POST /Prompts/CreateVersion

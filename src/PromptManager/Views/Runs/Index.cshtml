@@ -4,37 +4,47 @@
     ViewData["Title"] = Model.PromptTitle is null ? "Runs" : $"Runs of {Model.PromptTitle}";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0"><i class="bi bi-play-circle text-primary"></i> @ViewData["Title"]</h2>
-    <span class="badge bg-secondary fs-6">@Model.TotalCount runs</span>
-</div>
-
 @if (Model.PromptId is not null)
 {
-    <p>
-        <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.PromptId">Back to the prompt</a>
-        &middot; <a asp-action="Index">All runs</a>
-    </p>
+    <nav class="pm-crumbs" aria-label="Breadcrumb">
+        <a asp-controller="Prompts" asp-action="Index">Library</a><span aria-hidden="true">/</span>
+        <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.PromptId">@Model.PromptTitle</a><span aria-hidden="true">/</span>
+        <span>Runs</span>
+    </nav>
 }
+
+<header class="pm-head">
+    <div>
+        <h1>Runs</h1>
+        <p class="pm-sub">
+            @Model.TotalCount @(Model.TotalCount == 1 ? "run" : "runs")@(Model.PromptTitle is null ? " across the library" : $" of {Model.PromptTitle}"). Each one keeps the exact text sent, the answer, tokens and cost.
+        </p>
+    </div>
+    @if (Model.PromptId is not null)
+    {
+        <div class="pm-actions">
+            <a asp-action="Index" class="btn btn-outline-secondary">All runs</a>
+        </div>
+    }
+</header>
 
 @if (!Model.Runs.Any())
 {
-    <div class="text-center py-5 text-muted">
-        <i class="bi bi-inbox display-4"></i>
-        <p class="mt-3">No runs yet. Open a prompt and press <strong>Run</strong>.</p>
+    <div class="pm-empty">
+        <h2>No runs yet</h2>
+        <p>Open a prompt, fill in its variables and press Run. The answer and its cost land here.</p>
+        <a asp-controller="Prompts" asp-action="Index" class="btn btn-outline-secondary">Open the library</a>
     </div>
 }
 else
 {
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <partial name="_RunTable" model="(Model.Runs, Model.PromptId is null)" />
-        </div>
+    <div class="pm-list">
+        <partial name="_RunTable" model="(Model.Runs, Model.PromptId is null)" />
     </div>
 
     @if (Model.PageCount > 1)
     {
-        <nav class="mt-3" aria-label="Runs pages">
+        <nav class="mt-4" aria-label="Runs pages">
             <ul class="pagination">
                 @for (var i = 1; i <= Model.PageCount; i++)
                 {

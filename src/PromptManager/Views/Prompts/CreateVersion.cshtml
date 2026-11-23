@@ -1,62 +1,61 @@
 @using PromptManager.DTOs
+@using PromptManager.Infrastructure
 @model CreatePromptVersionDto
 @{
-    ViewData["Title"] = "Create New Version";
+    ViewData["Title"] = "New version";
     var prompt = ViewBag.Prompt as PromptManager.DTOs.PromptDetailsDto;
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow-sm mb-3">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0"><i class="bi bi-git"></i> Create New Version</h5>
-            </div>
-            <div class="card-body">
-                @if (prompt != null)
-                {
-                    <div class="alert alert-light border mb-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>@prompt.Title</strong>
-                                <span class="badge bg-secondary ms-2">Current: v@(prompt.CurrentVersion)</span>
-                                <span class="badge bg-primary ms-1">New: v@(prompt.CurrentVersion + 1)</span>
-                            </div>
-                            <small class="text-muted">@prompt.Category · @prompt.AiTool</small>
-                        </div>
-                    </div>
+<nav class="pm-crumbs" aria-label="Breadcrumb">
+    <a asp-action="Index">Library</a><span aria-hidden="true">/</span>
+    @if (prompt != null)
+    {
+        <a asp-action="Details" asp-route-id="@prompt.Id">@prompt.Title</a><span aria-hidden="true">/</span>
+    }
+    <span>New version</span>
+</nav>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small text-muted">CURRENT VERSION TEXT (v@(prompt.CurrentVersion))</label>
-                        <pre class="bg-light p-3 rounded small" style="white-space: pre-wrap; max-height: 150px; overflow-y: auto;">@prompt.CurrentText</pre>
-                    </div>
-                }
+<header class="pm-head">
+    <div>
+        <h1>@(prompt != null ? $"v{prompt.CurrentVersion + 1}" : "New version")</h1>
+        <p class="pm-sub">The new version starts as a draft. Production keeps serving the current one until you promote it.</p>
+    </div>
+</header>
 
-                <form asp-action="CreateVersion" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" asp-for="PromptId" />
-
-                    <div class="mb-3">
-                        <label asp-for="PromptText" class="form-label fw-semibold">New Prompt Text</label>
-                        <textarea asp-for="PromptText" class="form-control" rows="8"
-                                  placeholder="Enter the updated prompt text (min. 20 characters)..."></textarea>
-                        <span asp-validation-for="PromptText" class="text-danger small"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="ChangeNote" class="form-label fw-semibold">Change Note</label>
-                        <input asp-for="ChangeNote" class="form-control"
-                               placeholder="Describe what changed in this version..." />
-                    </div>
-
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-info text-white">
-                            <i class="bi bi-check-lg"></i> Create Version
-                        </button>
-                        <a asp-action="Details" asp-route-id="@Model.PromptId" class="btn btn-outline-secondary">Cancel</a>
-                    </div>
-                </form>
-            </div>
+<div class="row g-4">
+    @if (prompt != null)
+    {
+        <div class="col-lg-6">
+            <section class="pm-sheet h-100" aria-label="Current text">
+                <div class="pm-sheet-head">
+                    <span class="pm-sheet-title">v@(prompt.CurrentVersion), now</span>
+                    <span class="pm-sheet-meta">@prompt.Category, @prompt.AiTool</span>
+                </div>
+                <pre class="pm-lines" style="max-height: 460px; overflow-y: auto">@PromptMarkup.Lines(prompt.CurrentText)</pre>
+            </section>
         </div>
+    }
+    <div class="@(prompt != null ? "col-lg-6" : "col-lg-8")">
+        <form asp-action="CreateVersion" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="PromptId" />
+
+            <div class="mb-3">
+                <label asp-for="PromptText" class="form-label">New text</label>
+                <textarea asp-for="PromptText" class="form-control pm-editor" rows="14"></textarea>
+                <span asp-validation-for="PromptText" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ChangeNote" class="form-label">What changed</label>
+                <input asp-for="ChangeNote" class="form-control" placeholder="Shorter answer, asks for the order number first" />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-marker">Save as draft</button>
+                <a asp-action="Details" asp-route-id="@Model.PromptId" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
     </div>
 </div>
 
