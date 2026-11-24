@@ -16,6 +16,9 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Written to only on main, to publish the coverage badge.
+    permissions:
+      contents: write
     env:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
@@ -49,8 +52,22 @@ jobs:
         if: always()
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
-          reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:coverage -reporttypes:"MarkdownSummaryGithub;HtmlInline;Badges" -assemblyfilters:"+PromptManager" -classfilters:"-PromptManager.Migrations.*"
+          reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:coverage -reporttypes:"MarkdownSummaryGithub;HtmlInline;JsonSummary" -assemblyfilters:"+PromptManager" -classfilters:"-PromptManager.Migrations.*"
           cat coverage/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      # The badge reads a shields.io endpoint file kept on its own branch, so
+      # main's history does not fill with coverage commits.
+      - name: Publish the coverage badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          line=$(jq -r '.summary.linecoverage' coverage/Summary.json)
+          color=$(jq -rn --argjson p "$line" 'if $p >= 90 then "brightgreen" elif $p >= 80 then "green" elif $p >= 70 then "yellowgreen" else "yellow" end')
+          mkdir -p badge && cd badge
+          jq -n --arg m "$line%" --arg c "$color" '{schemaVersion: 1, label: "coverage", message: $m, color: $c}' > coverage.json
+          git init -q -b badges
+          git add coverage.json
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "Coverage $line%"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" badges
 
       - name: Upload coverage report
         if: always()
