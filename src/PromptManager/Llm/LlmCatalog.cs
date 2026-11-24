@@ -17,7 +17,8 @@ public sealed class LlmCatalog
     public LlmCatalog(IOptions<LlmOptions> options, IEnumerable<ILlmClient> clients)
     {
         _options = options.Value;
-        _clients = clients.ToDictionary(c => c.Provider, StringComparer.OrdinalIgnoreCase);
+        _clients = clients.ToDictionary(c => c.Provider, c => (ILlmClient)new InstrumentedLlmClient(c, Find),
+            StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
