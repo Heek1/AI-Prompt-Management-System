@@ -1,29 +1,29 @@
 @using PromptManager.DTOs
 @model RunPageDto
 @{
-    ViewData["Title"] = Model.PromptTitle is null ? "Runs" : $"Runs of {Model.PromptTitle}";
+    ViewData["Title"] = Model.PromptTitle is null ? "Runs" : T["Runs of {0}", Model.PromptTitle].Value;
 }
 
 @if (Model.PromptId is not null)
 {
-    <nav class="pm-crumbs" aria-label="Breadcrumb">
-        <a asp-controller="Prompts" asp-action="Index">Library</a><span aria-hidden="true">/</span>
+    <nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
+        <a asp-controller="Prompts" asp-action="Index">@T["Library"]</a><span aria-hidden="true">/</span>
         <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.PromptId">@Model.PromptTitle</a><span aria-hidden="true">/</span>
-        <span>Runs</span>
+        <span>@T["Runs"]</span>
     </nav>
 }
 
 <header class="pm-head">
     <div>
-        <h1>Runs</h1>
+        <h1>@T["Runs"]</h1>
         <p class="pm-sub">
-            @Model.TotalCount @(Model.TotalCount == 1 ? "run" : "runs")@(Model.PromptTitle is null ? " across the library" : $" of {Model.PromptTitle}"). Each one keeps the exact text sent, the answer, tokens and cost.
+            @T.Count(Model.TotalCount, "run", "runs")@(Model.PromptTitle is null ? T[" across the library"].Value : T[" of {0}", Model.PromptTitle].Value). @T["Each one keeps the exact text sent, the answer, tokens and cost."]
         </p>
     </div>
     @if (Model.PromptId is not null)
     {
         <div class="pm-actions">
-            <a asp-action="Index" class="btn btn-outline-secondary">All runs</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">@T["All runs"]</a>
         </div>
     }
 </header>
@@ -31,9 +31,9 @@
 @if (!Model.Runs.Any())
 {
     <div class="pm-empty">
-        <h2>No runs yet</h2>
-        <p>Open a prompt, fill in its variables and press Run. The answer and its cost land here.</p>
-        <a asp-controller="Prompts" asp-action="Index" class="btn btn-outline-secondary">Open the library</a>
+        <h2>@T["No runs yet"]</h2>
+        <p>@T["Open a prompt, fill in its variables and press Run. The answer and its cost land here."]</p>
+        <a asp-controller="Prompts" asp-action="Index" class="btn btn-outline-secondary">@T["Open the library"]</a>
     </div>
 }
 else
@@ -44,7 +44,7 @@ else
 
     @if (Model.PageCount > 1)
     {
-        <nav class="mt-4" aria-label="Runs pages">
+        <nav class="mt-4" aria-label="@T["Runs pages"]">
             <ul class="pagination">
                 @for (var i = 1; i <= Model.PageCount; i++)
                 {

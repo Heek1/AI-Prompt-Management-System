@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#121a2e" />
-    <title>@ViewData["Title"] | Prompt Manager</title>
+    <title>@T[ViewData["Title"]?.ToString() ?? ""] | Prompt Manager</title>
     <script src="~/js/theme.js" asp-append-version="true"></script>
     <meta name="color-scheme" content="light dark" />
     <link rel="preload" href="~/fonts/instrument-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
@@ -14,8 +14,8 @@
 </head>
 <body>
     <div class="pm-auth">
-        <section class="pm-auth-art" aria-label="About Prompt Manager">
-            <a class="pm-wordmark" asp-controller="Prompts" asp-action="Index" aria-label="Prompt Manager, library">
+        <section class="pm-auth-art" aria-label="@T["About Prompt Manager"]">
+            <a class="pm-wordmark" asp-controller="Prompts" asp-action="Index" aria-label="@T["Prompt Manager, library"]">
                 <span class="pm-braces" aria-hidden="true">{{ }}</span>promptmanager
             </a>
 
@@ -27,14 +27,15 @@
             </figure>
             </div>
 
-            <p class="pm-auth-note">Write a prompt once. Version it, run it on real models, test it with evals, and ship only the version that passed.</p>
+            <partial name="_LanguageSwitch" />
+            <p class="pm-auth-note">@T["Write a prompt once. Version it, run it on real models, test it with evals, and ship only the version that passed."]</p>
         </section>
 
         <main class="pm-auth-form" id="main">
             <div class="pm-auth-inner">
                 @if (TempData["Error"] != null)
                 {
-                    <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
+                    <div class="alert alert-danger" role="alert">@T[TempData["Error"]!.ToString()!]</div>
                 }
                 @RenderBody()
             </div>

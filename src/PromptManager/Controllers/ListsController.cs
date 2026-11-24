@@ -11,9 +11,11 @@ namespace PromptManager.Controllers;
 public class ListsController : Controller
 {
     private readonly ILookupService _lookups;
+    private readonly Microsoft.Extensions.Localization.IStringLocalizer<PromptManager.SharedResource> _t;
 
-    public ListsController(ILookupService lookups)
+    public ListsController(ILookupService lookups, Microsoft.Extensions.Localization.IStringLocalizer<PromptManager.SharedResource> t)
     {
+        _t = t;
         _lookups = lookups;
     }
 
@@ -33,7 +35,7 @@ public class ListsController : Controller
     {
         var error = await _lookups.AddAsync(kind, name ?? string.Empty);
         if (error is null)
-            TempData["Success"] = $"Added \"{name!.Trim()}\".";
+            TempData["Success"] = _t["Added \"{0}\".", name!.Trim()].Value;
         else
             TempData["Error"] = error;
         return RedirectToAction(nameof(Index));

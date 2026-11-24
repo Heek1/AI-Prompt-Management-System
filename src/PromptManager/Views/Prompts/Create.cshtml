@@ -4,14 +4,14 @@
     ViewData["Title"] = "New prompt";
 }
 
-<nav class="pm-crumbs" aria-label="Breadcrumb">
-    <a asp-action="Index">Library</a><span aria-hidden="true">/</span><span>New prompt</span>
+<nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
+    <a asp-action="Index">@T["Library"]</a><span aria-hidden="true">/</span><span>@T["New prompt"]</span>
 </nav>
 
 <header class="pm-head">
     <div>
-        <h1>New prompt</h1>
-        <p class="pm-sub">Write the text once, mark the parts that change as <span class="pm-var">{{name}}</span>, and it becomes v1.</p>
+        <h1>@T["New prompt"]</h1>
+        <p class="pm-sub">@T["Write the text once, mark the parts that change as"] <span class="pm-var">{{name}}</span>@T[", and it becomes v1."]</p>
     </div>
 </header>
 
@@ -19,30 +19,30 @@
     @Html.AntiForgeryToken()
     <div class="pm-form-main">
         <div class="mb-3">
-            <label asp-for="Title" class="form-label"></label>
-            <input asp-for="Title" class="form-control form-control-lg" placeholder="Support reply in English" />
+            <label asp-for="Title" class="form-label">@T["Title"]</label>
+            <input asp-for="Title" class="form-control form-control-lg" placeholder="@T["Support reply in English"]" />
             <span asp-validation-for="Title" class="text-danger small"></span>
         </div>
 
         <div class="mb-3">
-            <label asp-for="PromptText" class="form-label">Prompt text</label>
+            <label asp-for="PromptText" class="form-label">@T["Prompt text"]</label>
             <textarea asp-for="PromptText" class="form-control pm-editor" rows="12"
                       placeholder="You are a support agent. Answer {{question}} politely and in under 120 words."></textarea>
             <span asp-validation-for="PromptText" class="text-danger small"></span>
-            <div class="form-text">At least 20 characters. Every <span class="pm-var">{{name}}</span> becomes a field when you run it.</div>
+            <div class="form-text">@T["At least 20 characters. Every"] <span class="pm-var">{{name}}</span> @T["becomes a field when you run it."]</div>
         </div>
     </div>
 
     <aside class="pm-form-side">
         <div class="mb-3">
-            <label asp-for="Description" class="form-label">Description</label>
-            <textarea asp-for="Description" class="form-control" rows="3" placeholder="What it is for and who uses it"></textarea>
+            <label asp-for="Description" class="form-label">@T["Description"]</label>
+            <textarea asp-for="Description" class="form-control" rows="3" placeholder="@T["What it is for and who uses it"]"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="Category" class="form-label"></label>
+            <label asp-for="Category" class="form-label">@T["Category"]</label>
             <select asp-for="Category" class="form-select">
-                <option value="">Choose a category</option>
+                <option value="">@T["Choose a category"]</option>
                 @foreach (var cat in (ViewBag.Categories as List<string>) ?? new List<string>())
                 {
                     <option value="@cat">@cat</option>
@@ -52,9 +52,9 @@
         </div>
 
         <div class="mb-3">
-            <label asp-for="AiTool" class="form-label">Tool</label>
+            <label asp-for="AiTool" class="form-label">@T["Tool"]</label>
             <select asp-for="AiTool" class="form-select">
-                <option value="">Choose a tool</option>
+                <option value="">@T["Choose a tool"]</option>
                 @foreach (var tool in (ViewBag.AiTools as List<string>) ?? new List<string>())
                 {
                     <option value="@tool">@tool</option>
@@ -64,15 +64,15 @@
         </div>
 
         <div class="mb-4">
-            <label asp-for="Tags" class="form-label">Tags</label>
+            <label asp-for="Tags" class="form-label">@T["Tags"]</label>
             <input asp-for="Tags" class="form-control" placeholder="support, email, en" />
-            <div class="form-text">Separated by commas, up to 8. Prompts with the same tag form a collection.</div>
+            <div class="form-text">@T["Separated by commas, up to 8. Prompts with the same tag form a collection."]</div>
             <span asp-validation-for="Tags" class="text-danger small"></span>
         </div>
 
         <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-marker">Create prompt</button>
-            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-marker">@T["Create prompt"]</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">@T["Cancel"]</a>
         </div>
     </aside>
 </form>

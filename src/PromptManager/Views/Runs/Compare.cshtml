@@ -9,15 +9,15 @@
     var diffModel = (Model.OutputDiff, $"Run #{Model.Left.Id} (v{Model.Left.VersionNumber})", $"Run #{Model.Right.Id} (v{Model.Right.VersionNumber})");
 }
 
-<nav class="pm-crumbs" aria-label="Breadcrumb">
-    <a asp-controller="Prompts" asp-action="Index">Library</a><span aria-hidden="true">/</span>
+<nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
+    <a asp-controller="Prompts" asp-action="Index">@T["Library"]</a><span aria-hidden="true">/</span>
     <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.Left.PromptId">@Model.Left.PromptTitle</a><span aria-hidden="true">/</span>
-    <span>Compare runs</span>
+    <span>@T["Compare runs"]</span>
 </nav>
 
 <header class="pm-head">
     <div>
-        <h1>Two answers, side by side</h1>
+        <h1>@T["Two answers, side by side"]</h1>
         <p class="pm-sub">Run #@Model.Left.Id on v@(Model.Left.VersionNumber) and run #@Model.Right.Id on v@(Model.Right.VersionNumber), same values.</p>
     </div>
 </header>
@@ -49,7 +49,7 @@
     }
 </div>
 
-<h2 class="pm-section-title">What differs</h2>
+<h2 class="pm-section-title">@T["What differs"]</h2>
 <section class="pm-sheet">
     <partial name="_Diff" model="diffModel" />
 </section>

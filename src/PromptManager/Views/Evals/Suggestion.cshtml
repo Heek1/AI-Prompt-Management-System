@@ -7,18 +7,18 @@
     var diffModel = (Model.Diff, $"v{s.BaseVersion}", "suggested");
 }
 
-<nav class="pm-crumbs" aria-label="Breadcrumb">
+<nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
     <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.Prompt.Id">@Model.Prompt.Title</a><span aria-hidden="true">/</span>
     <a asp-action="Run" asp-route-id="@Model.Eval.Id">Eval #@Model.Eval.Id</a><span aria-hidden="true">/</span>
-    <span>Suggested revision</span>
+    <span>@T["Suggested revision"]</span>
 </nav>
 
 <header class="pm-head">
     <div>
-        <h1>Suggested revision</h1>
+        <h1>@T["Suggested revision"]</h1>
         <p class="pm-sub">
-            From eval #@Model.Eval.Id (@Model.Eval.PassedCases/@Model.Eval.TotalCases passed on v@(s.BaseVersion)) by <code>@s.Model</code>,
-            $@s.CostUsd.ToString("0.0000", CultureInfo.InvariantCulture). Nothing is saved until you accept it.
+            @T["From eval #{0} ({1}/{2} passed on v{3}) by", Model.Eval.Id, Model.Eval.PassedCases, Model.Eval.TotalCases, s.BaseVersion] <code>@s.Model</code>,
+            $@s.CostUsd.ToString("0.0000", CultureInfo.InvariantCulture). @T["Nothing is saved until you accept it."]
         </p>
     </div>
 </header>
@@ -32,24 +32,24 @@
     <div class="alert alert-warning">@w</div>
 }
 
-<section class="pm-sheet mb-4" aria-label="Changes">
+<section class="pm-sheet mb-4" aria-label="@T["Changes"]">
     <partial name="_Diff" model="diffModel" />
 </section>
 
 <form asp-action="AcceptSuggestion" method="post" class="card">
     <input type="hidden" name="evalRunId" value="@Model.Eval.Id" />
     <div class="card-body">
-        <label class="form-label" for="suggested-text">Text to save, edit it if you like</label>
+        <label class="form-label" for="suggested-text">@T["Text to save, edit it if you like"]</label>
         <textarea id="suggested-text" name="text" class="form-control pm-editor" rows="12">@s.RevisedText</textarea>
-        <label class="form-label mt-3" for="suggested-note">What changed</label>
+        <label class="form-label mt-3" for="suggested-note">@T["What changed"]</label>
         <input id="suggested-note" name="changeNote" class="form-control" maxlength="500" value="Suggested from eval #@Model.Eval.Id" />
         <div class="d-flex flex-wrap gap-2 mt-3">
-            <button type="submit" class="btn btn-marker">Save as draft and run the eval</button>
-            <a asp-action="Run" asp-route-id="@Model.Eval.Id" class="btn btn-outline-secondary">Discard</a>
+            <button type="submit" class="btn btn-marker">@T["Save as draft and run the eval"]</button>
+            <a asp-action="Run" asp-route-id="@Model.Eval.Id" class="btn btn-outline-secondary">@T["Discard"]</a>
         </div>
         <p class="form-text mb-0 mt-2">
-            The eval runs on <code>@Model.Eval.Model</code>@(Model.Eval.JudgeModel is null ? "" : $" with judge {Model.Eval.JudgeModel}"), as before.
-            Production stays on its current version until you promote the new one.
+            @T["The eval runs on"] <code>@Model.Eval.Model</code>@(Model.Eval.JudgeModel is null ? "" : T[" with judge {0}", Model.Eval.JudgeModel].Value), @T["as before."]
+            @T["Production stays on its current version until you promote the new one."]
         </p>
     </div>
 </form>

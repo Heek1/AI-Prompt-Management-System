@@ -22,10 +22,12 @@ public class EvalsController : Controller
     private readonly ICurrentUser _user;
     private readonly ImprovementAssistant _assistant;
     private readonly ICollaborationService _collab;
+    private readonly Microsoft.Extensions.Localization.IStringLocalizer<PromptManager.SharedResource> _t;
 
     public EvalsController(IEvalService evals, IPromptService prompts, LlmCatalog catalog, ICurrentUser user,
-        ImprovementAssistant assistant, ICollaborationService collab)
+        ImprovementAssistant assistant, ICollaborationService collab, Microsoft.Extensions.Localization.IStringLocalizer<PromptManager.SharedResource> t)
     {
+        _t = t;
         _collab = collab;
         _assistant = assistant;
         _evals = evals;
@@ -112,7 +114,7 @@ public class EvalsController : Controller
 
         var (added, error) = await _evals.AddInjectionPackAsync(promptId, variable ?? "");
         if (error is null)
-            TempData["Success"] = $"Added {added} prompt-injection cases attacking through {{{{{variable}}}}}. Run an eval to see how the prompt holds up.";
+            TempData["Success"] = _t["Added {0} prompt-injection cases attacking through {1}. Run an eval to see how the prompt holds up.", added, "{{" + variable + "}}"].Value;
         else
             TempData["Error"] = error;
         return RedirectToAction(nameof(Index), new { id = promptId });
@@ -269,7 +271,7 @@ public class EvalsController : Controller
 
         if (string.IsNullOrWhiteSpace(text) || text.Length is < FieldLimits.PromptTextMin or > FieldLimits.PromptText)
         {
-            TempData["Error"] = $"The text must be between {FieldLimits.PromptTextMin} and {FieldLimits.PromptText} characters.";
+            TempData["Error"] = _t["The text must be between {0} and {1} characters.", FieldLimits.PromptTextMin, FieldLimits.PromptText].Value;
             return RedirectToAction(nameof(Run), new { id = evalRunId });
         }
 
@@ -304,10 +306,10 @@ public class EvalsController : Controller
         });
         if (newEvalId is null)
         {
-            TempData["Error"] = $"Saved v{version} as a draft, but the eval did not start: {error}";
+            TempData["Error"] = _t["Saved v{0} as a draft, but the eval did not start: {1}", version, error ?? ""].Value;
             return RedirectToAction("Details", "Prompts", new { id = prompt.Id });
         }
-        TempData["Success"] = $"Saved v{version} as a draft and started the same eval on it.";
+        TempData["Success"] = _t["Saved v{0} as a draft and started the same eval on it.", version].Value;
         return RedirectToAction(nameof(Run), new { id = newEvalId });
     }
 

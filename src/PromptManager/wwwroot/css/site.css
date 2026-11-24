@@ -748,3 +748,4 @@ a.pm-tag-link:hover { background: var(--marker); color: var(--on-marker); }
 .pm-inbox li.is-new a { color: var(--ink); font-weight: 600; }
 .pm-inbox li.is-new::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--marker); }
 .pm-inbox .pm-num { color: var(--ink-4); font-size: 0.82rem; white-space: nowrap; }
+.pm-lang { margin-top: 0.4rem; } .pm-auth-art .pm-lang { margin: 0 0 1rem; }

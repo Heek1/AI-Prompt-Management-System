@@ -5,8 +5,8 @@
     Layout = "_AuthLayout";
 }
 
-<h1>Welcome back</h1>
-<p class="text-muted mb-4">Sign in to run prompts, write evals and promote versions.</p>
+<h1>@T["Welcome back"]</h1>
+<p class="text-muted mb-4">@T["Sign in to run prompts, write evals and promote versions."]</p>
 
 <form asp-action="Login" method="post" novalidate>
     <input type="hidden" asp-for="ReturnUrl" />
@@ -18,17 +18,17 @@
         <span asp-validation-for="Email" class="text-danger small"></span>
     </div>
     <div class="mb-3">
-        <label asp-for="Password" class="form-label"></label>
+        <label asp-for="Password" class="form-label">@T["Password"]</label>
         <input asp-for="Password" class="form-control form-control-lg" autocomplete="current-password" />
         <span asp-validation-for="Password" class="text-danger small"></span>
     </div>
     <div class="form-check mb-4">
         <input asp-for="RememberMe" class="form-check-input" />
-        <label asp-for="RememberMe" class="form-check-label"></label>
+        <label asp-for="RememberMe" class="form-check-label">@T["Keep me signed in"]</label>
     </div>
-    <button type="submit" class="btn btn-marker btn-lg w-100">Sign in</button>
+    <button type="submit" class="btn btn-marker btn-lg w-100">@T["Sign in"]</button>
 </form>
 <p class="text-muted mt-4 mb-0">
-    No account yet? <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Create one</a>
+    @T["No account yet?"] <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">@T["Create one"]</a>
 </p>
-<p class="small mt-2 mb-0"><a asp-controller="Prompts" asp-action="Index" class="text-muted">Browse the library without signing in</a></p>
+<p class="small mt-2 mb-0"><a asp-controller="Prompts" asp-action="Index" class="text-muted">@T["Browse the library without signing in"]</a></p>

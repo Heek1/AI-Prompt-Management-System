@@ -13,13 +13,13 @@
 <p class="pm-diff-summary">
     @if (Model.Diff.HasChanges)
     {
-        <span class="is-added">+@Model.Diff.Added added</span>
-        <span class="is-removed">-@Model.Diff.Removed removed</span>
-        <span class="is-changed">~@Model.Diff.Modified changed</span>
+        <span class="is-added">@T["+{0} added", Model.Diff.Added]</span>
+        <span class="is-removed">@T["-{0} removed", Model.Diff.Removed]</span>
+        <span class="is-changed">@T["~{0} changed", Model.Diff.Modified]</span>
     }
     else
     {
-        <span>No differences.</span>
+        <span>@T["No differences."]</span>
     }
 </p>
 <div class="table-responsive">

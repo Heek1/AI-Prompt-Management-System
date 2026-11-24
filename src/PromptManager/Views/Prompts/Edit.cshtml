@@ -6,14 +6,14 @@
     var tools = (ViewBag.AiTools as List<string>) ?? new List<string>();
 }
 
-<nav class="pm-crumbs" aria-label="Breadcrumb">
-    <a asp-action="Index">Library</a><span aria-hidden="true">/</span><a asp-action="Details" asp-route-id="@Model.Id">@Model.Title</a><span aria-hidden="true">/</span><span>Edit</span>
+<nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
+    <a asp-action="Index">@T["Library"]</a><span aria-hidden="true">/</span><a asp-action="Details" asp-route-id="@Model.Id">@Model.Title</a><span aria-hidden="true">/</span><span>@T["Edit"]</span>
 </nav>
 
 <header class="pm-head">
     <div>
-        <h1>Edit details</h1>
-        <p class="pm-sub">The prompt text changes through <a asp-action="CreateVersion" asp-route-id="@Model.Id">a new version</a>, so its history is kept.</p>
+        <h1>@T["Edit details"]</h1>
+        <p class="pm-sub">@T["The prompt text changes through"] <a asp-action="CreateVersion" asp-route-id="@Model.Id">@T["a new version"]</a>@T[", so its history is kept."]</p>
     </div>
 </header>
 
@@ -23,20 +23,20 @@
     <div asp-validation-summary="ModelOnly" class="alert alert-danger small"></div>
 
     <div class="mb-3">
-        <label asp-for="Title" class="form-label"></label>
+        <label asp-for="Title" class="form-label">@T["Title"]</label>
         <input asp-for="Title" class="form-control form-control-lg" />
         <span asp-validation-for="Title" class="text-danger small"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="Description" class="form-label"></label>
+        <label asp-for="Description" class="form-label">@T["Description"]</label>
         <textarea asp-for="Description" class="form-control" rows="3"></textarea>
         <span asp-validation-for="Description" class="text-danger small"></span>
     </div>
 
     <div class="row">
         <div class="col-md-6 mb-3">
-            <label asp-for="Category" class="form-label"></label>
+            <label asp-for="Category" class="form-label">@T["Category"]</label>
             <select asp-for="Category" class="form-select">
                 @foreach (var cat in categories)
                 {
@@ -46,7 +46,7 @@
             <span asp-validation-for="Category" class="text-danger small"></span>
         </div>
         <div class="col-md-6 mb-3">
-            <label asp-for="AiTool" class="form-label">Tool</label>
+            <label asp-for="AiTool" class="form-label">@T["Tool"]</label>
             <select asp-for="AiTool" class="form-select">
                 @foreach (var tool in tools)
                 {
@@ -58,14 +58,14 @@
     </div>
 
     <div class="mb-4">
-        <label asp-for="Tags" class="form-label">Tags</label>
+        <label asp-for="Tags" class="form-label">@T["Tags"]</label>
         <input asp-for="Tags" class="form-control" placeholder="support, email, en" />
-        <div class="form-text">Separated by commas, up to 8. Prompts with the same tag form a collection.</div>
+        <div class="form-text">@T["Separated by commas, up to 8. Prompts with the same tag form a collection."]</div>
         <span asp-validation-for="Tags" class="text-danger small"></span>
     </div>
 
     <div class="d-flex gap-2 mt-2">
-        <button type="submit" class="btn btn-primary">Save details</button>
-        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">@T["Save details"]</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">@T["Cancel"]</a>
     </div>
 </form>

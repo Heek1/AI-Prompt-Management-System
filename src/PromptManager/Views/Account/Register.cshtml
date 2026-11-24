@@ -5,8 +5,8 @@
     Layout = "_AuthLayout";
 }
 
-<h1>Create account</h1>
-<p class="text-muted mb-4">Free, and nothing is sent to a model until you press Run.</p>
+<h1>@T["Create account"]</h1>
+<p class="text-muted mb-4">@T["Free, and nothing is sent to a model until you press Run."]</p>
 
 <form asp-action="Register" method="post" novalidate>
     <input type="hidden" asp-for="ReturnUrl" />
@@ -18,24 +18,24 @@
         <span asp-validation-for="Email" class="text-danger small"></span>
     </div>
     <div class="mb-3">
-        <label asp-for="DisplayName" class="form-label"></label>
+        <label asp-for="DisplayName" class="form-label">@T["Display name"]</label>
         <input asp-for="DisplayName" class="form-control" autocomplete="nickname" />
-        <div class="form-text">Shown as the author of your prompts, versions, ratings and runs.</div>
+        <div class="form-text">@T["Shown as the author of your prompts, versions, ratings and runs."]</div>
         <span asp-validation-for="DisplayName" class="text-danger small"></span>
     </div>
     <div class="mb-3">
-        <label asp-for="Password" class="form-label"></label>
+        <label asp-for="Password" class="form-label">@T["Password"]</label>
         <input asp-for="Password" class="form-control" autocomplete="new-password" />
-        <div class="form-text">At least 10 characters, with an upper-case letter, a lower-case letter and a digit.</div>
+        <div class="form-text">@T["At least 10 characters, with an upper-case letter, a lower-case letter and a digit."]</div>
         <span asp-validation-for="Password" class="text-danger small"></span>
     </div>
     <div class="mb-4">
-        <label asp-for="ConfirmPassword" class="form-label"></label>
+        <label asp-for="ConfirmPassword" class="form-label">@T["Confirm password"]</label>
         <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
         <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
     </div>
-    <button type="submit" class="btn btn-marker btn-lg w-100">Create account</button>
+    <button type="submit" class="btn btn-marker btn-lg w-100">@T["Create account"]</button>
 </form>
 <p class="text-muted mt-4 mb-0">
-    Already have an account? <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Sign in</a>
+    @T["Already have an account?"] <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">@T["Sign in"]</a>
 </p>

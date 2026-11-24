@@ -16,20 +16,20 @@
     }
 }
 
-<nav class="pm-crumbs" aria-label="Breadcrumb">
+<nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
     <a asp-controller="Prompts" asp-action="Details" asp-route-id="@f.PromptId">@f.PromptTitle</a><span aria-hidden="true">/</span>
     <a asp-action="Index" asp-route-id="@f.PromptId">Evals</a><span aria-hidden="true">/</span>
-    <span>Model comparison</span>
+    <span>@T["Model comparison"]</span>
 </nav>
 
 <header class="pm-head">
     <div>
-        <h1>Which model, for v@(f.VersionNumber)?</h1>
+        <h1>@T["Which model, for v{0}?", f.VersionNumber]</h1>
         <p class="pm-sub">
-            The same @f.TotalCases @(f.TotalCases == 1 ? "case" : "cases") on each model@(f.JudgeModel is null ? "" : $", graded by {f.JudgeModel}").
+            @T["The same {0} on each model", T.Count(f.TotalCases, "case", "cases")]@(f.JudgeModel is null ? "" : T[", graded by {0}", f.JudgeModel].Value).
             @if (!Model.AllFinished)
             {
-                <span>Still running; this page refreshes itself.</span>
+                <span>@T["Still running; this page refreshes itself."]</span>
             }
         </p>
     </div>
@@ -40,11 +40,11 @@
         <table class="table table-hover align-middle mb-0 pm-table" data-testid="comparison-table">
             <thead>
                 <tr>
-                    <th>Model</th>
-                    <th>Passed</th>
-                    <th class="text-end">Cost</th>
-                    <th class="text-end">Tokens in / out</th>
-                    <th class="text-end">Avg. time per answer</th>
+                    <th>@T["Model"]</th>
+                    <th>@T["Passed"]</th>
+                    <th class="text-end">@T["Cost"]</th>
+                    <th class="text-end">@T["Tokens in / out"]</th>
+                    <th class="text-end">@T["Avg. time per answer"]</th>
                     <th></th>
                 </tr>
             </thead>
@@ -55,7 +55,7 @@
                     var isBest = row == best && finished.Count > 1;
                     <tr class="@(isBest ? "pm-best" : "")">
                         <td>
-                            <div class="fw-semibold">@row.DisplayName @if (isBest) { <span class="pm-status pm-status-production ms-1">best</span> }</div>
+                            <div class="fw-semibold">@row.DisplayName @if (isBest) { <span class="pm-status pm-status-production ms-1">@T["best"]</span> }</div>
                             <div class="small text-muted"><code>@e.Model</code></div>
                         </td>
                         <td>
@@ -75,7 +75,7 @@
                         <td class="text-end pm-num">$@e.CostUsd.ToString("0.0000", inv)</td>
                         <td class="text-end pm-num">@row.InputTokens.ToString("N0") / @row.OutputTokens.ToString("N0")</td>
                         <td class="text-end pm-num">@(row.AverageSeconds is { } s ? s.ToString("0.0", inv) + " s" : "-")</td>
-                        <td class="text-end"><a asp-action="Run" asp-route-id="@e.Id" class="small">Details</a></td>
+                        <td class="text-end"><a asp-action="Run" asp-route-id="@e.Id" class="small">@T["Details"]</a></td>
                     </tr>
                 }
             </tbody>
@@ -84,5 +84,5 @@
 </div>
 @if (best is not null && finished.Count > 1)
 {
-    <p class="small text-muted mt-2">Best: the highest pass rate, and the lower cost when pass rates tie.</p>
+    <p class="small text-muted mt-2">@T["Best: the highest pass rate, and the lower cost when pass rates tie."]</p>
 }
