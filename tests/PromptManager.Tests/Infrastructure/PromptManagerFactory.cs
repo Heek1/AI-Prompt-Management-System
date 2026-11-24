@@ -19,6 +19,15 @@ public sealed class PromptManagerFactory : WebApplicationFactory<Program>
 
     private readonly TestDatabase _database = new();
 
+    // Each test server would otherwise watch its config and static files with
+    // inotify; with dozens of servers in one run, Linux CI hits its limit of
+    // 128 watcher instances and requests fail. Tests never change files.
+    static PromptManagerFactory()
+    {
+        Environment.SetEnvironmentVariable("DOTNET_hostBuilder__reloadConfigOnChange", "false");
+        Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "true");
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");

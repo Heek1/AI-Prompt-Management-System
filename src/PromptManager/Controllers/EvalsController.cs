@@ -96,7 +96,7 @@ public class EvalsController : Controller
                 TempData["Success"] = "Case saved.";
                 return RedirectToAction(nameof(Index), new { id = dto.PromptId });
             }
-            ModelState.AddModelError("", error!);
+            ModelState.AddModelError("", _t.Message(error));
         }
 
         return View(CaseViewModel(prompt, dto));

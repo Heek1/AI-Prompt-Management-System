@@ -25,10 +25,13 @@ public class PromptsController : Controller
     private readonly IVersionLifecycle _lifecycle;
     private readonly ILookupService _lookups;
     private readonly ICollaborationService _collab;
+    private readonly Microsoft.Extensions.Localization.IStringLocalizer<PromptManager.SharedResource> _t;
 
     public PromptsController(IPromptService service, IPromptRunner runner, LlmCatalog catalog, IInputSetService inputSets,
-        ICurrentUser user, IVersionLifecycle lifecycle, ILookupService lookups, ICollaborationService collab)
+        ICurrentUser user, IVersionLifecycle lifecycle, ILookupService lookups, ICollaborationService collab,
+        Microsoft.Extensions.Localization.IStringLocalizer<PromptManager.SharedResource> t)
     {
+        _t = t;
         _collab = collab;
         _lifecycle = lifecycle;
         _lookups = lookups;
@@ -129,7 +132,8 @@ public class PromptsController : Controller
             BlockedPromotion = TempData["BlockedPromotion"] as int?,
             Comments = await _collab.CommentsByVersionAsync(id),
             IsWatching = await _collab.IsWatchingAsync(id),
-            CurrentUserId = _user.Id
+            CurrentUserId = _user.Id,
+            MyRating = _user.Id is { } me ? await _service.RatingByAsync(id, me) : null
         });
     }
 
@@ -140,6 +144,7 @@ public class PromptsController : Controller
         var prompt = await _service.GetByIdAsync(id);
         if (prompt == null) return NotFound();
         if (!_user.CanManage(prompt.OwnerId)) return Forbid();
+        if (prompt.IsArchived) return ArchivedRedirect(prompt.Id);
 
         await FillListsAsync(prompt.Category, prompt.AiTool);
         return View(new EditPromptDto
@@ -162,6 +167,7 @@ public class PromptsController : Controller
         var prompt = await _service.GetByIdAsync(dto.Id);
         if (prompt == null) return NotFound();
         if (!_user.CanManage(prompt.OwnerId)) return Forbid();
+        if (prompt.IsArchived) return ArchivedRedirect(prompt.Id);
 
         // A prompt may keep a category or tool an admin has since removed.
         await ValidateListsAsync(dto.Category == prompt.Category ? null : dto.Category,
@@ -184,6 +190,7 @@ public class PromptsController : Controller
         var prompt = await _service.GetByIdAsync(id);
         if (prompt == null) return NotFound();
         if (!_user.CanManage(prompt.OwnerId)) return Forbid();
+        if (prompt.IsArchived) return ArchivedRedirect(prompt.Id);
 
         ViewBag.Prompt = prompt;
         // Start from the current text: most versions are small edits of it.
@@ -210,7 +217,7 @@ public class PromptsController : Controller
         dto.CreatedById = _user.Id;
         if (!await _service.CreateVersionAsync(dto))
         {
-            ModelState.AddModelError("", "Could not create version. Prompt may be archived or not found.");
+            ModelState.AddModelError("", _t.Message("Could not create version. Prompt may be archived or not found."));
             ViewBag.Prompt = await _service.GetByIdAsync(dto.PromptId);
             return View(dto);
         }
@@ -229,6 +236,13 @@ public class PromptsController : Controller
     {
         var prompt = await _service.GetByIdAsync(id);
         if (prompt == null) return NotFound();
+        if (prompt.IsArchived) return ArchivedRedirect(prompt.Id);
+        // One rating per account: say so before the form, not after it.
+        if (await _service.RatingByAsync(id, _user.Id!) is not null)
+        {
+            TempData["Error"] = "You have already rated this prompt.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
 
         ViewBag.Prompt = prompt;
         return View(new RatePromptDto { PromptId = id });
@@ -251,7 +265,7 @@ public class PromptsController : Controller
         var (success, error) = await _service.RateAsync(dto);
         if (!success)
         {
-            ModelState.AddModelError("", error);
+            ModelState.AddModelError("", _t.Message(error));
             ViewBag.Prompt = await _service.GetByIdAsync(dto.PromptId);
             return View(dto);
         }
@@ -469,11 +483,11 @@ public class PromptsController : Controller
     private async Task ValidateListsAsync(string? category, string? aiTool, string? tags)
     {
         if (!string.IsNullOrEmpty(category) && !await _lookups.IsAllowedAsync(LookupKind.Category, category))
-            ModelState.AddModelError(nameof(CreatePromptDto.Category), "Pick a category from the list.");
+            ModelState.AddModelError(nameof(CreatePromptDto.Category), _t.Message("Pick a category from the list."));
         if (!string.IsNullOrEmpty(aiTool) && !await _lookups.IsAllowedAsync(LookupKind.Tool, aiTool))
-            ModelState.AddModelError(nameof(CreatePromptDto.AiTool), "Pick a tool from the list.");
+            ModelState.AddModelError(nameof(CreatePromptDto.AiTool), _t.Message("Pick a tool from the list."));
         if (TagNames.Parse(tags).Error is { } tagError)
-            ModelState.AddModelError(nameof(CreatePromptDto.Tags), tagError);
+            ModelState.AddModelError(nameof(CreatePromptDto.Tags), _t.Message(tagError));
     }
 
     /// <summary>The dropdown lists, plus the prompt's current values when they were removed from the lists.</summary>
@@ -485,5 +499,12 @@ public class PromptsController : Controller
         if (!string.IsNullOrEmpty(currentTool) && !tools.Contains(currentTool)) tools.Add(currentTool);
         ViewBag.Categories = categories;
         ViewBag.AiTools = tools;
+    }
+
+    /// <summary>Archived prompts are read-only: back to the prompt, with the reason.</summary>
+    private IActionResult ArchivedRedirect(int id)
+    {
+        TempData["Error"] = "Archived prompts cannot be changed. Restore the prompt first.";
+        return RedirectToAction(nameof(Details), new { id });
     }
 }

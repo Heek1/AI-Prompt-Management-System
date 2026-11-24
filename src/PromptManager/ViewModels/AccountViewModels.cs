@@ -5,7 +5,8 @@ namespace PromptManager.ViewModels;
 
 public class RegisterViewModel
 {
-    [Required, EmailAddress, StringLength(256)]
+    [Required, EmailAddress(ErrorMessage = "{0} is not a valid e-mail address."), StringLength(256)]
+    [Display(Name = "E-mail")]
     public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Display name is required.")]
@@ -14,6 +15,7 @@ public class RegisterViewModel
     public string DisplayName { get; set; } = string.Empty;
 
     [Required, DataType(DataType.Password), StringLength(128, MinimumLength = 10, ErrorMessage = "Password must be at least {2} characters.")]
+    [Display(Name = "Password")]
     public string Password { get; set; } = string.Empty;
 
     [Required, DataType(DataType.Password), Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
@@ -25,10 +27,12 @@ public class RegisterViewModel
 
 public class LoginViewModel
 {
-    [Required, EmailAddress]
+    [Required, EmailAddress(ErrorMessage = "{0} is not a valid e-mail address.")]
+    [Display(Name = "E-mail")]
     public string Email { get; set; } = string.Empty;
 
     [Required, DataType(DataType.Password)]
+    [Display(Name = "Password")]
     public string Password { get; set; } = string.Empty;
 
     [Display(Name = "Keep me signed in")]

@@ -67,10 +67,12 @@ builder.Services.AddLocalization(o => o.ResourcesPath = "Resources");
 // the pages are UTF-8, and prompts and the interface are often Ukrainian.
 builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(o =>
     o.TextEncoderSettings = new System.Text.Encodings.Web.TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All));
-builder.Services.AddControllersWithViews()
+builder.Services.AddControllersWithViews(o =>
+        o.ModelMetadataDetailsProviders.Add(new PromptManager.Infrastructure.DefaultValidationMessages()))
     // Validation messages are looked up in the shared resource too (C8).
     .AddDataAnnotationsLocalization(o =>
         o.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(PromptManager.SharedResource)));
+builder.Services.AddSingleton<Microsoft.Extensions.Options.IConfigureOptions<Microsoft.AspNetCore.Mvc.MvcOptions>, PromptManager.Infrastructure.LocalizedBindingMessages>();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException(
@@ -89,6 +91,7 @@ builder.Services
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     })
     .AddEntityFrameworkStores<AppDbContext>()
+    .AddErrorDescriber<PromptManager.Infrastructure.LocalizedIdentityErrors>()
     .AddDefaultTokenProviders();
 
 // Form-token and TempData cookies get the Secure flag on https requests too

@@ -23,7 +23,7 @@
 
 @foreach (var error in Model.Errors)
 {
-    <div class="alert alert-danger">@error</div>
+    <div class="alert alert-danger">@T.Message(error)</div>
 }
 
 @if (Model.Lines.Any())
@@ -54,7 +54,7 @@
                             }
                         </td>
                         <td><span class="pm-status pm-status-@css">@T.Text("import:" + label, label)</span></td>
-                        <td>@line.Detail</td>
+                        <td>@T.Message(line.Detail)</td>
                     </tr>
                 }
             </tbody>

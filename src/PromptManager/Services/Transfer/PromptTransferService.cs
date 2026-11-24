@@ -116,9 +116,16 @@ public sealed class PromptTransferService(AppDbContext db, ILookupService lookup
             {
                 prompts.AddRange(PromptSerializer.Read(text, ext == ".json"));
             }
-            catch (Exception e) when (e is YamlDotNet.Core.YamlException or JsonException)
+            catch (Exception e) when (e is YamlDotNet.Core.YamlException or JsonException or InvalidOperationException or NotSupportedException)
             {
-                errors.Add($"{name}: not a valid {ext.TrimStart('.').ToUpperInvariant()} file ({FirstLine(e.Message)}).");
+                // The parser's own message names .NET types; say where the problem is instead.
+                var where = e switch
+                {
+                    YamlDotNet.Core.YamlException y => $"line {y.Start.Line}",
+                    JsonException { LineNumber: { } line } => $"line {line + 1}",
+                    _ => FirstLine(e.Message)
+                };
+                errors.Add($"{name}: not a valid {ext.TrimStart('.').ToUpperInvariant()} file ({where}).");
             }
         }
 
@@ -281,6 +288,9 @@ public sealed class PromptTransferService(AppDbContext db, ILookupService lookup
 
     private async Task<ImportLine> UpdateAsync(Prompt existing, PromptDocument doc, string author)
     {
+        if (existing.IsArchived)
+            return new ImportLine(existing.Title, ImportOutcome.Skipped, "The prompt is archived; restore it to import a new version.", existing.Id);
+
         var latest = doc.EffectiveVersions()[^1];
         var (added, caseErrors) = await AddCasesAsync(existing.Id, doc.Evals);
         var cases = added > 0 ? $"; {added} new eval {(added == 1 ? "case" : "cases")}" : "";

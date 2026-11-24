@@ -27,7 +27,7 @@
     <div class="col-xl-8">
         @if (Model.Status == PromptRunStatus.Failed)
         {
-            <div class="alert alert-danger">@Model.Error</div>
+            <div class="alert alert-danger">@T.Message(Model.Error)</div>
         }
         @if (!string.IsNullOrEmpty(Model.Note))
         {

@@ -9,6 +9,7 @@
   <data name=" of {0}" xml:space="preserve"><value> промпту «{0}»</value></data>
   <data name=" plus one judge call per rubric" xml:space="preserve"><value> і ще один виклик судді на кожну рубрику</value></data>
   <data name=" with judge {0}" xml:space="preserve"><value> із суддею {0}</value></data>
+  <data name="&quot;{0}&quot; is not a valid e-mail address." xml:space="preserve"><value>«{0}» не схоже на адресу e-mail.</value></data>
   <data name="(fallback)" xml:space="preserve"><value>(резервна)</value></data>
   <data name="(optional)" xml:space="preserve"><value>(необов'язково)</value></data>
   <data name="+{0} added" xml:space="preserve"><value>+{0} додано</value></data>
@@ -23,12 +24,15 @@
   <data name=". The API is described at" xml:space="preserve"><value>. Опис API —</value></data>
   <data name="; live since {0}, promoted by {1}" xml:space="preserve"><value>; у продакшні з {0}, випустив(-ла) {1}</value></data>
   <data name="A prompt is a piece of text you give a model. Save it here to version it, run it and test it before anyone depends on it." xml:space="preserve"><value>Промпт — це текст, який ви даєте моделі. Збережіть його тут, щоб версіонувати, запускати й тестувати, перш ніж хтось на нього покладеться.</value></data>
+  <data name="A value is required." xml:space="preserve"><value>Потрібне значення.</value></data>
   <data name="AI Tool is required." xml:space="preserve"><value>Оберіть інструмент.</value></data>
   <data name="API keys" xml:space="preserve"><value>Ключі API</value></data>
   <data name="API slug" xml:space="preserve"><value>Slug для API</value></data>
   <data name="About Prompt Manager" xml:space="preserve"><value>Про Prompt Manager</value></data>
   <data name="Active" xml:space="preserve"><value>Активний</value></data>
   <data name="Add" xml:space="preserve"><value>Додати</value></data>
+  <data name="Add at least one case before running an eval." xml:space="preserve"><value>Додайте хоча б один кейс, перш ніж запускати eval.</value></data>
+  <data name="Add at least one check: text to find or avoid, a regex, a JSON schema or a judge rubric." xml:space="preserve"><value>Додайте хоча б одну перевірку: текст, який треба знайти чи уникнути, регулярний вираз, JSON-схему або рубрику для судді.</value></data>
   <data name="Add attacks" xml:space="preserve"><value>Додати атаки</value></data>
   <data name="Add case" xml:space="preserve"><value>Додати кейс</value></data>
   <data name="Added &quot;{0}&quot;." xml:space="preserve"><value>Додано «{0}».</value></data>
@@ -41,6 +45,7 @@
   <data name="All runs" xml:space="preserve"><value>Усі запуски</value></data>
   <data name="All {0} runs" xml:space="preserve"><value>Усі запуски ({0})</value></data>
   <data name="Already have an account?" xml:space="preserve"><value>Уже маєте акаунт?</value></data>
+  <data name="An account with {0} already exists. Sign in instead." xml:space="preserve"><value>Акаунт з {0} уже існує. Увійдіть.</value></data>
   <data name="An admin promoted it although its evals were worse" xml:space="preserve"><value>Адміністратор випустив її, хоча evals були гірші</value></data>
   <data name="An input, and what a good answer must or must not contain. The case passes only when every check passes." xml:space="preserve"><value>Вхідні дані й те, що добра відповідь має або не має містити. Кейс проходить, лише коли проходять усі перевірки.</value></data>
   <data name="Answer" xml:space="preserve"><value>Відповідь</value></data>
@@ -50,6 +55,11 @@
   <data name="Archive" xml:space="preserve"><value>Архівувати</value></data>
   <data name="Archive this prompt?" xml:space="preserve"><value>Архівувати цей промпт?</value></data>
   <data name="Archived" xml:space="preserve"><value>В архіві</value></data>
+  <data name="Archived prompts cannot be changed. Restore the prompt first." xml:space="preserve"><value>Архівний промпт не можна змінювати. Спершу відновіть його.</value></data>
+  <data name="Archived prompts cannot be commented on." xml:space="preserve"><value>Архівні промпти не можна коментувати.</value></data>
+  <data name="Archived prompts cannot be evaluated." xml:space="preserve"><value>Архівні промпти не можна тестувати.</value></data>
+  <data name="Archived prompts cannot be promoted." xml:space="preserve"><value>Архівні промпти не можна випускати.</value></data>
+  <data name="Archived prompts cannot be run." xml:space="preserve"><value>Архівні промпти не можна запускати.</value></data>
   <data name="As an admin you can promote v{0} anyway. This is recorded on the version." xml:space="preserve"><value>Як адміністратор ви можете все одно випустити v{0}. Це буде записано у версії.</value></data>
   <data name="Ask a model to fix it" xml:space="preserve"><value>Попросіть модель виправити</value></data>
   <data name="At" xml:space="preserve"><value>Час</value></data>
@@ -84,6 +94,8 @@
   <data name="Choose a model to run the prompt on." xml:space="preserve"><value>Оберіть модель для запуску промпту.</value></data>
   <data name="Choose a model." xml:space="preserve"><value>Оберіть модель.</value></data>
   <data name="Choose a tool" xml:space="preserve"><value>Оберіть інструмент</value></data>
+  <data name="Choose at least one file." xml:space="preserve"><value>Оберіть хоча б один файл.</value></data>
+  <data name="Choose at least two models to compare." xml:space="preserve"><value>Оберіть щонайменше дві моделі для порівняння.</value></data>
   <data name="Clear filters" xml:space="preserve"><value>Скинути фільтри</value></data>
   <data name="Collections" xml:space="preserve"><value>Колекції</value></data>
   <data name="Comment" xml:space="preserve"><value>Коментар</value></data>
@@ -101,6 +113,7 @@
   <data name="Copy text" xml:space="preserve"><value>Копіювати текст</value></data>
   <data name="Cost" xml:space="preserve"><value>Вартість</value></data>
   <data name="Costs" xml:space="preserve"><value>Витрати</value></data>
+  <data name="Could not create version. Prompt may be archived or not found." xml:space="preserve"><value>Не вдалося створити версію. Можливо, промпт в архіві або його не знайдено.</value></data>
   <data name="Could not save the version." xml:space="preserve"><value>Не вдалося зберегти версію.</value></data>
   <data name="Create account" xml:space="preserve"><value>Створити акаунт</value></data>
   <data name="Create an account to start" xml:space="preserve"><value>Створіть акаунт, щоб почати</value></data>
@@ -134,10 +147,13 @@
   <data name="Edit details" xml:space="preserve"><value>Редагувати деталі</value></data>
   <data name="Edit eval case" xml:space="preserve"><value>Редагувати кейс</value></data>
   <data name="Edit prompt" xml:space="preserve"><value>Редагувати промпт</value></data>
+  <data name="Enter a name." xml:space="preserve"><value>Введіть назву.</value></data>
   <data name="Error" xml:space="preserve"><value>Помилка</value></data>
+  <data name="Eval not found." xml:space="preserve"><value>Eval не знайдено.</value></data>
   <data name="Eval runs" xml:space="preserve"><value>Прогони evals</value></data>
   <data name="Evals" xml:space="preserve"><value>Evals</value></data>
   <data name="Evals: {0}" xml:space="preserve"><value>Evals: {0}</value></data>
+  <data name="Every case passed; there is nothing to fix." xml:space="preserve"><value>Усі кейси пройшли, виправляти нічого.</value></data>
   <data name="Excellent" xml:space="preserve"><value>Чудово</value></data>
   <data name="Export" xml:space="preserve"><value>Експорт</value></data>
   <data name="Export as folder (.zip)" xml:space="preserve"><value>Експорт текою (.zip)</value></data>
@@ -146,6 +162,7 @@
   <data name="Failed runs this month (no cost recorded): {0}" xml:space="preserve"><value>Невдалих запусків цього місяця (без вартості): {0}</value></data>
   <data name="Fair" xml:space="preserve"><value>Так собі</value></data>
   <data name="Files" xml:space="preserve"><value>Файли</value></data>
+  <data name="Fill in {0}." xml:space="preserve"><value>Заповніть поле «{0}».</value></data>
   <data name="Filter" xml:space="preserve"><value>Фільтрувати</value></data>
   <data name="Folder for git (.zip)" xml:space="preserve"><value>Тека для git (.zip)</value></data>
   <data name="Free, and nothing is sent to a model until you press Run." xml:space="preserve"><value>Безкоштовно, і нічого не надсилається моделі, доки ви не натиснете «Запустити».</value></data>
@@ -217,6 +234,7 @@
   <data name="No limit. Set" xml:space="preserve"><value>Без ліміту. Задайте</value></data>
   <data name="No model that can write prompts is configured here; the echo model only repeats its input." xml:space="preserve"><value>Тут не налаштовано моделі, яка вміє писати промпти; модель echo лише повторює вхідний текст.</value></data>
   <data name="No output." xml:space="preserve"><value>Відповіді немає.</value></data>
+  <data name="No prompts found in the files." xml:space="preserve"><value>У файлах не знайдено промптів.</value></data>
   <data name="No ratings yet." xml:space="preserve"><value>Оцінок ще немає.</value></data>
   <data name="No results yet." xml:space="preserve"><value>Результатів ще немає.</value></data>
   <data name="No runs this month." xml:space="preserve"><value>Цього місяця запусків не було.</value></data>
@@ -253,6 +271,7 @@
   <data name="Prompt" xml:space="preserve"><value>Промпт</value></data>
   <data name="Prompt Manager, library" xml:space="preserve"><value>Prompt Manager, бібліотека</value></data>
   <data name="Prompt created successfully!" xml:space="preserve"><value>Промпт створено.</value></data>
+  <data name="Prompt not found." xml:space="preserve"><value>Промпт не знайдено.</value></data>
   <data name="Prompt sent" xml:space="preserve"><value>Надісланий промпт</value></data>
   <data name="Prompt text" xml:space="preserve"><value>Текст промпту</value></data>
   <data name="Prompt text is required." xml:space="preserve"><value>Вкажіть текст промпту.</value></data>
@@ -319,6 +338,7 @@
   <data name="Signal strip" xml:space="preserve"><value>Смуга сигналів</value></data>
   <data name="Skip to content" xml:space="preserve"><value>До вмісту</value></data>
   <data name="Smallest file" xml:space="preserve"><value>Найменший файл</value></data>
+  <data name="Some cases have a rubric: choose a judge model." xml:space="preserve"><value>Деякі кейси мають рубрику: оберіть модель-суддю.</value></data>
   <data name="Something broke" xml:space="preserve"><value>Щось зламалося</value></data>
   <data name="Something went wrong while processing your request." xml:space="preserve"><value>Під час обробки запиту сталася помилка.</value></data>
   <data name="Sort by" xml:space="preserve"><value>Сортування</value></data>
@@ -338,17 +358,35 @@
   <data name="Text sent" xml:space="preserve"><value>Надісланий текст</value></data>
   <data name="Text to save, edit it if you like" xml:space="preserve"><value>Текст для збереження, можна відредагувати</value></data>
   <data name="The answer stopped at the token limit and is incomplete." xml:space="preserve"><value>Відповідь обірвалася на ліміті токенів і неповна.</value></data>
+  <data name="The answer was cut off before the revised prompt ended." xml:space="preserve"><value>Відповідь обірвалася раніше, ніж закінчилася редакція промпту.</value></data>
+  <data name="The echo model only repeats its input and cannot write a prompt; pick a real model." xml:space="preserve"><value>Модель echo лише повторює вхідний текст і не може написати промпт; оберіть справжню модель.</value></data>
   <data name="The eval runs on" xml:space="preserve"><value>Eval запуститься на</value></data>
+  <data name="The eval stopped because of an unexpected error. Partial results are kept." xml:space="preserve"><value>Eval зупинився через неочікувану помилку. Часткові результати збережено.</value></data>
   <data name="The library is empty" xml:space="preserve"><value>Бібліотека порожня</value></data>
+  <data name="The model declined to suggest a revision." xml:space="preserve"><value>Модель відмовилася пропонувати редакцію.</value></data>
+  <data name="The model did not return a revised prompt in the expected form." xml:space="preserve"><value>Модель не повернула редакцію промпту в очікуваному вигляді.</value></data>
   <data name="The model sees v{0}, the failed cases with their answers and checks, and the names of the cases that passed. You review the change as a diff before anything is saved; accepting it saves a draft and runs this eval again." xml:space="preserve"><value>Модель бачить v{0}, провалені кейси з відповідями й перевірками та назви кейсів, що пройшли. Ви переглядаєте зміну як diff, перш ніж щось зберегти; прийняття зберігає чернетку й повторно запускає цей eval.</value></data>
   <data name="The new version starts as a draft. Production keeps serving the current one until you promote it." xml:space="preserve"><value>Нова версія починається як чернетка. Продакшн віддає поточну, доки ви не випустите нову.</value></data>
   <data name="The page or prompt you are looking for does not exist." xml:space="preserve"><value>Сторінки чи промпту, які ви шукаєте, не існує.</value></data>
+  <data name="The password needs a digit." xml:space="preserve"><value>Пароль має містити цифру.</value></data>
+  <data name="The password needs a lower-case letter." xml:space="preserve"><value>Пароль має містити малу літеру.</value></data>
+  <data name="The password needs an upper-case letter." xml:space="preserve"><value>Пароль має містити велику літеру.</value></data>
+  <data name="The password needs at least {0} characters." xml:space="preserve"><value>Пароль має містити щонайменше {0} символів.</value></data>
+  <data name="The password needs at least {0} different characters." xml:space="preserve"><value>Пароль має містити щонайменше {0} різних символів.</value></data>
+  <data name="The prompt changed while you were promoting. Reload the page and try again." xml:space="preserve"><value>Промпт змінився під час випуску. Оновіть сторінку й спробуйте ще раз.</value></data>
+  <data name="The prompt is archived; restore it to import a new version." xml:space="preserve"><value>Промпт в архіві; відновіть його, щоб імпортувати нову версію.</value></data>
   <data name="The prompt text changes through" xml:space="preserve"><value>Текст промпту змінюється через</value></data>
   <data name="The same {0} on each model" xml:space="preserve"><value>Ті самі {0} на кожній моделі</value></data>
   <data name="The smallest file that imports" xml:space="preserve"><value>Найменший файл, який імпортується</value></data>
+  <data name="The tested version no longer exists." xml:space="preserve"><value>Протестованої версії вже не існує.</value></data>
   <data name="The text goes to the selected provider. Every run is kept with its tokens, cost and time." xml:space="preserve"><value>Текст надсилається обраному провайдеру. Кожен запуск зберігається з токенами, вартістю й часом.</value></data>
   <data name="The text must be between {0} and {1} characters." xml:space="preserve"><value>Текст має містити від {0} до {1} символів.</value></data>
   <data name="The translation is natural Ukrainian and keeps the polite tone." xml:space="preserve"><value>Переклад звучить природною українською й зберігає ввічливий тон.</value></data>
+  <data name="The value &quot;{0}&quot; is not valid for {1}." xml:space="preserve"><value>Значення «{0}» не підходить для поля «{1}».</value></data>
+  <data name="The value &quot;{0}&quot; is not valid." xml:space="preserve"><value>Значення «{0}» не підходить.</value></data>
+  <data name="The value is not valid for {0}." xml:space="preserve"><value>Значення не підходить для поля «{0}».</value></data>
+  <data name="The value is not valid." xml:space="preserve"><value>Значення не підходить.</value></data>
+  <data name="The value must be a number." xml:space="preserve"><value>Значення має бути числом.</value></data>
   <data name="Theme" xml:space="preserve"><value>Тема</value></data>
   <data name="This month" xml:space="preserve"><value>Цей місяць</value></data>
   <data name="This month by model" xml:space="preserve"><value>Цей місяць за моделями</value></data>
@@ -376,6 +414,7 @@
   <data name="Values" xml:space="preserve"><value>Значення</value></data>
   <data name="Variable that carries user input" xml:space="preserve"><value>Змінна з вводом користувача</value></data>
   <data name="Version" xml:space="preserve"><value>Версія</value></data>
+  <data name="Wait until the eval has finished." xml:space="preserve"><value>Зачекайте, доки eval завершиться.</value></data>
   <data name="Waiting" xml:space="preserve"><value>Очікує</value></data>
   <data name="Watch" xml:space="preserve"><value>Стежити</value></data>
   <data name="Watching" xml:space="preserve"><value>Стежу</value></data>
@@ -400,6 +439,8 @@
   <data name="Write the text once, mark the parts that change as" xml:space="preserve"><value>Напишіть текст один раз, позначте змінні частини як</value></data>
   <data name="YAML or JSON files from an export, a zip of a" xml:space="preserve"><value>Файли YAML чи JSON з експорту, zip теки</value></data>
   <data name="You can rate each prompt once." xml:space="preserve"><value>Кожен промпт можна оцінити один раз.</value></data>
+  <data name="You have already rated this prompt." xml:space="preserve"><value>Ви вже оцінили цей промпт.</value></data>
+  <data name="You rated it {0} out of 5." xml:space="preserve"><value>Ваша оцінка: {0} з 5.</value></data>
   <data name="Your new key." xml:space="preserve"><value>Ваш новий ключ.</value></data>
   <data name="a new version" xml:space="preserve"><value>нову версію</value></data>
   <data name="admin" xml:space="preserve"><value>admin</value></data>
@@ -442,9 +483,16 @@
   <data name="v{0} to v{1}" xml:space="preserve"><value>v{0} → v{1}</value></data>
   <data name="v{0}, now" xml:space="preserve"><value>v{0}, зараз</value></data>
   <data name="v{0}, values filled in" xml:space="preserve"><value>v{0}, зі значеннями</value></data>
+  <data name="{0} and {1} do not match." xml:space="preserve"><value>Поля «{0}» і «{1}» не збігаються.</value></data>
+  <data name="{0} can have at most {1} characters." xml:space="preserve"><value>Поле «{0}» може містити щонайбільше {1} символів.</value></data>
   <data name="{0} cases" xml:space="preserve"><value>{0} кейс|{0} кейси|{0} кейсів</value></data>
   <data name="{0} checks" xml:space="preserve"><value>{0} перевірка|{0} перевірки|{0} перевірок</value></data>
   <data name="{0} comments" xml:space="preserve"><value>{0} коментар|{0} коментарі|{0} коментарів</value></data>
+  <data name="{0} is not a valid e-mail address." xml:space="preserve"><value>Поле «{0}» не схоже на адресу e-mail.</value></data>
+  <data name="{0} must be a number." xml:space="preserve"><value>Поле «{0}» має бути числом.</value></data>
+  <data name="{0} must be between {1} and {2}." xml:space="preserve"><value>Поле «{0}» має бути від {1} до {2}.</value></data>
+  <data name="{0} must be between {2} and {1} characters." xml:space="preserve"><value>Поле «{0}» має містити від {2} до {1} символів.</value></data>
+  <data name="{0} needs at least {1} characters." xml:space="preserve"><value>Поле «{0}» має містити щонайменше {1} символів.</value></data>
   <data name="{0} of {1} done. This page refreshes itself." xml:space="preserve"><value>Виконано {0} з {1}. Сторінка оновлюється сама.</value></data>
   <data name="{0} prompts" xml:space="preserve"><value>{0} промпт|{0} промпти|{0} промптів</value></data>
   <data name="{0} runs" xml:space="preserve"><value>{0} запуск|{0} запуски|{0} запусків</value></data>

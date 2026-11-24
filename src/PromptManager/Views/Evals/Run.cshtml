@@ -70,7 +70,7 @@
 
         @if (Model.Error is not null)
         {
-            <div class="alert alert-danger mt-3 mb-0">@Model.Error</div>
+            <div class="alert alert-danger mt-3 mb-0">@T.Message(Model.Error)</div>
         }
 
         @if (Model.Previous is { } prev && Model.Status == EvalRunStatus.Completed)
