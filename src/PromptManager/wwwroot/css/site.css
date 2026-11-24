@@ -664,3 +664,4 @@ a.pm-tag-link:hover { background: var(--marker); }
 .pm-lookup li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.55rem 1.1rem; border-top: 1px solid var(--line-2); }
 .pm-lookup li:first-child { border-top: 0; }
 .pm-lookup .pm-num { color: var(--ink-4); font-size: 0.85rem; }
+.pm-row-excerpt mark { background: var(--marker-soft); color: var(--ink); padding: 0 0.1em; border-radius: 2px; box-shadow: inset 0 -2px 0 var(--marker); }

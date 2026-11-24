@@ -225,6 +225,60 @@ public sealed class PromptServiceTests : IDisposable
         Assert.Equal(expected, Assert.Single(result).Title);
     }
 
+    // ---------- Full-text search (C4) ----------
+
+    [Fact]
+    public async Task Search_finds_words_in_any_order()
+    {
+        await CreatePromptAsync(NewPrompt(title: "Summary", text: "Summarise the text in three bullet points."));
+        await CreatePromptAsync(NewPrompt(title: "Other", text: "Translate the text into French, please."));
+
+        var result = await CreateService().GetAllAsync("points three bullet", null, null, "relevance");
+
+        Assert.Equal("Summary", Assert.Single(result).Title);
+    }
+
+    [Fact]
+    public async Task Search_ranks_a_title_match_above_a_text_match()
+    {
+        await CreatePromptAsync(NewPrompt(title: "Helpful assistant", text: "Answer the question about invoices briefly."));
+        await CreatePromptAsync(NewPrompt(title: "Invoices", text: "Explain the invoice to the customer in plain words."));
+
+        var result = await CreateService().GetAllAsync("invoices", null, null, "relevance");
+
+        Assert.Equal(new[] { "Invoices", "Helpful assistant" }, result.Select(p => p.Title));
+    }
+
+    [Fact]
+    public async Task Search_understands_excluded_words_and_phrases()
+    {
+        await CreatePromptAsync(NewPrompt(title: "Email reply", text: "Write a polite email reply to the customer."));
+        await CreatePromptAsync(NewPrompt(title: "Email summary", text: "Summarise the email thread for the manager."));
+
+        Assert.Equal("Email summary", Assert.Single(await CreateService().GetAllAsync("email -reply", null, null, "relevance")).Title);
+        Assert.Equal("Email reply", Assert.Single(await CreateService().GetAllAsync("\"polite email\"", null, null, "relevance")).Title);
+    }
+
+    [Fact]
+    public async Task Search_excerpt_marks_the_matching_words()
+    {
+        await CreatePromptAsync(NewPrompt(title: "Translator",
+            text: "You are a careful translator. Translate the customer message into Ukrainian and keep the tone."));
+
+        var excerpt = Assert.Single(await CreateService().GetAllAsync("ukrainian", null, null, "relevance")).Excerpt;
+
+        Assert.Contains("\u0001Ukrainian\u0002", excerpt);
+        Assert.Equal("…<mark>Ukrainian</mark>…", PromptManager.Infrastructure.PromptMarkup.Inline("…\u0001Ukrainian\u0002…").ToString());
+    }
+
+    [Fact]
+    public async Task Search_still_finds_half_typed_words()
+    {
+        await CreatePromptAsync(NewPrompt(title: "Summary", text: "Summarise the text in three bullet points."));
+
+        Assert.Single(await CreateService().GetAllAsync("summar", null, null, "relevance"));
+    }
+
     [Fact]
     public async Task GetAllAsync_filters_by_category_and_tool()
     {
