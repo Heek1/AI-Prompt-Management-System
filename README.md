@@ -1,7 +1,21 @@
 # Prompt Manager
 
 [![CI](https://github.com/Heek1/AI-Prompt-Management-System/actions/workflows/ci.yml/badge.svg)](https://github.com/Heek1/AI-Prompt-Management-System/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Heek1/AI-Prompt-Management-System/badges/coverage.json)](https://github.com/Heek1/AI-Prompt-Management-System/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Heek1/AI-Prompt-Management-System/actions/workflows/codeql.yml/badge.svg)](https://github.com/Heek1/AI-Prompt-Management-System/actions/workflows/codeql.yml)
+[![Live demo](https://img.shields.io/badge/live%20demo-prompt--manager--bt5r.onrender.com-121a2e)](https://prompt-manager-bt5r.onrender.com)
+[![Last commit](https://img.shields.io/github/last-commit/Heek1/AI-Prompt-Management-System)](https://github.com/Heek1/AI-Prompt-Management-System/commits/main)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+![.NET 10](https://img.shields.io/badge/.NET-10-512bd4?logo=dotnet&logoColor=white)
+![ASP.NET Core MVC](https://img.shields.io/badge/ASP.NET%20Core-MVC-512bd4)
+![EF Core 10](https://img.shields.io/badge/EF%20Core-10-512bd4)
+![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)
+![Claude](https://img.shields.io/badge/AI-Claude-d97757?logo=anthropic&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-compose-2496ed?logo=docker&logoColor=white)
+![Playwright](https://img.shields.io/badge/E2E-Playwright-2ead33?logo=playwright&logoColor=white)
+![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-traces%20%26%20metrics-425cc7?logo=opentelemetry&logoColor=white)
+![Languages](https://img.shields.io/badge/UI-English%20%7C%20%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-ffd84d)
 
 A self-hosted web app for a team's AI prompts: write a prompt once, improve it
 in versions, test every version against cases before it ships, and let
