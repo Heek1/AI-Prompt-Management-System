@@ -1,3 +1,4 @@
+@using PromptManager.Infrastructure
 @using System.Globalization
 @using PromptManager.ViewModels
 @model PromptIndexViewModel
@@ -12,9 +13,9 @@
 
 <header class="pm-head">
     <div>
-        <h1>@(Model.ActiveTag is { } active ? "#" + active.Name : "Library")</h1>
+        <h1>@(Model.ActiveTag is { } active ? "#" + active.Name : T["Library"].Value)</h1>
         <p class="pm-sub">
-            @Model.TotalCount @(Model.TotalCount == 1 ? "prompt" : "prompts")@(filtered ? " match these filters" : "")@(Model.PageCount > 1 ? $", page {Model.Page} of {Model.PageCount}" : "").
+            @T.Count(Model.TotalCount, "prompt", "prompts")@(filtered ? T[" match these filters"].Value : "")@(Model.PageCount > 1 ? T[", page {0} of {1}", Model.Page, Model.PageCount].Value : "").
         </p>
     </div>
     <div class="pm-actions">
@@ -141,21 +142,21 @@ else
                     <div class="pm-tags">
                         <span class="pm-tag">@prompt.Category</span>
                         <span class="pm-tag">@prompt.AiTool</span>
-                        <span class="pm-tag">by @prompt.Author</span>
+                        <span class="pm-tag">@T["by {0}", prompt.Author]</span>
                         @foreach (var t in prompt.Tags)
                         {
                             <span class="pm-tag pm-tag-hash">#@t.Name</span>
                         }
                         @if (prompt.IsArchived)
                         {
-                            <span class="pm-tag">@T["archived"]</span>
+                            <span class="pm-tag">@T.Text("status:archived", "archived")</span>
                         }
                     </div>
                 </div>
                 <div class="pm-row-meta">
                     @if (prompt.ProductionVersion is { } prod)
                     {
-                        <span class="pm-status pm-status-production">v@(prod) live</span>
+                        <span class="pm-status pm-status-production">@T["v{0} live", prod]</span>
                     }
                     else
                     {
@@ -163,7 +164,7 @@ else
                     }
                     @if (prompt.CurrentVersion != prompt.ProductionVersion)
                     {
-                        <div class="small mt-1">v@(prompt.CurrentVersion) in draft</div>
+                        <div class="small mt-1">@T["v{0} in draft", prompt.CurrentVersion]</div>
                     }
                 </div>
                 <div class="pm-row-meta">
@@ -176,7 +177,7 @@ else
                         <span>@T["no ratings"]</span>
                     }
                 </div>
-                <div class="pm-row-meta pm-num">@prompt.UpdatedAt.ToString("dd MMM yyyy", inv)</div>
+                <div class="pm-row-meta pm-num">@prompt.UpdatedAt.Date("dd MMM yyyy")</div>
             </a>
         }
     </div>

@@ -20,7 +20,7 @@
         <h1>@T["How well does it work?"]</h1>
         @if (prompt != null)
         {
-            <p class="pm-sub">@prompt.Title, by @prompt.Author. You can rate each prompt once.</p>
+            <p class="pm-sub">@prompt.Title, @T["by {0}", prompt.Author]. @T["You can rate each prompt once."]</p>
         }
     </div>
 </header>
@@ -35,7 +35,7 @@
             @foreach (var (val, label) in scale)
             {
                 <input type="radio" class="btn-check" name="Rating" id="rating-@val" value="@val" required @(Model.Rating == val ? "checked" : "") />
-                <label class="pm-scale-step" for="rating-@val"><b>@val</b><span>@label</span></label>
+                <label class="pm-scale-step" for="rating-@val"><b>@val</b><span>@T[label]</span></label>
             }
         </div>
         <span asp-validation-for="Rating" class="text-danger small"></span>

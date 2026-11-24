@@ -1,3 +1,4 @@
+@using PromptManager.Infrastructure
 @using PromptManager.Api
 @model List<ApiKeyInfo>
 @{
@@ -11,7 +12,7 @@
         <h1>@T["API keys"]</h1>
         <p class="pm-sub">
             @T["Applications use a key to fetch the production version of a prompt from"] <code>@baseUrl/api/prompts/{slug}</code>@T[". The API is described at"] <a href="/openapi/v1.json"><code>/openapi/v1.json</code></a>.
-            Each key may make @PromptApi.RequestsPerMinute requests per minute.
+            @T["Each key may make {0} requests per minute.", PromptApi.RequestsPerMinute]
         </p>
     </div>
 </header>
@@ -58,8 +59,8 @@
                         <tr class="@(k.IsActive ? "" : "text-muted")">
                             <td>@k.Name</td>
                             <td><code>@k.Prefix…</code></td>
-                            <td class="small">@k.CreatedAt.ToString("dd MMM yyyy")</td>
-                            <td class="small">@(k.LastUsedAt?.ToString("dd MMM yyyy HH:mm") ?? "never")</td>
+                            <td class="small">@k.CreatedAt.Date("dd MMM yyyy")</td>
+                            <td class="small">@(k.LastUsedAt?.Date("dd MMM yyyy HH:mm") ?? T["never"].Value)</td>
                             <td class="text-end">
                                 @if (k.IsActive)
                                 {

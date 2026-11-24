@@ -17,7 +17,7 @@
 
 <header class="pm-head">
     <div>
-        <h1>@(prompt != null ? $"v{prompt.CurrentVersion + 1}" : "New version")</h1>
+        <h1>@(prompt != null ? $"v{prompt.CurrentVersion + 1}" : T["New version"].Value)</h1>
         <p class="pm-sub">@T["The new version starts as a draft. Production keeps serving the current one until you promote it."]</p>
     </div>
 </header>
@@ -28,7 +28,7 @@
         <div class="col-lg-6">
             <section class="pm-sheet h-100" aria-label="@T["Current text"]">
                 <div class="pm-sheet-head">
-                    <span class="pm-sheet-title">v@(prompt.CurrentVersion), now</span>
+                    <span class="pm-sheet-title">@T["v{0}, now", prompt.CurrentVersion]</span>
                     <span class="pm-sheet-meta">@prompt.Category, @prompt.AiTool</span>
                 </div>
                 <pre class="pm-lines" style="max-height: 460px; overflow-y: auto">@PromptMarkup.Lines(prompt.CurrentText)</pre>

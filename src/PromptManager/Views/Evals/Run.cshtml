@@ -26,8 +26,8 @@
     <div>
         <h1>Eval #@Model.Id</h1>
         <p class="pm-sub">
-            v@(Model.VersionNumber) on <code>@Model.Model</code>. @(Model.JudgeModel is null ? "No judge." : $"Judge: {Model.JudgeModel}.")
-            Run by @Model.RunBy, $@Model.CostUsd.ToString("0.0000", inv).
+            @T["v{0} on", Model.VersionNumber] <code>@Model.Model</code>. @(Model.JudgeModel is null ? T["No judge."].Value : T["Judge: {0}.", Model.JudgeModel].Value)
+            @T["Run by {0}", Model.RunBy], $@Model.CostUsd.ToString("0.0000", inv).
         </p>
     </div>
     <div class="pm-actions text-end">
@@ -42,7 +42,7 @@
         }
         else
         {
-            <div class="pm-status pm-status-draft" data-testid="eval-status">@Model.Status</div>
+            <div class="pm-status pm-status-draft" data-testid="eval-status">@T[Model.Status.ToString()]</div>
         }
     </div>
 </header>
@@ -52,7 +52,7 @@
         <div class="pm-signal pm-signal-lg" role="list" aria-label="@T["One cell per case"]">
             @foreach (var r in Model.Results)
             {
-                <span role="listitem" class="@(r.Passed ? "is-pass" : "is-fail")" title="@r.CaseName: @(r.Passed ? "passed" : "failed")"></span>
+                <span role="listitem" class="@(r.Passed ? "is-pass" : "is-fail")" title="@r.CaseName: @(r.Passed ? T.Text("case:passed", "passed") : T.Text("case:failed", "failed"))"></span>
             }
             @for (var i = 0; i < pending; i++)
             {
@@ -65,7 +65,7 @@
             <div class="progress mt-3" role="progressbar" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100" aria-label="@T["Cases done"]">
                 <div class="progress-bar" style="width: @percent%"></div>
             </div>
-            <p class="small text-muted mt-2 mb-0">@Model.CompletedCases of @Model.TotalCases done. This page refreshes itself.</p>
+            <p class="small text-muted mt-2 mb-0">@T["{0} of {1} done. This page refreshes itself.", Model.CompletedCases, Model.TotalCases]</p>
         }
 
         @if (Model.Error is not null)
@@ -78,13 +78,13 @@
             <div class="alert @(Model.IsRegression ? "alert-danger" : "alert-success") mt-3 mb-0" data-testid="comparison">
                 @if (Model.IsRegression)
                 {
-                    <strong>Worse than v@(prev.VersionNumber)</strong>
+                    <strong>@T["Worse than v{0}", prev.VersionNumber]</strong>
                 }
                 else
                 {
-                    <span>Not worse than v@(prev.VersionNumber)</span>
+                    <span>@T["Not worse than v{0}", prev.VersionNumber]</span>
                 }
-                on this model: @prev.PassedCases/@prev.TotalCases before, @Model.PassedCases/@Model.TotalCases now
+                @T["on this model: {0}/{1} before, {2}/{3} now", prev.PassedCases, prev.TotalCases, Model.PassedCases, Model.TotalCases]
                 (<a asp-action="Run" asp-route-id="@prev.Id">eval #@prev.Id</a>).
             </div>
         }
@@ -98,8 +98,7 @@
             <div style="max-width: 560px">
                 <h2 class="h6 mb-1" id="suggest-heading">@T["Ask a model to fix it"]</h2>
                 <p class="small text-muted mb-0">
-                    The model sees v@(Model.VersionNumber), the failed cases with their answers and checks, and the names of the cases that passed.
-                    You review the change as a diff before anything is saved; accepting it saves a draft and runs this eval again.
+                    @T["The model sees v{0}, the failed cases with their answers and checks, and the names of the cases that passed. You review the change as a diff before anything is saved; accepting it saves a draft and runs this eval again.", Model.VersionNumber]
                 </p>
             </div>
             @if (suggestModels.Any(m => m.IsAvailable))

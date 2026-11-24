@@ -92,6 +92,8 @@ promoted; only an admin can override that, and the override is recorded.
   an OpenAPI description. See [API](#api).
 
 **Running it**
+- English and Ukrainian interface: the browser's language, or the EN / UA
+  switch in the sidebar (dates follow the language; numbers stay en-GB).
 - Light and dark theme (follows the system, or a choice kept in the browser),
   a layout that works on a phone, keyboard focus marks.
 - Health checks, structured JSON logs, and OpenTelemetry traces and metrics.
@@ -115,7 +117,10 @@ promoted; only an admin can override that, and the override is recorded.
   watches a repository.
 - **Accessibility has not been audited.** The colours were chosen for contrast
   by eye, not measured against WCAG AA.
-- **The interface is English only.**
+- **Ukrainian covers the interface, not every message.** Pages, buttons,
+  form errors and the main notices are translated; messages built deeper in
+  the services (eval check details, some refusals) and account errors from
+  ASP.NET Core Identity stay English.
 
 ## Run it
 

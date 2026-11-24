@@ -1,7 +1,7 @@
 @using PromptManager.DTOs
 @model RunPageDto
 @{
-    ViewData["Title"] = Model.PromptTitle is null ? "Runs" : $"Runs of {Model.PromptTitle}";
+    ViewData["Title"] = Model.PromptTitle is null ? "Runs" : T["Runs of {0}", Model.PromptTitle].Value;
 }
 
 @if (Model.PromptId is not null)
@@ -17,7 +17,7 @@
     <div>
         <h1>@T["Runs"]</h1>
         <p class="pm-sub">
-            @Model.TotalCount @(Model.TotalCount == 1 ? "run" : "runs")@(Model.PromptTitle is null ? " across the library" : $" of {Model.PromptTitle}"). Each one keeps the exact text sent, the answer, tokens and cost.
+            @T.Count(Model.TotalCount, "run", "runs")@(Model.PromptTitle is null ? T[" across the library"].Value : T[" of {0}", Model.PromptTitle].Value). @T["Each one keeps the exact text sent, the answer, tokens and cost."]
         </p>
     </div>
     @if (Model.PromptId is not null)

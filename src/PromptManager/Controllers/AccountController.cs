@@ -14,9 +14,12 @@ public class AccountController : Controller
     private readonly SignInManager<AppUser> _signIn;
     private readonly AuthOptions _auth;
     private readonly ILogger<AccountController> _logger;
+    private readonly Microsoft.Extensions.Localization.IStringLocalizer<PromptManager.SharedResource> _t;
 
-    public AccountController(UserManager<AppUser> users, SignInManager<AppUser> signIn, IOptions<AuthOptions> auth, ILogger<AccountController> logger)
+    public AccountController(UserManager<AppUser> users, SignInManager<AppUser> signIn, IOptions<AuthOptions> auth, ILogger<AccountController> logger,
+        Microsoft.Extensions.Localization.IStringLocalizer<PromptManager.SharedResource> t)
     {
+        _t = t;
         _users = users;
         _signIn = signIn;
         _auth = auth.Value;
@@ -73,8 +76,8 @@ public class AccountController : Controller
         // The same message for unknown e-mail and wrong password, so the form
         // cannot be used to find out which addresses have accounts.
         ModelState.AddModelError(string.Empty, result.IsLockedOut
-            ? "Too many failed attempts. Try again in 15 minutes."
-            : "Invalid e-mail or password.");
+            ? _t["Too many failed attempts. Try again in 15 minutes."]
+            : _t["Invalid e-mail or password."]);
         return View(model);
     }
 

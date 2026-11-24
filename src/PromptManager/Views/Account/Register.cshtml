@@ -18,19 +18,19 @@
         <span asp-validation-for="Email" class="text-danger small"></span>
     </div>
     <div class="mb-3">
-        <label asp-for="DisplayName" class="form-label"></label>
+        <label asp-for="DisplayName" class="form-label">@T["Display name"]</label>
         <input asp-for="DisplayName" class="form-control" autocomplete="nickname" />
         <div class="form-text">@T["Shown as the author of your prompts, versions, ratings and runs."]</div>
         <span asp-validation-for="DisplayName" class="text-danger small"></span>
     </div>
     <div class="mb-3">
-        <label asp-for="Password" class="form-label"></label>
+        <label asp-for="Password" class="form-label">@T["Password"]</label>
         <input asp-for="Password" class="form-control" autocomplete="new-password" />
         <div class="form-text">@T["At least 10 characters, with an upper-case letter, a lower-case letter and a digit."]</div>
         <span asp-validation-for="Password" class="text-danger small"></span>
     </div>
     <div class="mb-4">
-        <label asp-for="ConfirmPassword" class="form-label"></label>
+        <label asp-for="ConfirmPassword" class="form-label">@T["Confirm password"]</label>
         <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
         <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
     </div>

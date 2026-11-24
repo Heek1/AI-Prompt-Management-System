@@ -1,3 +1,4 @@
+@using PromptManager.Infrastructure
 @using System.Globalization
 @using PromptManager.Services
 @model List<NotificationDto>
@@ -27,7 +28,7 @@ else
         {
             <li class="@(n.IsRead ? "" : "is-new")">
                 <a href="@n.Url">@n.Text</a>
-                <span class="pm-num">@n.CreatedAt.ToString("dd MMM yyyy HH:mm", inv)</span>
+                <span class="pm-num">@n.CreatedAt.Date("dd MMM yyyy HH:mm")</span>
             </li>
         }
     </ul>

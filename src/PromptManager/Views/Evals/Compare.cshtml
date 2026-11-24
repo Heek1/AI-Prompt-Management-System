@@ -24,9 +24,9 @@
 
 <header class="pm-head">
     <div>
-        <h1>Which model, for v@(f.VersionNumber)?</h1>
+        <h1>@T["Which model, for v{0}?", f.VersionNumber]</h1>
         <p class="pm-sub">
-            The same @f.TotalCases @(f.TotalCases == 1 ? "case" : "cases") on each model@(f.JudgeModel is null ? "" : $", graded by {f.JudgeModel}").
+            @T["The same {0} on each model", T.Count(f.TotalCases, "case", "cases")]@(f.JudgeModel is null ? "" : T[", graded by {0}", f.JudgeModel].Value).
             @if (!Model.AllFinished)
             {
                 <span>@T["Still running; this page refreshes itself."]</span>

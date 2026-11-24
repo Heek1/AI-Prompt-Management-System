@@ -10,12 +10,12 @@
     var onLibrary = Current("Prompts") is not null && action != "Create" || Current("Evals") is not null;
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#121a2e" />
-    <title>@ViewData["Title"] | Prompt Manager</title>
+    <title>@T[ViewData["Title"]?.ToString() ?? ""] | Prompt Manager</title>
     <script src="~/js/theme.js" asp-append-version="true"></script>
     <meta name="color-scheme" content="light dark" />
     @await RenderSectionAsync("Head", required: false)
@@ -91,6 +91,7 @@
                         <button type="button" data-theme-choice="light" aria-pressed="false">@T["Light"]</button>
                         <button type="button" data-theme-choice="dark" aria-pressed="false">@T["Dark"]</button>
                     </div>
+                    <partial name="_LanguageSwitch" />
                 </div>
             </div>
         </aside>
@@ -100,14 +101,14 @@
                 @if (TempData["Success"] != null)
                 {
                     <div class="alert alert-success alert-dismissible fade show" role="status">
-                        @TempData["Success"]
+                        @T[TempData["Success"]!.ToString()!]
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="@T["Dismiss"]"></button>
                     </div>
                 }
                 @if (TempData["Error"] != null)
                 {
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        @TempData["Error"]
+                        @T[TempData["Error"]!.ToString()!]
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="@T["Dismiss"]"></button>
                     </div>
                 }

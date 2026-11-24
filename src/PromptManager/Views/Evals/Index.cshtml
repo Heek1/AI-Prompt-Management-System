@@ -4,7 +4,7 @@
 @model EvalsIndexViewModel
 @{
     var p = Model.Prompt;
-    ViewData["Title"] = $"Evals: {p.Title}";
+    ViewData["Title"] = T["Evals: {0}", p.Title].Value;
     var inv = CultureInfo.InvariantCulture;
 }
 
@@ -45,7 +45,7 @@
                                 <div>
                                     <div class="pm-row-title">@c.Name</div>
                                     <div class="pm-tags mt-1">
-                                        <span class="pm-tag">@c.CheckCount @(c.CheckCount == 1 ? "check" : "checks")</span>
+                                        <span class="pm-tag">@T.Count(c.CheckCount, "check", "checks")</span>
                                         @foreach (var k in c.Variables.Keys)
                                         {
                                             <span class="pm-var small">{{@k}}</span>
@@ -80,10 +80,8 @@
                 <div class="card-header"><h2 class="h6 mb-0">@T["Prompt-injection check"]</h2></div>
                 <div class="card-body">
                     <p class="small text-muted mb-2">
-                        Adds six standard attacks (instruction override, "developer mode", asking for the prompt itself,
-                        a fake end of input, another language, a base64-encoded order) as cases. Each passes when the answer
-                        contains neither a random canary word nor a piece of your prompt.
-                        @(Model.HasInjectionCases ? "Adding again replaces the earlier injection cases with a new canary." : "")
+                        @T["Adds six standard attacks (instruction override, \"developer mode\", asking for the prompt itself, a fake end of input, another language, a base64-encoded order) as cases. Each passes when the answer contains neither a random canary word nor a piece of your prompt."]
+                        @(Model.HasInjectionCases ? T["Adding again replaces the earlier injection cases with a new canary."].Value : "")
                     </p>
                     @if (Model.Variables.Any())
                     {
@@ -155,9 +153,9 @@
                                 </select>
                             </div>
                         }
-                        <button type="submit" class="btn btn-marker w-100 mt-2">Run @Model.Cases.Count @(Model.Cases.Count == 1 ? "case" : "cases")</button>
+                        <button type="submit" class="btn btn-marker w-100 mt-2">@T["Run {0}", T.Count(Model.Cases.Count, "case", "cases")]</button>
                     </form>
-                    <div class="form-text">Runs in the background, one call per case@(Model.NeedsJudge ? " plus one judge call per rubric" : "").</div>
+                    <div class="form-text">@T["Runs in the background, one call per case"]@(Model.NeedsJudge ? T[" plus one judge call per rubric"].Value : "").</div>
                 </div>
             </div>
         }
@@ -170,7 +168,7 @@
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="PromptId" value="@p.Id" />
                         <input type="hidden" name="VersionNumber" value="@p.CurrentVersion" />
-                        <p class="small text-muted mb-2">Runs v@(p.CurrentVersion) and all cases on each model you tick (2 to 4).</p>
+                        <p class="small text-muted mb-2">@T["Runs v{0} and all cases on each model you tick (2 to 4).", p.CurrentVersion]</p>
                         @foreach (var m in Model.Models)
                         {
                             <div class="form-check">

@@ -1,3 +1,4 @@
+@using PromptManager.Infrastructure
 @using System.Globalization
 @using PromptManager.Services
 @model CostSummary
@@ -40,14 +41,14 @@
         <div class="pm-figure" data-testid="cost-month">@Usd(Model.MonthToDate)</div>
         @if (Model.JudgeMonthToDate > 0)
         {
-            <div class="small text-muted">of which judges @Usd(Model.JudgeMonthToDate)</div>
+            <div class="small text-muted">@T["of which judges {0}", Usd(Model.JudgeMonthToDate)]</div>
         }
     </div>
     <div>
         <div class="pm-stat-label">@T["Monthly budget"]</div>
             @if (Model.HasBudget)
             {
-                <div class="pm-figure">@Usd(Model.Remaining) <span class="fs-6 text-muted fw-normal">left of @Usd(Model.MonthlyBudget)</span></div>
+                <div class="pm-figure">@Usd(Model.Remaining) <span class="fs-6 text-muted fw-normal">@T["left of {0}", Usd(Model.MonthlyBudget)]</span></div>
                 <div class="progress mt-2" style="height: 6px" role="progressbar" aria-label="@T["Budget used"]"
                      aria-valuenow="@((int)(Model.BudgetUsed * 100))" aria-valuemin="0" aria-valuemax="100">
                     <div class="progress-bar @(Model.BudgetUsed >= 1 ? "bg-danger" : Model.BudgetUsed >= 0.8 ? "bg-warning" : "")"
@@ -84,7 +85,7 @@
                 <g>
                     @* Hit target: the whole slot, taller than the bar, carries the tooltip. *@
                     <rect x="@((left + i * slot).ToString(inv))" y="@top" width="@slot.ToString(inv)" height="@(height - top - bottom)" fill="transparent">
-                        <title>@d.Day.ToString("dd MMM", inv): @Usd(d.CostUsd), @d.Runs run(s)</title>
+                        <title>@d.Day.Date("dd MMM"): @Usd(d.CostUsd), @T.Count(d.Runs, "run", "runs")</title>
                     </rect>
                     @if (h >= 1)
                     {
@@ -96,7 +97,7 @@
                     @* Every 7th day counted back from today, so the last tick never crowds another. *@
                     @if ((days.Count - 1 - i) % 7 == 0)
                     {
-                        @:<text x="@((x + barWidth / 2).ToString(inv))" y="@(height - 6)" text-anchor="middle" font-size="10" fill="#6b7390">@d.Day.ToString("dd MMM", inv)</text>
+                        @:<text x="@((x + barWidth / 2).ToString(inv))" y="@(height - 6)" text-anchor="middle" font-size="10" fill="#6b7390">@d.Day.Date("dd MMM")</text>
                     }
                 </g>
             }
@@ -114,7 +115,7 @@
                 <tbody>
                     @foreach (var d in days.Where(d => d.Runs > 0 || d.CostUsd > 0))
                     {
-                        <tr><td>@d.Day.ToString("dd MMM yyyy", inv)</td><td class="text-end">@d.Runs</td><td class="text-end">@Usd(d.CostUsd)</td></tr>
+                        <tr><td>@d.Day.Date("dd MMM yyyy")</td><td class="text-end">@d.Runs</td><td class="text-end">@Usd(d.CostUsd)</td></tr>
                     }
                 </tbody>
             </table>
@@ -172,7 +173,7 @@
                 }
                 @if (Model.FailedRunsMonthToDate > 0)
                 {
-                    <p class="small text-muted px-3 py-2 mb-0">@Model.FailedRunsMonthToDate failed run(s) this month (no cost recorded).</p>
+                    <p class="small text-muted px-3 py-2 mb-0">@T["Failed runs this month (no cost recorded): {0}", Model.FailedRunsMonthToDate]</p>
                 }
             </div>
         </div>

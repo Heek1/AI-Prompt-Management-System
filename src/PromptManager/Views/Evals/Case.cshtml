@@ -8,12 +8,12 @@
 <nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
     <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.Prompt.Id">@Model.Prompt.Title</a><span aria-hidden="true">/</span>
     <a asp-action="Index" asp-route-id="@Model.Prompt.Id">Evals</a><span aria-hidden="true">/</span>
-    <span>@(c.Id == 0 ? "New case" : c.Name)</span>
+    <span>@(c.Id == 0 ? T["New case"].Value : c.Name)</span>
 </nav>
 
 <header class="pm-head">
     <div>
-        <h1>@(c.Id == 0 ? "New case" : "Edit case")</h1>
+        <h1>@(c.Id == 0 ? T["New case"] : T["Edit case"])</h1>
         <p class="pm-sub">@T["An input, and what a good answer must or must not contain. The case passes only when every check passes."]</p>
     </div>
 </header>

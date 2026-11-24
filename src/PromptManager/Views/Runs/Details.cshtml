@@ -4,7 +4,7 @@
 @using PromptManager.Models
 @model RunDetailsDto
 @{
-    ViewData["Title"] = $"Run #{Model.Id}";
+    ViewData["Title"] = T["Run #{0}", Model.Id].Value;
     var inv = CultureInfo.InvariantCulture;
 }
 
@@ -17,8 +17,8 @@
 
 <header class="pm-head">
     <div>
-        <h1>Run #@Model.Id</h1>
-        <p class="pm-sub">v@(Model.VersionNumber) of @Model.PromptTitle on <code>@Model.Model</code>, by @Model.RunBy.</p>
+        <h1>@T["Run #{0}", Model.Id]</h1>
+        <p class="pm-sub">@T["v{0} of {1} on", Model.VersionNumber, Model.PromptTitle] <code>@Model.Model</code>, @T["by {0}", Model.RunBy].</p>
     </div>
     <div class="pm-actions"><partial name="_RunStatusBadge" model="Model.Status" /></div>
 </header>
@@ -64,7 +64,7 @@
 
         <h2 class="pm-section-title">@T["Text sent"]</h2>
         <section class="pm-sheet" aria-label="@T["Prompt sent"]">
-            <div class="pm-sheet-head"><span class="pm-sheet-title">v@(Model.VersionNumber), values filled in</span></div>
+            <div class="pm-sheet-head"><span class="pm-sheet-title">@T["v{0}, values filled in", Model.VersionNumber]</span></div>
             <pre class="pm-lines pm-lines-plain">@PromptMarkup.Lines(Model.PromptText)</pre>
         </section>
     </div>
@@ -75,7 +75,7 @@
                 <div class="pm-stat-label">@T["Cost"]</div>
                 <div class="pm-figure mb-3">$@Model.CostUsd.ToString("0.000000", inv)</div>
                 <dl class="pm-facts">
-                    <dt>@T["Status"]</dt><dd>@Model.Status</dd>
+                    <dt>@T["Status"]</dt><dd>@T[Model.Status.ToString()]</dd>
                     <dt>@T["Model"]</dt><dd><code>@Model.Model</code></dd>
                     @if (Model.ServedByModel is not null)
                     {
@@ -84,7 +84,7 @@
                     <dt>@T["Input tokens"]</dt><dd class="pm-num">@Model.InputTokens.ToString("N0")</dd>
                     <dt>@T["Output tokens"]</dt><dd class="pm-num">@Model.OutputTokens.ToString("N0")</dd>
                     <dt>@T["Duration"]</dt><dd class="pm-num">@((Model.DurationMs / 1000.0).ToString("0.00", inv)) s</dd>
-                    <dt>@T["Stop reason"]</dt><dd>@(Model.StopReason ?? "none")</dd>
+                    <dt>@T["Stop reason"]</dt><dd>@(Model.StopReason ?? T["none"].Value)</dd>
                     <dt>@T["Run by"]</dt><dd>@Model.RunBy</dd>
                     <dt>@T["At"]</dt><dd class="pm-num">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss", inv) UTC</dd>
                 </dl>

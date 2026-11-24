@@ -1,0 +1,10 @@
+@{
+    var ui = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var back = Context.Request.Path + Context.Request.QueryString;
+}
+<form action="/Language" method="post" class="pm-theme pm-lang" aria-label="@T["Language"]">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="returnUrl" value="@back" />
+    <button type="submit" name="ui" value="en" lang="en" aria-pressed="@(ui == "uk" ? "false" : "true")">EN</button>
+    <button type="submit" name="ui" value="uk" lang="uk" aria-pressed="@(ui == "uk" ? "true" : "false")">UA</button>
+</form>

@@ -63,7 +63,14 @@ builder.Services.AddOpenTelemetry()
 
 // Services
 builder.Services.AddLocalization(o => o.ResourcesPath = "Resources");
-builder.Services.AddControllersWithViews();
+// Write Cyrillic (and every other script) as is instead of &#x...; entities:
+// the pages are UTF-8, and prompts and the interface are often Ukrainian.
+builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(o =>
+    o.TextEncoderSettings = new System.Text.Encodings.Web.TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All));
+builder.Services.AddControllersWithViews()
+    // Validation messages are looked up in the shared resource too (C8).
+    .AddDataAnnotationsLocalization(o =>
+        o.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(PromptManager.SharedResource)));
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException(

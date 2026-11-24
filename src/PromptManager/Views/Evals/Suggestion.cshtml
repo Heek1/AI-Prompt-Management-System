@@ -17,8 +17,8 @@
     <div>
         <h1>@T["Suggested revision"]</h1>
         <p class="pm-sub">
-            From eval #@Model.Eval.Id (@Model.Eval.PassedCases/@Model.Eval.TotalCases passed on v@(s.BaseVersion)) by <code>@s.Model</code>,
-            $@s.CostUsd.ToString("0.0000", CultureInfo.InvariantCulture). Nothing is saved until you accept it.
+            @T["From eval #{0} ({1}/{2} passed on v{3}) by", Model.Eval.Id, Model.Eval.PassedCases, Model.Eval.TotalCases, s.BaseVersion] <code>@s.Model</code>,
+            $@s.CostUsd.ToString("0.0000", CultureInfo.InvariantCulture). @T["Nothing is saved until you accept it."]
         </p>
     </div>
 </header>
@@ -48,8 +48,8 @@
             <a asp-action="Run" asp-route-id="@Model.Eval.Id" class="btn btn-outline-secondary">@T["Discard"]</a>
         </div>
         <p class="form-text mb-0 mt-2">
-            @T["The eval runs on"] <code>@Model.Eval.Model</code>@(Model.Eval.JudgeModel is null ? "" : $" with judge {Model.Eval.JudgeModel}"), as before.
-            Production stays on its current version until you promote the new one.
+            @T["The eval runs on"] <code>@Model.Eval.Model</code>@(Model.Eval.JudgeModel is null ? "" : T[" with judge {0}", Model.Eval.JudgeModel].Value), @T["as before."]
+            @T["Production stays on its current version until you promote the new one."]
         </p>
     </div>
 </form>

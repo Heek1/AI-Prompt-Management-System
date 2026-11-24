@@ -23,25 +23,25 @@
         <div class="col-lg-6">
             <section class="pm-list" aria-labelledby="list-@s.Kind">
                 <div class="pm-sheet-head">
-                    <h2 class="h6 mb-0" id="list-@s.Kind">@s.Title <span class="text-muted fw-normal">@s.Items.Count</span></h2>
+                    <h2 class="h6 mb-0" id="list-@s.Kind">@T[s.Title] <span class="text-muted fw-normal">@s.Items.Count</span></h2>
                 </div>
                 <ul class="pm-lookup" data-testid="list-@s.Kind.ToString().ToLowerInvariant()">
                     @foreach (var item in s.Items)
                     {
                         var used = s.Usage.GetValueOrDefault(item.Name);
                         <li>
-                            <span>@item.Name <span class="pm-num ms-2">@used @(used == 1 ? "prompt" : "prompts")</span></span>
+                            <span>@item.Name <span class="pm-num ms-2">@T.Count(used, "prompt", "prompts")</span></span>
                             <form asp-action="Remove" method="post" class="d-inline">
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <button type="submit" class="btn btn-sm btn-outline-danger"
-                                        data-confirm="Remove &quot;@item.Name&quot; from the list?">@T["Remove"]</button>
+                                        data-confirm="@T["Remove \"{0}\" from the list?", item.Name]">@T["Remove"]</button>
                             </form>
                         </li>
                     }
                 </ul>
                 <form asp-action="Add" method="post" class="d-flex gap-2 p-3 border-top">
                     <input type="hidden" name="kind" value="@s.Kind" />
-                    <label class="visually-hidden" for="add-@s.Kind">New entry for @s.Title.ToLowerInvariant()</label>
+                    <label class="visually-hidden" for="add-@s.Kind">@T["New entry for {0}", T[s.Title].Value.ToLowerInvariant()]</label>
                     <input id="add-@s.Kind" name="name" class="form-control" maxlength="50" required placeholder="@s.Placeholder" />
                     <button type="submit" class="btn btn-primary text-nowrap">@T["Add"]</button>
                 </form>

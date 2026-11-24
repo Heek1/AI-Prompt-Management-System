@@ -1,7 +1,7 @@
 @using PromptManager.ViewModels
 @model CompareVersionsViewModel
 @{
-    ViewData["Title"] = $"Compare v{Model.From.VersionNumber} and v{Model.To.VersionNumber}";
+    ViewData["Title"] = T["Compare v{0} and v{1}", Model.From.VersionNumber, Model.To.VersionNumber].Value;
     var p = Model.Prompt;
     var diffModel = (Model.Diff, $"v{Model.From.VersionNumber}", $"v{Model.To.VersionNumber}");
 }
@@ -12,8 +12,8 @@
 
 <header class="pm-head">
     <div>
-        <h1>v@(Model.From.VersionNumber) to v@(Model.To.VersionNumber)</h1>
-        <p class="pm-sub">@(string.IsNullOrEmpty(Model.To.ChangeNote) ? "No change note on the newer version." : Model.To.ChangeNote)</p>
+        <h1>@T["v{0} to v{1}", Model.From.VersionNumber, Model.To.VersionNumber]</h1>
+        <p class="pm-sub">@(string.IsNullOrEmpty(Model.To.ChangeNote) ? T["No change note on the newer version."].Value : Model.To.ChangeNote)</p>
     </div>
     <form method="get" asp-action="Compare" asp-route-id="@p.Id" class="pm-actions align-items-end">
         <div>
