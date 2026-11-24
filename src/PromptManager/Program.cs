@@ -5,11 +5,61 @@ using PromptManager.Api;
 using PromptManager.Data;
 using PromptManager.Evals;
 using PromptManager.Llm;
+using Microsoft.AspNetCore.HttpLogging;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using PromptManager.Middleware;
 using PromptManager.Models;
 using PromptManager.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ---------- Observability (D7) ----------
+// JSON logs outside development, so a log service can index the fields
+// (method, path, status, duration, trace id) instead of parsing sentences.
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Logging.ClearProviders();
+    builder.Logging.AddJsonConsole(o =>
+    {
+        o.IncludeScopes = true;
+        o.TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
+        o.UseUtcTimestamp = true;
+    });
+}
+
+// One line per request with what is safe to keep: no query string (it holds
+// searches), no headers (cookies, API keys) and no client IP.
+builder.Services.AddHttpLogging(o =>
+{
+    o.LoggingFields = HttpLoggingFields.RequestMethod | HttpLoggingFields.RequestPath
+                      | HttpLoggingFields.ResponseStatusCode | HttpLoggingFields.Duration;
+    o.CombineLogs = true;
+});
+
+// Traces and metrics are always collected; they leave the process only when
+// an OTLP endpoint is configured (OTEL_EXPORTER_OTLP_ENDPOINT, e.g. a
+// collector, Grafana Cloud or Honeycomb). Without one this costs nearly nothing.
+var otlp = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("promptmanager"))
+    .WithTracing(t =>
+    {
+        t.AddAspNetCoreInstrumentation(o => o.Filter = ctx => !ctx.Request.Path.StartsWithSegments("/health")
+                                                          && !ctx.Request.Path.StartsWithSegments("/lib"))
+         .AddHttpClientInstrumentation()
+         .AddSource("Npgsql")
+         .AddSource(Telemetry.Name);
+        if (otlp) t.AddOtlpExporter();
+    })
+    .WithMetrics(m =>
+    {
+        m.AddAspNetCoreInstrumentation()
+         .AddHttpClientInstrumentation()
+         .AddMeter(Telemetry.Name);
+        if (otlp) m.AddOtlpExporter();
+    });
 
 // Services
 builder.Services.AddControllersWithViews();
@@ -123,12 +173,12 @@ app.UseRequestLocalization(new Microsoft.AspNetCore.Builder.RequestLocalizationO
 });
 
 app.UseStaticFiles();
+// After static files, so the log has page and API requests, not every stylesheet.
+app.UseHttpLogging();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
-
-app.UseRequestLogging();
 
 app.MapPromptApi();
 

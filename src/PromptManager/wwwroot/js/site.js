@@ -33,3 +33,29 @@ document.addEventListener('click', function (event) {
         setTimeout(function () { button.innerHTML = original; }, 2000);
     });
 });
+
+// Theme switch: Auto follows the system; Light and Dark are remembered in
+// this browser only (theme.js applies the choice before the page paints).
+(function () {
+    function current() {
+        try { return localStorage.getItem('pm-theme') || 'auto'; } catch (e) { return 'auto'; }
+    }
+    function apply(theme) {
+        if (theme === 'light' || theme === 'dark') document.documentElement.setAttribute('data-theme', theme);
+        else document.documentElement.removeAttribute('data-theme');
+        document.querySelectorAll('[data-theme-choice]').forEach(function (b) {
+            b.setAttribute('aria-pressed', b.getAttribute('data-theme-choice') === theme ? 'true' : 'false');
+        });
+    }
+    document.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-theme-choice]');
+        if (!button) return;
+        const theme = button.getAttribute('data-theme-choice');
+        try {
+            if (theme === 'auto') localStorage.removeItem('pm-theme');
+            else localStorage.setItem('pm-theme', theme);
+        } catch (e) { /* not remembered, still applied */ }
+        apply(theme);
+    });
+    apply(current());
+})();
