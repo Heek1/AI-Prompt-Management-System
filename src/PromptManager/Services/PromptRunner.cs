@@ -159,7 +159,9 @@ public sealed class PromptRunner(AppDbContext db, LlmCatalog catalog, ICostServi
         {
             // Two saves under the same new name at once: the run is already
             // stored, so losing this convenience copy is acceptable.
-            logger.LogWarning(ex, "Could not save input set {Name} for prompt {PromptId}.", name, promptId);
+            // The name is typed by the user: line breaks would let it fake log lines.
+            var safeName = name.Replace("\r", " ").Replace("\n", " ");
+            logger.LogWarning(ex, "Could not save input set {Name} for prompt {PromptId}.", safeName, promptId);
             db.ChangeTracker.Clear();
         }
     }

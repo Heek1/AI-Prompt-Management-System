@@ -19,7 +19,16 @@ public class LanguageController : Controller
             Response.Cookies.Append(
                 CookieRequestCultureProvider.DefaultCookieName,
                 CookieRequestCultureProvider.MakeCookieValue(new RequestCulture("en-GB", ui)),
-                new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), IsEssential = true, SameSite = SameSiteMode.Lax, HttpOnly = true });
+                new CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddYears(1),
+                    IsEssential = true,
+                    SameSite = SameSiteMode.Lax,
+                    HttpOnly = true,
+                    // Behind Render's proxy every request is https; plain http
+                    // happens only on a developer's machine and in tests.
+                    Secure = Request.IsHttps
+                });
         }
         // Only back to a page of this app, never to an address from the form.
         return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
