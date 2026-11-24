@@ -21,22 +21,22 @@
 
 <header class="pm-head">
     <div>
-        <h1>Costs</h1>
-        <p class="pm-sub">Paid model calls: runs (including eval answers) and judge calls. Days are UTC.</p>
+        <h1>@T["Costs"]</h1>
+        <p class="pm-sub">@T["Paid model calls: runs (including eval answers) and judge calls. Days are UTC."]</p>
     </div>
 </header>
 
 <div class="pm-ledger mb-4">
     <div>
-        <div class="pm-stat-label">Today</div>
+        <div class="pm-stat-label">@T["Today"]</div>
         <div class="pm-figure" data-testid="cost-today">@Usd(Model.Today)</div>
     </div>
     <div>
-        <div class="pm-stat-label">Last 7 days</div>
+        <div class="pm-stat-label">@T["Last 7 days"]</div>
         <div class="pm-figure">@Usd(Model.Last7Days)</div>
     </div>
     <div>
-        <div class="pm-stat-label">This month</div>
+        <div class="pm-stat-label">@T["This month"]</div>
         <div class="pm-figure" data-testid="cost-month">@Usd(Model.MonthToDate)</div>
         @if (Model.JudgeMonthToDate > 0)
         {
@@ -44,31 +44,31 @@
         }
     </div>
     <div>
-        <div class="pm-stat-label">Monthly budget</div>
+        <div class="pm-stat-label">@T["Monthly budget"]</div>
             @if (Model.HasBudget)
             {
                 <div class="pm-figure">@Usd(Model.Remaining) <span class="fs-6 text-muted fw-normal">left of @Usd(Model.MonthlyBudget)</span></div>
-                <div class="progress mt-2" style="height: 6px" role="progressbar" aria-label="Budget used"
+                <div class="progress mt-2" style="height: 6px" role="progressbar" aria-label="@T["Budget used"]"
                      aria-valuenow="@((int)(Model.BudgetUsed * 100))" aria-valuemin="0" aria-valuemax="100">
                     <div class="progress-bar @(Model.BudgetUsed >= 1 ? "bg-danger" : Model.BudgetUsed >= 0.8 ? "bg-warning" : "")"
                          style="width: @(Math.Min(100, (int)(Model.BudgetUsed * 100)))%"></div>
                 </div>
                 @if (Model.BudgetUsed >= 1)
                 {
-                    <div class="small text-danger mt-1">Used up: paid calls are refused until the 1st.</div>
+                    <div class="small text-danger mt-1">@T["Used up: paid calls are refused until the 1st."]</div>
                 }
             }
             else
             {
-                <div class="text-muted mt-2">No limit. Set <code>Llm:MonthlyBudgetUsd</code>.</div>
+                <div class="text-muted mt-2">@T["No limit. Set"] <code>Llm:MonthlyBudgetUsd</code>.</div>
             }
     </div>
 </div>
 
 <div class="card mb-4">
-    <div class="card-header"><h2 class="h6 mb-0">Spend per day, last 30 days</h2></div>
+    <div class="card-header"><h2 class="h6 mb-0">@T["Spend per day, last 30 days"]</h2></div>
     <div class="card-body">
-        <svg viewBox="0 0 @width @height" class="w-100" role="img" aria-label="Spend per day for the last 30 days; the table below lists the same numbers" data-testid="daily-chart">
+        <svg viewBox="0 0 @width @height" class="w-100" role="img" aria-label="@T["Spend per day for the last 30 days; the table below lists the same numbers"]" data-testid="daily-chart">
             @* Recessive grid: baseline and the top value only. *@
             <line x1="@left" x2="@(width - right)" y1="@baseline" y2="@baseline" stroke="#c9cedc" stroke-width="1" />
             <line x1="@left" x2="@(width - right)" y1="@Y(scaleMax).ToString(inv)" y2="@Y(scaleMax).ToString(inv)" stroke="#eceef5" stroke-width="1" />
@@ -108,9 +108,9 @@
             }
         </svg>
         <details class="mt-2 small">
-            <summary class="text-muted">Show as a table</summary>
+            <summary class="text-muted">@T["Show as a table"]</summary>
             <table class="table table-sm mt-2 mb-0">
-                <thead><tr><th>Day</th><th class="text-end">Runs</th><th class="text-end">Cost</th></tr></thead>
+                <thead><tr><th>@T["Day"]</th><th class="text-end">@T["Runs"]</th><th class="text-end">@T["Cost"]</th></tr></thead>
                 <tbody>
                     @foreach (var d in days.Where(d => d.Runs > 0 || d.CostUsd > 0))
                     {
@@ -125,16 +125,16 @@
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header"><h2 class="h6 mb-0">This month by prompt (top 10)</h2></div>
+            <div class="card-header"><h2 class="h6 mb-0">@T["This month by prompt (top 10)"]</h2></div>
             <div class="card-body p-0">
                 @if (!Model.ByPrompt.Any())
                 {
-                    <p class="text-muted small p-3 mb-0">No runs this month.</p>
+                    <p class="text-muted small p-3 mb-0">@T["No runs this month."]</p>
                 }
                 else
                 {
                     <table class="table mb-0 pm-table">
-                        <thead><tr><th>Prompt</th><th class="text-end">Runs</th><th class="text-end">Cost</th></tr></thead>
+                        <thead><tr><th>@T["Prompt"]</th><th class="text-end">@T["Runs"]</th><th class="text-end">@T["Cost"]</th></tr></thead>
                         <tbody>
                             @foreach (var p in Model.ByPrompt)
                             {
@@ -152,16 +152,16 @@
     </div>
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header"><h2 class="h6 mb-0">This month by model</h2></div>
+            <div class="card-header"><h2 class="h6 mb-0">@T["This month by model"]</h2></div>
             <div class="card-body p-0">
                 @if (!Model.ByModel.Any())
                 {
-                    <p class="text-muted small p-3 mb-0">No calls this month.</p>
+                    <p class="text-muted small p-3 mb-0">@T["No calls this month."]</p>
                 }
                 else
                 {
                     <table class="table mb-0 pm-table" data-testid="by-model">
-                        <thead><tr><th>Model</th><th class="text-end">Calls</th><th class="text-end">Cost</th></tr></thead>
+                        <thead><tr><th>@T["Model"]</th><th class="text-end">@T["Calls"]</th><th class="text-end">@T["Cost"]</th></tr></thead>
                         <tbody>
                             @foreach (var m in Model.ByModel)
                             {

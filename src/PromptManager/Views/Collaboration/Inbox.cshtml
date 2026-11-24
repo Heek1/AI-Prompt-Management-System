@@ -8,16 +8,16 @@
 
 <header class="pm-head">
     <div>
-        <h1>Inbox</h1>
-        <p class="pm-sub">New versions, promotions and comments on the prompts you watch. You watch the prompts you create or comment on; any prompt page has a Watch button.</p>
+        <h1>@T["Inbox"]</h1>
+        <p class="pm-sub">@T["New versions, promotions and comments on the prompts you watch. You watch the prompts you create or comment on; any prompt page has a Watch button."]</p>
     </div>
 </header>
 
 @if (!Model.Any())
 {
     <div class="pm-empty">
-        <h2>Nothing yet</h2>
-        <p>When someone changes or discusses a prompt you watch, it shows up here.</p>
+        <h2>@T["Nothing yet"]</h2>
+        <p>@T["When someone changes or discusses a prompt you watch, it shows up here."]</p>
     </div>
 }
 else

@@ -62,6 +62,7 @@ builder.Services.AddOpenTelemetry()
     });
 
 // Services
+builder.Services.AddLocalization(o => o.ResourcesPath = "Resources");
 builder.Services.AddControllersWithViews();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
@@ -170,7 +171,8 @@ app.UseRequestLocalization(new Microsoft.AspNetCore.Builder.RequestLocalizationO
 {
     DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(culture),
     SupportedCultures = [culture],
-    SupportedUICultures = [culture]
+    // Texts in English or Ukrainian (cookie or Accept-Language); formats stay en-GB.
+    SupportedUICultures = [culture, new System.Globalization.CultureInfo("uk")]
 });
 
 app.UseStaticFiles();

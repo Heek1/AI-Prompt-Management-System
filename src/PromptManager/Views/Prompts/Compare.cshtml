@@ -6,8 +6,8 @@
     var diffModel = (Model.Diff, $"v{Model.From.VersionNumber}", $"v{Model.To.VersionNumber}");
 }
 
-<nav class="pm-crumbs" aria-label="Breadcrumb">
-    <a asp-action="Index">Library</a><span aria-hidden="true">/</span><a asp-action="Details" asp-route-id="@p.Id">@p.Title</a><span aria-hidden="true">/</span><span>Compare versions</span>
+<nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
+    <a asp-action="Index">@T["Library"]</a><span aria-hidden="true">/</span><a asp-action="Details" asp-route-id="@p.Id">@p.Title</a><span aria-hidden="true">/</span><span>@T["Compare versions"]</span>
 </nav>
 
 <header class="pm-head">
@@ -17,7 +17,7 @@
     </div>
     <form method="get" asp-action="Compare" asp-route-id="@p.Id" class="pm-actions align-items-end">
         <div>
-            <label class="form-label small" for="from">From</label>
+            <label class="form-label small" for="from">@T["From"]</label>
             <select id="from" name="from" class="form-select form-select-sm">
                 @foreach (var v in p.Versions)
                 {
@@ -26,7 +26,7 @@
             </select>
         </div>
         <div>
-            <label class="form-label small" for="to">To</label>
+            <label class="form-label small" for="to">@T["To"]</label>
             <select id="to" name="to" class="form-select form-select-sm">
                 @foreach (var v in p.Versions)
                 {
@@ -34,25 +34,25 @@
                 }
             </select>
         </div>
-        <button class="btn btn-outline-secondary btn-sm" type="submit">Compare</button>
+        <button class="btn btn-outline-secondary btn-sm" type="submit">@T["Compare"]</button>
     </form>
 </header>
 
-<section class="pm-sheet mb-4" aria-label="Changes">
+<section class="pm-sheet mb-4" aria-label="@T["Changes"]">
     <partial name="_Diff" model="diffModel" />
 </section>
 
 @if (!p.IsArchived && !Model.IsSignedIn)
 {
     <div class="alert alert-info">
-        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Sign in</a> to run both versions side by side.
+        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">@T["Sign in"]</a> @T["to run both versions side by side."]
     </div>
 }
 @if (!p.IsArchived && Model.IsSignedIn)
 {
     <section class="card" aria-labelledby="run-both-heading">
         <div class="card-header">
-            <h2 class="h6 mb-0" id="run-both-heading">Run both versions side by side</h2>
+            <h2 class="h6 mb-0" id="run-both-heading">@T["Run both versions side by side"]</h2>
         </div>
         <div class="card-body">
             <form asp-action="RunCompare" method="post" class="row g-3 align-items-end">
@@ -68,7 +68,7 @@
                     </div>
                 }
                 <div class="col-md-9">
-                    <label class="form-label" for="cmp-model">Model</label>
+                    <label class="form-label" for="cmp-model">@T["Model"]</label>
                     <select id="cmp-model" name="Model" class="form-select">
                         @foreach (var m in Model.Models)
                         {
@@ -79,10 +79,10 @@
                     </select>
                 </div>
                 <div class="col-md-3 d-grid">
-                    <button type="submit" class="btn btn-marker">Run both</button>
+                    <button type="submit" class="btn btn-marker">@T["Run both"]</button>
                 </div>
             </form>
-            <p class="form-text mb-0 mt-2">Both versions get the same model and the same values. This makes two calls and two runs.</p>
+            <p class="form-text mb-0 mt-2">@T["Both versions get the same model and the same values. This makes two calls and two runs."]</p>
         </div>
     </section>
 }

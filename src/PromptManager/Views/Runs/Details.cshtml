@@ -8,10 +8,10 @@
     var inv = CultureInfo.InvariantCulture;
 }
 
-<nav class="pm-crumbs" aria-label="Breadcrumb">
-    <a asp-controller="Prompts" asp-action="Index">Library</a><span aria-hidden="true">/</span>
+<nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
+    <a asp-controller="Prompts" asp-action="Index">@T["Library"]</a><span aria-hidden="true">/</span>
     <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.PromptId">@Model.PromptTitle</a><span aria-hidden="true">/</span>
-    <a asp-action="Index" asp-route-promptId="@Model.PromptId">Runs</a><span aria-hidden="true">/</span>
+    <a asp-action="Index" asp-route-promptId="@Model.PromptId">@T["Runs"]</a><span aria-hidden="true">/</span>
     <span>#@Model.Id</span>
 </nav>
 
@@ -35,14 +35,14 @@
         }
         @if (Model.Status == PromptRunStatus.Truncated)
         {
-            <div class="alert alert-warning">The answer stopped at the token limit and is incomplete.</div>
+            <div class="alert alert-warning">@T["The answer stopped at the token limit and is incomplete."]</div>
         }
 
-        <section class="pm-sheet mb-4" aria-label="Output">
-            <div class="pm-sheet-head"><span class="pm-sheet-title">Answer</span></div>
+        <section class="pm-sheet mb-4" aria-label="@T["Output"]">
+            <div class="pm-sheet-head"><span class="pm-sheet-title">@T["Answer"]</span></div>
             @if (string.IsNullOrEmpty(Model.Output))
             {
-                <p class="text-muted m-0 p-4">No output.</p>
+                <p class="text-muted m-0 p-4">@T["No output."]</p>
             }
             else
             {
@@ -52,7 +52,7 @@
 
         @if (Model.Variables.Any())
         {
-            <h2 class="pm-section-title">Values</h2>
+            <h2 class="pm-section-title">@T["Values"]</h2>
             <dl class="pm-values">
                 @foreach (var (name, value) in Model.Variables)
                 {
@@ -62,8 +62,8 @@
             </dl>
         }
 
-        <h2 class="pm-section-title">Text sent</h2>
-        <section class="pm-sheet" aria-label="Prompt sent">
+        <h2 class="pm-section-title">@T["Text sent"]</h2>
+        <section class="pm-sheet" aria-label="@T["Prompt sent"]">
             <div class="pm-sheet-head"><span class="pm-sheet-title">v@(Model.VersionNumber), values filled in</span></div>
             <pre class="pm-lines pm-lines-plain">@PromptMarkup.Lines(Model.PromptText)</pre>
         </section>
@@ -72,21 +72,21 @@
     <aside class="col-xl-4">
         <section class="card">
             <div class="card-body">
-                <div class="pm-stat-label">Cost</div>
+                <div class="pm-stat-label">@T["Cost"]</div>
                 <div class="pm-figure mb-3">$@Model.CostUsd.ToString("0.000000", inv)</div>
                 <dl class="pm-facts">
-                    <dt>Status</dt><dd>@Model.Status</dd>
-                    <dt>Model</dt><dd><code>@Model.Model</code></dd>
+                    <dt>@T["Status"]</dt><dd>@Model.Status</dd>
+                    <dt>@T["Model"]</dt><dd><code>@Model.Model</code></dd>
                     @if (Model.ServedByModel is not null)
                     {
-                        <dt>Answered by</dt><dd><code>@Model.ServedByModel</code> (fallback)</dd>
+                        <dt>@T["Answered by"]</dt><dd><code>@Model.ServedByModel</code> @T["(fallback)"]</dd>
                     }
-                    <dt>Input tokens</dt><dd class="pm-num">@Model.InputTokens.ToString("N0")</dd>
-                    <dt>Output tokens</dt><dd class="pm-num">@Model.OutputTokens.ToString("N0")</dd>
-                    <dt>Duration</dt><dd class="pm-num">@((Model.DurationMs / 1000.0).ToString("0.00", inv)) s</dd>
-                    <dt>Stop reason</dt><dd>@(Model.StopReason ?? "none")</dd>
-                    <dt>Run by</dt><dd>@Model.RunBy</dd>
-                    <dt>At</dt><dd class="pm-num">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss", inv) UTC</dd>
+                    <dt>@T["Input tokens"]</dt><dd class="pm-num">@Model.InputTokens.ToString("N0")</dd>
+                    <dt>@T["Output tokens"]</dt><dd class="pm-num">@Model.OutputTokens.ToString("N0")</dd>
+                    <dt>@T["Duration"]</dt><dd class="pm-num">@((Model.DurationMs / 1000.0).ToString("0.00", inv)) s</dd>
+                    <dt>@T["Stop reason"]</dt><dd>@(Model.StopReason ?? "none")</dd>
+                    <dt>@T["Run by"]</dt><dd>@Model.RunBy</dd>
+                    <dt>@T["At"]</dt><dd class="pm-num">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss", inv) UTC</dd>
                 </dl>
             </div>
         </section>

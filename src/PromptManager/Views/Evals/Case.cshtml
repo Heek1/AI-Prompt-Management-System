@@ -5,7 +5,7 @@
     ViewData["Title"] = c.Id == 0 ? "New eval case" : "Edit eval case";
 }
 
-<nav class="pm-crumbs" aria-label="Breadcrumb">
+<nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
     <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.Prompt.Id">@Model.Prompt.Title</a><span aria-hidden="true">/</span>
     <a asp-action="Index" asp-route-id="@Model.Prompt.Id">Evals</a><span aria-hidden="true">/</span>
     <span>@(c.Id == 0 ? "New case" : c.Name)</span>
@@ -14,7 +14,7 @@
 <header class="pm-head">
     <div>
         <h1>@(c.Id == 0 ? "New case" : "Edit case")</h1>
-        <p class="pm-sub">An input, and what a good answer must or must not contain. The case passes only when every check passes.</p>
+        <p class="pm-sub">@T["An input, and what a good answer must or must not contain. The case passes only when every check passes."]</p>
     </div>
 </header>
 
@@ -27,11 +27,11 @@
         <div asp-validation-summary="All" class="alert alert-danger small"></div>
 
         <div class="mb-4">
-            <label class="form-label" for="Name">Name</label>
-            <input id="Name" name="Name" value="@c.Name" class="form-control form-control-lg" maxlength="100" placeholder="Short English sentence" />
+            <label class="form-label" for="Name">@T["Name"]</label>
+            <input id="Name" name="Name" value="@c.Name" class="form-control form-control-lg" maxlength="100" placeholder="@T["Short English sentence"]" />
         </div>
 
-        <h2 class="pm-section-title mt-0">Input</h2>
+        <h2 class="pm-section-title mt-0">@T["Input"]</h2>
         @if (Model.Variables.Any())
         {
             @foreach (var name in Model.Variables)
@@ -44,39 +44,39 @@
         }
         else
         {
-            <p class="text-muted">This prompt has no <code>{{variables}}</code>, so every case sends the same text; the checks are what differ.</p>
+            <p class="text-muted">@T["This prompt has no"] <code>{{variables}}</code>@T[", so every case sends the same text; the checks are what differ."]</p>
         }
 
-        <h2 class="pm-section-title">Checks</h2>
+        <h2 class="pm-section-title">@T["Checks"]</h2>
         <div class="row">
             <div class="col-md-6 mb-3">
-                <label class="form-label" for="MustContain">Must contain, one per line</label>
+                <label class="form-label" for="MustContain">@T["Must contain, one per line"]</label>
                 <textarea id="MustContain" name="MustContain" class="form-control pm-editor" rows="4">@c.MustContain</textarea>
             </div>
             <div class="col-md-6 mb-3">
-                <label class="form-label" for="MustNotContain">Must not contain, one per line</label>
+                <label class="form-label" for="MustNotContain">@T["Must not contain, one per line"]</label>
                 <textarea id="MustNotContain" name="MustNotContain" class="form-control pm-editor" rows="4">@c.MustNotContain</textarea>
             </div>
         </div>
         <div class="mb-3">
-            <label class="form-label" for="Regex">Must match regular expression</label>
+            <label class="form-label" for="Regex">@T["Must match regular expression"]</label>
             <input id="Regex" name="Regex" value="@c.Regex" class="form-control pm-editor" maxlength="1000" placeholder="^\d+ items$" />
         </div>
         <div class="mb-3">
-            <label class="form-label" for="JsonSchema">Must be JSON matching this schema</label>
+            <label class="form-label" for="JsonSchema">@T["Must be JSON matching this schema"]</label>
             <textarea id="JsonSchema" name="JsonSchema" class="form-control pm-editor" rows="4" placeholder='{"type": "object", "required": ["title"]}'>@c.JsonSchema</textarea>
         </div>
     </div>
 
     <aside class="pm-form-side">
         <div class="mb-4">
-            <label class="form-label" for="JudgeRubric">Judge rubric</label>
-            <textarea id="JudgeRubric" name="JudgeRubric" class="form-control" rows="6" placeholder="The translation is natural Ukrainian and keeps the polite tone.">@c.JudgeRubric</textarea>
-            <div class="form-text">Graded by a judge model you choose when running the eval; this costs one extra call per case.</div>
+            <label class="form-label" for="JudgeRubric">@T["Judge rubric"]</label>
+            <textarea id="JudgeRubric" name="JudgeRubric" class="form-control" rows="6" placeholder="@T["The translation is natural Ukrainian and keeps the polite tone."]">@c.JudgeRubric</textarea>
+            <div class="form-text">@T["Graded by a judge model you choose when running the eval; this costs one extra call per case."]</div>
         </div>
         <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-marker">Save case</button>
-            <a asp-action="Index" asp-route-id="@Model.Prompt.Id" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-marker">@T["Save case"]</button>
+            <a asp-action="Index" asp-route-id="@Model.Prompt.Id" class="btn btn-outline-secondary">@T["Cancel"]</a>
         </div>
     </aside>
 </form>

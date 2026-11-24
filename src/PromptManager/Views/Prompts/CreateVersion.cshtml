@@ -6,19 +6,19 @@
     var prompt = ViewBag.Prompt as PromptManager.DTOs.PromptDetailsDto;
 }
 
-<nav class="pm-crumbs" aria-label="Breadcrumb">
-    <a asp-action="Index">Library</a><span aria-hidden="true">/</span>
+<nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
+    <a asp-action="Index">@T["Library"]</a><span aria-hidden="true">/</span>
     @if (prompt != null)
     {
         <a asp-action="Details" asp-route-id="@prompt.Id">@prompt.Title</a><span aria-hidden="true">/</span>
     }
-    <span>New version</span>
+    <span>@T["New version"]</span>
 </nav>
 
 <header class="pm-head">
     <div>
         <h1>@(prompt != null ? $"v{prompt.CurrentVersion + 1}" : "New version")</h1>
-        <p class="pm-sub">The new version starts as a draft. Production keeps serving the current one until you promote it.</p>
+        <p class="pm-sub">@T["The new version starts as a draft. Production keeps serving the current one until you promote it."]</p>
     </div>
 </header>
 
@@ -26,7 +26,7 @@
     @if (prompt != null)
     {
         <div class="col-lg-6">
-            <section class="pm-sheet h-100" aria-label="Current text">
+            <section class="pm-sheet h-100" aria-label="@T["Current text"]">
                 <div class="pm-sheet-head">
                     <span class="pm-sheet-title">v@(prompt.CurrentVersion), now</span>
                     <span class="pm-sheet-meta">@prompt.Category, @prompt.AiTool</span>
@@ -41,19 +41,19 @@
             <input type="hidden" asp-for="PromptId" />
 
             <div class="mb-3">
-                <label asp-for="PromptText" class="form-label">New text</label>
+                <label asp-for="PromptText" class="form-label">@T["New text"]</label>
                 <textarea asp-for="PromptText" class="form-control pm-editor" rows="14"></textarea>
                 <span asp-validation-for="PromptText" class="text-danger small"></span>
             </div>
 
             <div class="mb-3">
-                <label asp-for="ChangeNote" class="form-label">What changed</label>
-                <input asp-for="ChangeNote" class="form-control" placeholder="Shorter answer, asks for the order number first" />
+                <label asp-for="ChangeNote" class="form-label">@T["What changed"]</label>
+                <input asp-for="ChangeNote" class="form-control" placeholder="@T["Shorter answer, asks for the order number first"]" />
             </div>
 
             <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-marker">Save as draft</button>
-                <a asp-action="Details" asp-route-id="@Model.PromptId" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-marker">@T["Save as draft"]</button>
+                <a asp-action="Details" asp-route-id="@Model.PromptId" class="btn btn-outline-secondary">@T["Cancel"]</a>
             </div>
         </form>
     </div>

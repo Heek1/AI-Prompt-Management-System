@@ -26,25 +26,25 @@
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
 </head>
 <body>
-    <a class="visually-hidden-focusable btn btn-marker position-absolute m-2" href="#main" style="z-index: 10">Skip to content</a>
+    <a class="visually-hidden-focusable btn btn-marker position-absolute m-2" href="#main" style="z-index: 10">@T["Skip to content"]</a>
     <div class="pm-shell">
         <aside class="pm-side" data-side>
             <div class="pm-topbar">
-                <a class="pm-wordmark" asp-controller="Prompts" asp-action="Index" aria-label="Prompt Manager, library">
+                <a class="pm-wordmark" asp-controller="Prompts" asp-action="Index" aria-label="@T["Prompt Manager, library"]">
                     <span class="pm-braces" aria-hidden="true">{{ }}</span>promptmanager
                 </a>
-                <button type="button" class="pm-menu-button" data-menu-toggle aria-expanded="false" aria-controls="pm-side-body">Menu</button>
+                <button type="button" class="pm-menu-button" data-menu-toggle aria-expanded="false" aria-controls="pm-side-body">@T["Menu"]</button>
             </div>
 
             <div class="pm-side-body" id="pm-side-body">
-                <nav aria-label="Main">
+                <nav aria-label="@T["Main"]">
                     <ul class="pm-nav">
-                        <li><a asp-controller="Prompts" asp-action="Index" aria-current="@(onLibrary ? "page" : null)">Library</a></li>
-                        <li><a asp-controller="Runs" asp-action="Index" aria-current="@Current("Runs")">Runs</a></li>
+                        <li><a asp-controller="Prompts" asp-action="Index" aria-current="@(onLibrary ? "page" : null)">@T["Library"]</a></li>
+                        <li><a asp-controller="Runs" asp-action="Index" aria-current="@Current("Runs")">@T["Runs"]</a></li>
                         @if (CurrentUser.IsSignedIn)
                         {
-                            <li><a asp-controller="Prompts" asp-action="Create" aria-current="@Current("Prompts", "Create")">New prompt</a></li>
-                            <li><a href="/Inbox" aria-current="@Current("Collaboration")"><span>Inbox</span>@if (unread > 0)
+                            <li><a asp-controller="Prompts" asp-action="Create" aria-current="@Current("Prompts", "Create")">@T["New prompt"]</a></li>
+                            <li><a href="/Inbox" aria-current="@Current("Collaboration")"><span>@T["Inbox"]</span>@if (unread > 0)
                                 {
                                     <span class="pm-count" aria-label="@unread unread">@(unread > 99 ? "99+" : unread)</span>
                                 }</a></li>
@@ -53,13 +53,13 @@
 
                     @if (CurrentUser.IsSignedIn)
                     {
-                        <div class="pm-nav-group">Workspace</div>
+                        <div class="pm-nav-group">@T["Workspace"]</div>
                         <ul class="pm-nav">
-                            <li><a asp-controller="ApiKeys" asp-action="Index" aria-current="@Current("ApiKeys")">API keys</a></li>
+                            <li><a asp-controller="ApiKeys" asp-action="Index" aria-current="@Current("ApiKeys")">@T["API keys"]</a></li>
                             @if (CurrentUser.IsAdmin)
                             {
-                                <li><a asp-controller="Costs" asp-action="Index" aria-current="@Current("Costs")">Costs</a></li>
-                                <li><a asp-controller="Lists" asp-action="Index" aria-current="@Current("Lists")">Lists</a></li>
+                                <li><a asp-controller="Costs" asp-action="Index" aria-current="@Current("Costs")">@T["Costs"]</a></li>
+                                <li><a asp-controller="Lists" asp-action="Index" aria-current="@Current("Lists")">@T["Lists"]</a></li>
                             }
                         </ul>
                     }
@@ -76,20 +76,20 @@
                             }
                         </div>
                         <form asp-controller="Account" asp-action="Logout" method="post" class="mt-1">
-                            <button type="submit" class="btn btn-link">Sign out</button>
+                            <button type="submit" class="btn btn-link">@T["Sign out"]</button>
                         </form>
                     }
                     else
                     {
                         <div class="d-grid gap-2">
-                            <a class="btn btn-marker btn-sm" asp-controller="Account" asp-action="Register">Create account</a>
-                            <a asp-controller="Account" asp-action="Login" class="text-center">Sign in</a>
+                            <a class="btn btn-marker btn-sm" asp-controller="Account" asp-action="Register">@T["Create account"]</a>
+                            <a asp-controller="Account" asp-action="Login" class="text-center">@T["Sign in"]</a>
                         </div>
                     }
-                    <div class="pm-theme" role="group" aria-label="Theme">
-                        <button type="button" data-theme-choice="auto" aria-pressed="true">Auto</button>
-                        <button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
-                        <button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+                    <div class="pm-theme" role="group" aria-label="@T["Theme"]">
+                        <button type="button" data-theme-choice="auto" aria-pressed="true">@T["Auto"]</button>
+                        <button type="button" data-theme-choice="light" aria-pressed="false">@T["Light"]</button>
+                        <button type="button" data-theme-choice="dark" aria-pressed="false">@T["Dark"]</button>
                     </div>
                 </div>
             </div>
@@ -101,14 +101,14 @@
                 {
                     <div class="alert alert-success alert-dismissible fade show" role="status">
                         @TempData["Success"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="@T["Dismiss"]"></button>
                     </div>
                 }
                 @if (TempData["Error"] != null)
                 {
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         @TempData["Error"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="@T["Dismiss"]"></button>
                     </div>
                 }
 

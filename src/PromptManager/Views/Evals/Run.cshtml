@@ -16,7 +16,7 @@
     }
 }
 
-<nav class="pm-crumbs" aria-label="Breadcrumb">
+<nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
     <a asp-controller="Prompts" asp-action="Details" asp-route-id="@Model.PromptId">@Model.PromptTitle</a><span aria-hidden="true">/</span>
     <a asp-action="Index" asp-route-id="@Model.PromptId">Evals</a><span aria-hidden="true">/</span>
     <span>#@Model.Id</span>
@@ -37,7 +37,7 @@
                 <div class="pm-figure pm-figure-xl @(Model.PassedCases == Model.TotalCases ? "is-pass" : "is-fail")" data-testid="pass-rate">
                     @Model.PassedCases / @Model.TotalCases
                 </div>
-                <div class="pm-stat-label">cases passed</div>
+                <div class="pm-stat-label">@T["cases passed"]</div>
             </div>
         }
         else
@@ -47,22 +47,22 @@
     </div>
 </header>
 
-<section class="card mb-4" aria-label="Signal strip">
+<section class="card mb-4" aria-label="@T["Signal strip"]">
     <div class="card-body">
-        <div class="pm-signal pm-signal-lg" role="list" aria-label="One cell per case">
+        <div class="pm-signal pm-signal-lg" role="list" aria-label="@T["One cell per case"]">
             @foreach (var r in Model.Results)
             {
                 <span role="listitem" class="@(r.Passed ? "is-pass" : "is-fail")" title="@r.CaseName: @(r.Passed ? "passed" : "failed")"></span>
             }
             @for (var i = 0; i < pending; i++)
             {
-                <span role="listitem" title="Waiting"></span>
+                <span role="listitem" title="@T["Waiting"]"></span>
             }
         </div>
 
         @if (!Model.IsFinished)
         {
-            <div class="progress mt-3" role="progressbar" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100" aria-label="Cases done">
+            <div class="progress mt-3" role="progressbar" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100" aria-label="@T["Cases done"]">
                 <div class="progress-bar" style="width: @percent%"></div>
             </div>
             <p class="small text-muted mt-2 mb-0">@Model.CompletedCases of @Model.TotalCases done. This page refreshes itself.</p>
@@ -96,7 +96,7 @@
     <section class="card pm-suggest mb-4" aria-labelledby="suggest-heading">
         <div class="card-body d-flex flex-wrap gap-3 align-items-end justify-content-between">
             <div style="max-width: 560px">
-                <h2 class="h6 mb-1" id="suggest-heading">Ask a model to fix it</h2>
+                <h2 class="h6 mb-1" id="suggest-heading">@T["Ask a model to fix it"]</h2>
                 <p class="small text-muted mb-0">
                     The model sees v@(Model.VersionNumber), the failed cases with their answers and checks, and the names of the cases that passed.
                     You review the change as a diff before anything is saved; accepting it saves a draft and runs this eval again.
@@ -107,7 +107,7 @@
                 <form asp-action="Suggest" method="post" class="d-flex gap-2 align-items-end">
                     <input type="hidden" name="evalRunId" value="@Model.Id" />
                     <div>
-                        <label class="form-label small" for="suggest-model">Model</label>
+                        <label class="form-label small" for="suggest-model">@T["Model"]</label>
                         <select id="suggest-model" name="model" class="form-select">
                             @foreach (var m in suggestModels)
                             {
@@ -115,18 +115,18 @@
                             }
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-marker text-nowrap">Suggest a fix</button>
+                    <button type="submit" class="btn btn-marker text-nowrap">@T["Suggest a fix"]</button>
                 </form>
             }
             else
             {
-                <p class="small mb-0">No model that can write prompts is configured here; the echo model only repeats its input.</p>
+                <p class="small mb-0">@T["No model that can write prompts is configured here; the echo model only repeats its input."]</p>
             }
         </div>
     </section>
 }
 
-<h2 class="pm-section-title">Cases</h2>
+<h2 class="pm-section-title">@T["Cases"]</h2>
 <ul class="pm-cases">
     @foreach (var r in Model.Results)
     {
@@ -135,17 +135,17 @@
                 <div class="pm-case-name">
                     @if (r.Passed)
                     {
-                        <i class="bi bi-check-circle-fill" aria-label="Passed"></i>
+                        <i class="bi bi-check-circle-fill" aria-label="@T["Passed"]"></i>
                     }
                     else
                     {
-                        <i class="bi bi-x-circle-fill" aria-label="Failed"></i>
+                        <i class="bi bi-x-circle-fill" aria-label="@T["Failed"]"></i>
                     }
                     @r.CaseName
                 </div>
                 @if (r.PromptRunId is not null)
                 {
-                    <a asp-controller="Runs" asp-action="Details" asp-route-id="@r.PromptRunId" class="small">Answer</a>
+                    <a asp-controller="Runs" asp-action="Details" asp-route-id="@r.PromptRunId" class="small">@T["Answer"]</a>
                 }
             </div>
             <ul class="pm-checks">
@@ -160,6 +160,6 @@
     }
     @if (!Model.Results.Any())
     {
-        <li class="text-muted">No results yet.</li>
+        <li class="text-muted">@T["No results yet."]</li>
     }
 </ul>

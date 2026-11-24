@@ -12,8 +12,8 @@
 
 <header class="pm-head">
     <div>
-        <h1>Lists</h1>
-        <p class="pm-sub">What the prompt forms offer as category and tool. Removing an entry keeps it on the prompts that already use it.</p>
+        <h1>@T["Lists"]</h1>
+        <p class="pm-sub">@T["What the prompt forms offer as category and tool. Removing an entry keeps it on the prompts that already use it."]</p>
     </div>
 </header>
 
@@ -34,7 +34,7 @@
                             <form asp-action="Remove" method="post" class="d-inline">
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <button type="submit" class="btn btn-sm btn-outline-danger"
-                                        data-confirm="Remove &quot;@item.Name&quot; from the list?">Remove</button>
+                                        data-confirm="Remove &quot;@item.Name&quot; from the list?">@T["Remove"]</button>
                             </form>
                         </li>
                     }
@@ -43,7 +43,7 @@
                     <input type="hidden" name="kind" value="@s.Kind" />
                     <label class="visually-hidden" for="add-@s.Kind">New entry for @s.Title.ToLowerInvariant()</label>
                     <input id="add-@s.Kind" name="name" class="form-control" maxlength="50" required placeholder="@s.Placeholder" />
-                    <button type="submit" class="btn btn-primary text-nowrap">Add</button>
+                    <button type="submit" class="btn btn-primary text-nowrap">@T["Add"]</button>
                 </form>
             </section>
         </div>

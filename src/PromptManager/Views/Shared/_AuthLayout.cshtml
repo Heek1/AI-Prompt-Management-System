@@ -14,8 +14,8 @@
 </head>
 <body>
     <div class="pm-auth">
-        <section class="pm-auth-art" aria-label="About Prompt Manager">
-            <a class="pm-wordmark" asp-controller="Prompts" asp-action="Index" aria-label="Prompt Manager, library">
+        <section class="pm-auth-art" aria-label="@T["About Prompt Manager"]">
+            <a class="pm-wordmark" asp-controller="Prompts" asp-action="Index" aria-label="@T["Prompt Manager, library"]">
                 <span class="pm-braces" aria-hidden="true">{{ }}</span>promptmanager
             </a>
 
@@ -27,7 +27,7 @@
             </figure>
             </div>
 
-            <p class="pm-auth-note">Write a prompt once. Version it, run it on real models, test it with evals, and ship only the version that passed.</p>
+            <p class="pm-auth-note">@T["Write a prompt once. Version it, run it on real models, test it with evals, and ship only the version that passed."]</p>
         </section>
 
         <main class="pm-auth-form" id="main">

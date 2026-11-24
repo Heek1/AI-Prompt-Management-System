@@ -14,8 +14,8 @@
         : (int)latestStatus > (int)step ? "is-done" : "";
 }
 
-<nav class="pm-crumbs" aria-label="Breadcrumb">
-    <a asp-action="Index">Library</a><span aria-hidden="true">/</span><span>@p.Title</span>
+<nav class="pm-crumbs" aria-label="@T["Breadcrumb"]">
+    <a asp-action="Index">@T["Library"]</a><span aria-hidden="true">/</span><span>@p.Title</span>
 </nav>
 
 <header class="pm-head">
@@ -35,7 +35,7 @@
             }
             @if (p.IsArchived)
             {
-                <span class="pm-status pm-status-draft">archived</span>
+                <span class="pm-status pm-status-draft">@T["archived"]</span>
             }
         </div>
     </div>
@@ -52,11 +52,11 @@
         <a asp-controller="Evals" asp-action="Index" asp-route-id="@p.Id" class="btn btn-outline-secondary">Evals</a>
         @if (p.CurrentVersion > 1)
         {
-            <a asp-action="Compare" asp-route-id="@p.Id" class="btn btn-outline-secondary">Compare versions</a>
+            <a asp-action="Compare" asp-route-id="@p.Id" class="btn btn-outline-secondary">@T["Compare versions"]</a>
         }
         @if (!p.IsArchived && Model.CanManage)
         {
-            <a asp-action="CreateVersion" asp-route-id="@p.Id" class="btn btn-primary">New version</a>
+            <a asp-action="CreateVersion" asp-route-id="@p.Id" class="btn btn-primary">@T["New version"]</a>
         }
     </div>
 </header>
@@ -70,21 +70,21 @@
             <input type="hidden" name="id" value="@p.Id" />
             <input type="hidden" name="versionNumber" value="@blocked" />
             <input type="hidden" name="overrideRegression" value="true" />
-            <button type="submit" class="btn btn-sm btn-warning" data-confirm="Promote v@(blocked) although its evals are worse?">Promote anyway</button>
+            <button type="submit" class="btn btn-sm btn-warning" data-confirm="Promote v@(blocked) although its evals are worse?">@T["Promote anyway"]</button>
         </form>
     </div>
 }
 
 <div class="row g-4">
     <div class="col-xl-8">
-        <section class="pm-sheet mb-4" aria-label="Prompt text">
+        <section class="pm-sheet mb-4" aria-label="@T["Prompt text"]">
             <div class="pm-sheet-head">
                 <div>
                     <span class="pm-sheet-title">v@(p.CurrentVersion)</span>
                     <span class="pm-status pm-status-@(latestStatus.ToString().ToLowerInvariant()) ms-2">@latestStatus.ToString().ToLowerInvariant()</span>
                     <span class="pm-sheet-meta ms-2">@Model.Variables.Count @(Model.Variables.Count == 1 ? "variable" : "variables")</span>
                 </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-copy-target="#promptText">Copy text</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-copy-target="#promptText">@T["Copy text"]</button>
             </div>
             <pre class="pm-lines" id="promptText">@PromptMarkup.Lines(p.CurrentText)</pre>
         </section>
@@ -92,14 +92,14 @@
         @if (!p.IsArchived && !Model.IsSignedIn)
         {
             <div class="alert alert-info mb-4">
-                <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Sign in</a> to run this prompt on a model.
+                <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">@T["Sign in"]</a> @T["to run this prompt on a model."]
             </div>
         }
         @if (!p.IsArchived && Model.IsSignedIn)
         {
             <section class="card mb-4" aria-labelledby="run-heading">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h2 class="h6 mb-0" id="run-heading">Run on a model</h2>
+                    <h2 class="h6 mb-0" id="run-heading">@T["Run on a model"]</h2>
                     @if (Model.InputSets.Any())
                     {
                         <div class="dropdown">
@@ -134,7 +134,7 @@
                         }
                         <div class="row g-2 align-items-end">
                             <div class="col-md-5">
-                                <label class="form-label" for="run-model">Model</label>
+                                <label class="form-label" for="run-model">@T["Model"]</label>
                                 <select id="run-model" name="Model" class="form-select">
                                     @foreach (var m in Model.Models)
                                     {
@@ -145,7 +145,7 @@
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label" for="run-version">Version</label>
+                                <label class="form-label" for="run-version">@T["Version"]</label>
                                 <select id="run-version" name="VersionNumber" class="form-select">
                                     @foreach (var v in Model.Versions)
                                     {
@@ -156,16 +156,16 @@
                             @if (Model.Variables.Any())
                             {
                                 <div class="col-md-3">
-                                    <label class="form-label" for="save-as">Save values as</label>
-                                    <input id="save-as" name="SaveInputSetAs" class="form-control" maxlength="100" placeholder="optional" value="@Model.SelectedInputSet?.Name" />
+                                    <label class="form-label" for="save-as">@T["Save values as"]</label>
+                                    <input id="save-as" name="SaveInputSetAs" class="form-control" maxlength="100" placeholder="@T["optional"]" value="@Model.SelectedInputSet?.Name" />
                                 </div>
                             }
                             <div class="col-md-2 d-grid">
-                                <button type="submit" class="btn btn-marker">Run</button>
+                                <button type="submit" class="btn btn-marker">@T["Run"]</button>
                             </div>
                         </div>
                     </form>
-                    <p class="form-text mb-0 mt-2">The text goes to the selected provider. Every run is kept with its tokens, cost and time.</p>
+                    <p class="form-text mb-0 mt-2">@T["The text goes to the selected provider. Every run is kept with its tokens, cost and time."]</p>
                     @if (Model.InputSets.Any())
                     {
                         <details class="mt-3 small">
@@ -181,7 +181,7 @@
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="promptId" value="@p.Id" />
                                                 <input type="hidden" name="inputSetId" value="@set.Id" />
-                                                <button type="submit" class="btn btn-link btn-sm text-danger p-0">Delete</button>
+                                                <button type="submit" class="btn btn-link btn-sm text-danger p-0">@T["Delete"]</button>
                                             </form>
                                         }
                                     </li>
@@ -194,7 +194,7 @@
         }
 
         <h2 class="pm-section-title d-flex justify-content-between align-items-baseline">
-            <span>Recent runs</span>
+            <span>@T["Recent runs"]</span>
             @if (Model.TotalRuns > 0)
             {
                 <a asp-controller="Runs" asp-action="Index" asp-route-promptId="@p.Id" class="small fw-normal">All @Model.TotalRuns runs</a>
@@ -202,7 +202,7 @@
         </h2>
         @if (!Model.RecentRuns.Any())
         {
-            <p class="text-muted">This prompt has not been run yet.</p>
+            <p class="text-muted">@T["This prompt has not been run yet."]</p>
         }
         else
         {
@@ -211,7 +211,7 @@
             </div>
         }
 
-        <h2 class="pm-section-title">History</h2>
+        <h2 class="pm-section-title">@T["History"]</h2>
         <ol class="pm-history">
             @foreach (var v in Model.Versions)
             {
@@ -223,7 +223,7 @@
                             <partial name="_VersionStatusBadge" model="v.Status" />
                             @if (v.PromotedOverRegression && v.Status == VersionStatus.Production)
                             {
-                                <span class="pm-status pm-status-failed" title="An admin promoted it although its evals were worse">over a regression</span>
+                                <span class="pm-status pm-status-failed" title="@T["An admin promoted it although its evals were worse"]">@T["over a regression"]</span>
                             }
                             <div class="pm-history-note">@(string.IsNullOrEmpty(v.ChangeNote) ? "No change note" : v.ChangeNote)</div>
                             <div class="text-muted small">
@@ -245,9 +245,9 @@
                             }
                             @if (v.VersionNumber > 1)
                             {
-                                <a class="btn btn-sm btn-outline-secondary" asp-action="Compare" asp-route-id="@p.Id" asp-route-from="@(v.VersionNumber - 1)" asp-route-to="@v.VersionNumber">Diff</a>
+                                <a class="btn btn-sm btn-outline-secondary" asp-action="Compare" asp-route-id="@p.Id" asp-route-from="@(v.VersionNumber - 1)" asp-route-to="@v.VersionNumber">@T["Diff"]</a>
                             }
-                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#version-@v.Id" aria-expanded="false" aria-controls="version-@v.Id">Text</button>
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#version-@v.Id" aria-expanded="false" aria-controls="version-@v.Id">@T["Text"]</button>
                         </div>
                     </div>
                     <div class="collapse" id="version-@v.Id">
@@ -272,7 +272,7 @@
                                                 <input type="hidden" name="promptId" value="@p.Id" />
                                                 <input type="hidden" name="commentId" value="@c.Id" />
                                                 <input type="hidden" name="versionNumber" value="@v.VersionNumber" />
-                                                <button type="submit" class="btn btn-link btn-sm p-0 ms-2 text-danger" data-confirm="Delete this comment?">Delete</button>
+                                                <button type="submit" class="btn btn-link btn-sm p-0 ms-2 text-danger" data-confirm="@T["Delete this comment?"]">@T["Delete"]</button>
                                             </form>
                                         }
                                     </div>
@@ -286,7 +286,7 @@
                                     <input type="hidden" name="promptId" value="@p.Id" />
                                     <input type="hidden" name="versionNumber" value="@v.VersionNumber" />
                                     <label class="visually-hidden" for="comment-@v.Id">Comment on v@(v.VersionNumber)</label>
-                                    <textarea id="comment-@v.Id" name="body" class="form-control" rows="2" maxlength="2000" placeholder="What works, what does not, what to try next"></textarea>
+                                    <textarea id="comment-@v.Id" name="body" class="form-control" rows="2" maxlength="2000" placeholder="@T["What works, what does not, what to try next"]"></textarea>
                                     <button type="submit" class="btn btn-sm btn-outline-secondary mt-2">Comment on v@(v.VersionNumber)</button>
                                 </form>
                             }
@@ -300,14 +300,14 @@
     <aside class="col-xl-4">
         <section class="card mb-4" aria-labelledby="release-heading">
             <div class="card-body">
-                <h2 class="h6" id="release-heading">Release</h2>
+                <h2 class="h6" id="release-heading">@T["Release"]</h2>
                 <ol class="pm-track my-3" aria-label="Release track of v@(p.CurrentVersion)">
-                    <li class="@StepClass(VersionStatus.Draft)">Draft</li>
-                    <li class="@StepClass(VersionStatus.Tested)">Tested</li>
-                    <li class="@StepClass(VersionStatus.Production)">Production</li>
+                    <li class="@StepClass(VersionStatus.Draft)">@T["Draft"]</li>
+                    <li class="@StepClass(VersionStatus.Tested)">@T["Tested"]</li>
+                    <li class="@StepClass(VersionStatus.Production)">@T["Production"]</li>
                 </ol>
                 <dl class="pm-facts">
-                    <dt>In production</dt>
+                    <dt>@T["In production"]</dt>
                     <dd>
                         @if (p.ProductionVersion is { } production)
                         {
@@ -315,49 +315,49 @@
                         }
                         else
                         {
-                            <span class="text-muted">none</span>
+                            <span class="text-muted">@T["none"]</span>
                         }
                     </dd>
-                    <dt>Latest</dt>
+                    <dt>@T["Latest"]</dt>
                     <dd>v@(p.CurrentVersion)</dd>
-                    <dt>API slug</dt>
+                    <dt>@T["API slug"]</dt>
                     <dd><code data-testid="slug">@p.Slug</code></dd>
                 </dl>
-                <p class="small text-muted mt-3 mb-0">Applications read the production version from <code>/api/prompts/@p.Slug</code>.</p>
-                <p class="small mt-2 mb-0">Export: <a href="/Prompts/Export/@p.Id?format=yaml">YAML</a>, <a href="/Prompts/Export/@p.Id?format=json">JSON</a></p>
+                <p class="small text-muted mt-3 mb-0">@T["Applications read the production version from"] <code>/api/prompts/@p.Slug</code>.</p>
+                <p class="small mt-2 mb-0">@T["Export:"] <a href="/Prompts/Export/@p.Id?format=yaml">YAML</a>, <a href="/Prompts/Export/@p.Id?format=json">JSON</a></p>
             </div>
         </section>
 
         <section class="card mb-4" aria-labelledby="rating-heading">
             <div class="card-body">
-                <h2 class="h6" id="rating-heading">Rating</h2>
+                <h2 class="h6" id="rating-heading">@T["Rating"]</h2>
                 @if (p.AverageRating > 0)
                 {
                     <div class="d-flex align-items-baseline gap-2 mt-2">
                         <span class="pm-figure">@p.AverageRating.ToString("0.0", inv)</span>
-                        <span class="text-muted">out of 5</span>
+                        <span class="text-muted">@T["out of 5"]</span>
                     </div>
                     <div class="pm-gauge mt-2" style="width: 100%" aria-hidden="true"><i style="width: @((int)(p.AverageRating / 5 * 100))%"></i></div>
                 }
                 else
                 {
-                    <p class="text-muted mt-2 mb-0">No ratings yet.</p>
+                    <p class="text-muted mt-2 mb-0">@T["No ratings yet."]</p>
                 }
                 @if (!p.IsArchived && Model.IsSignedIn)
                 {
-                    <a asp-action="Rate" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary mt-3">Rate this prompt</a>
+                    <a asp-action="Rate" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary mt-3">@T["Rate this prompt"]</a>
                 }
             </div>
         </section>
 
         <section class="card mb-4" aria-labelledby="facts-heading">
             <div class="card-body">
-                <h2 class="h6" id="facts-heading">Details</h2>
+                <h2 class="h6" id="facts-heading">@T["Details"]</h2>
                 <dl class="pm-facts mt-2">
-                    <dt>Category</dt><dd>@p.Category</dd>
-                    <dt>Tool</dt><dd>@p.AiTool</dd>
-                    <dt>Author</dt><dd>@p.Author</dd>
-                    <dt>Status</dt><dd>@(p.IsArchived ? "Archived" : "Active")</dd>
+                    <dt>@T["Category"]</dt><dd>@p.Category</dd>
+                    <dt>@T["Tool"]</dt><dd>@p.AiTool</dd>
+                    <dt>@T["Author"]</dt><dd>@p.Author</dd>
+                    <dt>@T["Status"]</dt><dd>@(p.IsArchived ? "Archived" : "Active")</dd>
                 </dl>
                 <p class="small text-muted mt-3 mb-0">
                     Created: @p.CreatedAt.ToString("dd MMM yyyy HH:mm", inv)<br />
@@ -370,15 +370,15 @@
         {
             <section class="card" aria-labelledby="manage-heading">
                 <div class="card-body">
-                    <h2 class="h6" id="manage-heading">Manage</h2>
+                    <h2 class="h6" id="manage-heading">@T["Manage"]</h2>
                     <div class="pm-inline-actions mt-2">
                         @if (!p.IsArchived)
                         {
-                            <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">Edit details</a>
+                            <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">@T["Edit details"]</a>
                             <form asp-action="Archive" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@p.Id" />
-                                <button type="submit" class="btn btn-sm btn-outline-secondary" data-confirm="Archive this prompt?">Archive</button>
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" data-confirm="@T["Archive this prompt?"]">@T["Archive"]</button>
                             </form>
                         }
                         else
@@ -386,14 +386,14 @@
                             <form asp-action="Unarchive" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@p.Id" />
-                                <button type="submit" class="btn btn-sm btn-outline-success">Restore</button>
+                                <button type="submit" class="btn btn-sm btn-outline-success">@T["Restore"]</button>
                             </form>
                         }
                         <form asp-action="Delete" method="post" class="d-inline">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@p.Id" />
                             <button type="submit" class="btn btn-sm btn-outline-danger"
-                                    data-confirm="Delete this prompt with all its versions, ratings and runs? This cannot be undone.">Delete</button>
+                                    data-confirm="@T["Delete this prompt with all its versions, ratings and runs? This cannot be undone."]">@T["Delete"]</button>
                         </form>
                     </div>
                 </div>

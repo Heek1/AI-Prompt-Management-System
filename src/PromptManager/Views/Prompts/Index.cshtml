@@ -19,26 +19,26 @@
     </div>
     <div class="pm-actions">
         <div class="dropdown">
-            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Export</button>
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">@T["Export"]</button>
             <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="/Prompts/Export?format=yaml">All prompts, YAML</a></li>
-                <li><a class="dropdown-item" href="/Prompts/Export?format=json">All prompts, JSON</a></li>
-                <li><a class="dropdown-item" href="/Prompts/ExportFolder">Folder for git (.zip)</a></li>
+                <li><a class="dropdown-item" href="/Prompts/Export?format=yaml">@T["All prompts, YAML"]</a></li>
+                <li><a class="dropdown-item" href="/Prompts/Export?format=json">@T["All prompts, JSON"]</a></li>
+                <li><a class="dropdown-item" href="/Prompts/ExportFolder">@T["Folder for git (.zip)"]</a></li>
             </ul>
         </div>
         @if (CurrentUser.IsSignedIn)
         {
-            <a href="/Prompts/Import" class="btn btn-outline-secondary">Import</a>
-            <a asp-action="Create" class="btn btn-marker">New prompt</a>
+            <a href="/Prompts/Import" class="btn btn-outline-secondary">@T["Import"]</a>
+            <a asp-action="Create" class="btn btn-marker">@T["New prompt"]</a>
         }
     </div>
 </header>
 
 @if (Model.TagCounts.Any())
 {
-    <nav class="pm-collections" aria-label="Collections">
+    <nav class="pm-collections" aria-label="@T["Collections"]">
         <a asp-action="Index" asp-route-showArchived="@(Model.ShowArchived ? "true" : null)"
-           aria-current="@(string.IsNullOrEmpty(Model.TagFilter) ? "page" : null)">All</a>
+           aria-current="@(string.IsNullOrEmpty(Model.TagFilter) ? "page" : null)">@T["All"]</a>
         @foreach (var t in Model.TagCounts.Take(16))
         {
             <a asp-action="Index" asp-route-tag="@t.Slug" asp-route-showArchived="@(Model.ShowArchived ? "true" : null)"
@@ -53,13 +53,13 @@
         <input type="hidden" name="tag" value="@Model.TagFilter" />
     }
     <div class="pm-search">
-        <label class="form-label small" for="search">Search</label>
-        <input type="search" id="search" name="search" value="@Model.SearchQuery" class="form-control" placeholder="Words, &quot;a phrase&quot; or -excluded" />
+        <label class="form-label small" for="search">@T["Search"]</label>
+        <input type="search" id="search" name="search" value="@Model.SearchQuery" class="form-control" placeholder="@T["Words, \"a phrase\" or -excluded"]" />
     </div>
     <div>
-        <label class="form-label small" for="category">Category</label>
+        <label class="form-label small" for="category">@T["Category"]</label>
         <select id="category" name="category" class="form-select">
-            <option value="">All</option>
+            <option value="">@T["All"]</option>
             @foreach (var cat in Model.Categories)
             {
                 <option value="@cat" selected="@(Model.CategoryFilter == cat)">@cat</option>
@@ -67,9 +67,9 @@
         </select>
     </div>
     <div>
-        <label class="form-label small" for="aiTool">Tool</label>
+        <label class="form-label small" for="aiTool">@T["Tool"]</label>
         <select id="aiTool" name="aiTool" class="form-select">
-            <option value="">All</option>
+            <option value="">@T["All"]</option>
             @foreach (var tool in Model.AiTools)
             {
                 <option value="@tool" selected="@(Model.AiToolFilter == tool)">@tool</option>
@@ -77,28 +77,28 @@
         </select>
     </div>
     <div>
-        <label class="form-label small" for="sortBy">Sort by</label>
+        <label class="form-label small" for="sortBy">@T["Sort by"]</label>
         <select id="sortBy" name="sortBy" class="form-select">
             @if (!string.IsNullOrWhiteSpace(Model.SearchQuery))
             {
-                <option value="relevance" selected="@(Model.SortBy == "relevance")">Best match</option>
+                <option value="relevance" selected="@(Model.SortBy == "relevance")">@T["Best match"]</option>
             }
-            <option value="rating" selected="@(Model.SortBy == "rating")">Rating</option>
-            <option value="date" selected="@(Model.SortBy == "date")">Newest</option>
-            <option value="title" selected="@(Model.SortBy == "title")">Title</option>
-            <option value="version" selected="@(Model.SortBy == "version")">Most versions</option>
+            <option value="rating" selected="@(Model.SortBy == "rating")">@T["Rating"]</option>
+            <option value="date" selected="@(Model.SortBy == "date")">@T["Newest"]</option>
+            <option value="title" selected="@(Model.SortBy == "title")">@T["Title"]</option>
+            <option value="version" selected="@(Model.SortBy == "version")">@T["Most versions"]</option>
         </select>
     </div>
     <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Filter</button>
+        <button type="submit" class="btn btn-primary">@T["Filter"]</button>
         @if (filtered)
         {
-            <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">@T["Reset"]</a>
         }
     </div>
     <div class="form-check" style="grid-column: 1 / -1">
         <input class="form-check-input" type="checkbox" id="showArchived" name="showArchived" value="true" checked="@Model.ShowArchived" />
-        <label class="form-check-label small" for="showArchived">Show archived prompts</label>
+        <label class="form-check-label small" for="showArchived">@T["Show archived prompts"]</label>
     </div>
 </form>
 
@@ -107,21 +107,21 @@
     <div class="pm-empty">
         @if (filtered)
         {
-            <h2>Nothing matches</h2>
-            <p>Try a shorter search or clear the filters.</p>
-            <a asp-action="Index" class="btn btn-outline-secondary">Clear filters</a>
+            <h2>@T["Nothing matches"]</h2>
+            <p>@T["Try a shorter search or clear the filters."]</p>
+            <a asp-action="Index" class="btn btn-outline-secondary">@T["Clear filters"]</a>
         }
         else
         {
-            <h2>The library is empty</h2>
-            <p>A prompt is a piece of text you give a model. Save it here to version it, run it and test it before anyone depends on it.</p>
+            <h2>@T["The library is empty"]</h2>
+            <p>@T["A prompt is a piece of text you give a model. Save it here to version it, run it and test it before anyone depends on it."]</p>
             @if (CurrentUser.IsSignedIn)
             {
-                <a asp-action="Create" class="btn btn-marker">Write the first prompt</a>
+                <a asp-action="Create" class="btn btn-marker">@T["Write the first prompt"]</a>
             }
             else
             {
-                <a asp-controller="Account" asp-action="Register" class="btn btn-marker">Create an account to start</a>
+                <a asp-controller="Account" asp-action="Register" class="btn btn-marker">@T["Create an account to start"]</a>
             }
         }
     </div>
@@ -130,7 +130,7 @@ else
 {
     <div class="pm-list">
         <div class="pm-row-head" aria-hidden="true">
-            <span>Prompt</span><span>Release</span><span>Rating</span><span>Updated</span>
+            <span>@T["Prompt"]</span><span>@T["Release"]</span><span>@T["Rating"]</span><span>@T["Updated"]</span>
         </div>
         @foreach (var prompt in Model.Prompts)
         {
@@ -148,7 +148,7 @@ else
                         }
                         @if (prompt.IsArchived)
                         {
-                            <span class="pm-tag">archived</span>
+                            <span class="pm-tag">@T["archived"]</span>
                         }
                     </div>
                 </div>
@@ -159,7 +159,7 @@ else
                     }
                     else
                     {
-                        <span class="pm-status pm-status-draft">not released</span>
+                        <span class="pm-status pm-status-draft">@T["not released"]</span>
                     }
                     @if (prompt.CurrentVersion != prompt.ProductionVersion)
                     {
@@ -173,7 +173,7 @@ else
                     }
                     else
                     {
-                        <span>no ratings</span>
+                        <span>@T["no ratings"]</span>
                     }
                 </div>
                 <div class="pm-row-meta pm-num">@prompt.UpdatedAt.ToString("dd MMM yyyy", inv)</div>
@@ -183,7 +183,7 @@ else
 
     @if (Model.PageCount > 1)
     {
-        <nav class="mt-4" aria-label="Library pages">
+        <nav class="mt-4" aria-label="@T["Library pages"]">
             <ul class="pagination">
                 @for (var i = 1; i <= Model.PageCount; i++)
                 {
