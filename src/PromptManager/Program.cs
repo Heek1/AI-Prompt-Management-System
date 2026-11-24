@@ -73,6 +73,7 @@ builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>("database", tags: ["ready"]);
 builder.Services.AddSingleton<EvalQueue>();
 builder.Services.AddScoped<EvalJudge>();
+builder.Services.AddScoped<ImprovementAssistant>();
 builder.Services.AddScoped<EvalExecutor>();
 builder.Services.AddScoped<IEvalService, EvalService>();
 builder.Services.AddHostedService<EvalWorker>();
