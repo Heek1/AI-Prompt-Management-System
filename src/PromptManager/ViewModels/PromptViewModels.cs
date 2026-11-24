@@ -30,6 +30,11 @@ public class PromptDetailsViewModel
 
     /// <summary>Set after a promotion was blocked by a regression, so admins can override it.</summary>
     public int? BlockedPromotion { get; set; }
+
+    /// <summary>Comments per version number (C6).</summary>
+    public Dictionary<int, List<PromptManager.Services.CommentDto>> Comments { get; set; } = new();
+    public bool IsWatching { get; set; }
+    public string? CurrentUserId { get; set; }
     public int TotalRuns { get; set; }
 }
 

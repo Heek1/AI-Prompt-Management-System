@@ -1,0 +1,34 @@
+@using System.Globalization
+@using PromptManager.Services
+@model List<NotificationDto>
+@{
+    ViewData["Title"] = "Inbox";
+    var inv = CultureInfo.InvariantCulture;
+}
+
+<header class="pm-head">
+    <div>
+        <h1>Inbox</h1>
+        <p class="pm-sub">New versions, promotions and comments on the prompts you watch. You watch the prompts you create or comment on; any prompt page has a Watch button.</p>
+    </div>
+</header>
+
+@if (!Model.Any())
+{
+    <div class="pm-empty">
+        <h2>Nothing yet</h2>
+        <p>When someone changes or discusses a prompt you watch, it shows up here.</p>
+    </div>
+}
+else
+{
+    <ul class="pm-inbox" data-testid="inbox">
+        @foreach (var n in Model)
+        {
+            <li class="@(n.IsRead ? "" : "is-new")">
+                <a href="@n.Url">@n.Text</a>
+                <span class="pm-num">@n.CreatedAt.ToString("dd MMM yyyy HH:mm", inv)</span>
+            </li>
+        }
+    </ul>
+}
