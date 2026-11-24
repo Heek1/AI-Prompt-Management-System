@@ -3,85 +3,119 @@
 [![CI](https://github.com/Heek1/AI-Prompt-Management-System/actions/workflows/ci.yml/badge.svg)](https://github.com/Heek1/AI-Prompt-Management-System/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A web app for keeping a team's AI prompts in one place and checking how they
-behave: write a prompt, improve it in versions, run any version on a model,
-compare versions side by side, and keep every run with its tokens, cost and
-timing.
+A self-hosted web app for a team's AI prompts: write a prompt once, improve it
+in versions, test every version against cases before it ships, and let
+applications fetch the version that passed over an API.
 
-Built with ASP.NET Core 10 MVC, EF Core and PostgreSQL.
+Built with ASP.NET Core 10 MVC, EF Core 10 and PostgreSQL.
+**Live demo:** https://prompt-manager-bt5r.onrender.com (free plan: the first
+request after a quiet spell takes a while; no API key is set there, so only the
+offline echo model runs).
 
-| Library | Prompt details |
+![Prompt page: the text as a numbered sheet with highlighted variables, the release track and the run form](docs/images/details.png)
+
+| Library with collections | Eval run: one cell per case |
 |---|---|
-| ![Prompt library](docs/images/library.png) | ![Prompt details](docs/images/details.png) |
-| **Run with variables** | **Run result** |
-| ![Run form with variables](docs/images/run-form.png) | ![Run details](docs/images/run-details.png) |
-| **Eval results** | |
-| ![Eval run](docs/images/eval-run.png) | |
-| **Version diff** | **Two versions side by side** |
-| ![Version diff](docs/images/compare-versions.png) | ![Compared runs](docs/images/compare-runs.png) |
+| ![Library](docs/images/library.png) | ![Eval run](docs/images/eval-run.png) |
+| **Version diff** | **Search with marked matches** |
+| ![Version diff](docs/images/compare-versions.png) | ![Search](docs/images/search.png) |
+| **Run result** | **Dark theme** |
+| ![Run details](docs/images/run-details.png) | ![Dark theme](docs/images/details-dark.png) |
+| **Costs** | **Import** |
+| ![Costs](docs/images/costs.png) | ![Import](docs/images/import.png) |
+
+## The workflow
+
+```mermaid
+flowchart LR
+    W[Write v1] --> R[Run on a model]
+    R --> E[Eval: cases and checks]
+    E -- fails --> S[Suggested fix<br/>reviewed as a diff]
+    S --> D[New draft version]
+    D --> E
+    E -- passes --> T[Tested]
+    T --> P[Promote to production]
+    P --> A[Apps read it<br/>over the API]
+```
+
+A version that does worse on its evals than the one in production cannot be
+promoted; only an admin can override that, and the override is recorded.
 
 ## What it does
 
-- **Library** with search over title, description and prompt text,
-  filters by category and AI tool, and sorting by rating, date, title or version.
-- **Versions.** Each edit creates a new numbered version with a change note.
-  The full history stays visible.
-- **Run on a model.** Run any version on Claude (through the official
-  Anthropic .NET SDK) or on the offline *echo* model. Each run stores the exact
-  text sent, the answer, status (succeeded, truncated, refused, failed),
-  tokens, cost and duration; `/Runs` lists them all.
-- **Variables.** Write `{{name}}` in a prompt and the Run form asks for a
-  value. Values can be saved as named *input sets* and reused.
-- **Evals.** Give a prompt test cases: variable values plus checks (must or
-  must not contain, a regular expression, a JSON Schema, or a rubric graded by
-  a judge model). Run any version on any model; the eval runs in the
-  background, keeps every answer as a run, and flags a version that passes
-  fewer cases than the previous one on the same model.
-- **Prompt-injection check.** One click adds six standard attacks as eval
-  cases, sent through the variable that carries user input: instruction
-  override, "developer mode", asking for the prompt itself, a fake end of
-  input, another language and a base64-encoded order. A case passes when the
-  answer contains neither a fresh random canary nor a piece of the prompt.
-- **Compare models.** Run the same version and cases on two to four models
-  and see pass rate, cost, tokens and average answer time side by side.
-- **Version statuses.** Draft, tested (passed all cases of an eval) and
-  production. Promoting a version, or rolling back to an older one, is refused
-  when its evals are worse than production's on the same model; only an admin
-  can override that, and the override is recorded.
-- **Costs.** Admins see spend today, over 7 days and this month, a daily chart
-  for the last 30 days, and spend by prompt and by model (judge calls
-  included). `Llm:MonthlyBudgetUsd` caps paid calls per UTC month.
-- **HTTP API.** Applications fetch the production version of a prompt by its
-  slug, or fill in its variables, with an API key. See [API](#api).
-- **Compare versions.** A side-by-side diff with changed words highlighted,
-  and a button that runs both versions on the same model and inputs, then
-  shows the two answers and their differences.
-- **Ratings** from 1 to 5 with an optional comment, one per user name per prompt.
-- **Archive.** Archived prompts can no longer be edited or used.
-- **Health checks.** `/health/live` (the process answers) and `/health/ready`
-  (the database answers); `/health` is the same as ready.
+**Prompts**
+- **Versions.** Each change of the text is a new numbered version with a change
+  note; title, description, category, tool and tags change without one. The
+  history stays visible, with a word-level diff between any two versions.
+- **Statuses.** Draft, tested (passed every case of an eval) and production.
+  Promoting, or rolling back to an older version, is refused when its evals are
+  worse than production's on the same model.
+- **Variables.** `{{name}}` in a prompt becomes a field when you run it. Values
+  can be saved as named input sets.
+- **Tags and collections.** Free-form tags (any script, up to 8 per prompt);
+  the library lists the tags in use with counts and filters by them.
+  Categories and tools are lists that admins edit on the **Lists** page.
+- **Search.** PostgreSQL full-text search over title, description and text,
+  ranked with the title weighted highest, with web-search syntax (`"a phrase"`,
+  `-excluded`) and the matching words marked in the results.
+- **Import and export.** The library or one prompt as YAML or JSON, with
+  versions, tags and eval cases, or a zip with one YAML file per prompt for a
+  folder in a git repository. Importing a changed file for a prompt you own
+  adds its text as a draft version.
+- **Comments and inbox.** Comments on each version; new versions, promotions
+  and comments on prompts you watch arrive in an in-app inbox.
+- **Ratings** from 1 to 5, one per account per prompt; archive, restore, delete.
+
+**Models and tests**
+- **Runs.** Run any version on Claude (official Anthropic .NET SDK) or on the
+  offline *echo* model. Every run keeps the exact text sent, the answer, status
+  (succeeded, truncated, refused, failed), tokens, cost and duration.
+- **Evals.** Test cases with variable values and checks: must or must not
+  contain, a regular expression, a JSON Schema, or a rubric graded by a judge
+  model. Evals run in a background queue, keep every answer, and show how the
+  version compares with the previous one on the same model.
+- **Prompt-injection check.** One click adds six standard attacks as cases
+  (instruction override, "developer mode", asking for the prompt, a fake end of
+  input, another language, a base64-encoded order); a case passes when the
+  answer has neither a fresh random canary nor a piece of the prompt.
+- **Suggested fixes.** On a failed eval, a model reads the failed cases, their
+  answers and the failed checks, and proposes a revision. You review it as a
+  diff and can edit it; accepting saves a draft and reruns the same eval.
+- **Model comparison.** The same version and cases on two to four models, with
+  pass rate, cost, tokens and answer time side by side.
+- **Costs.** Spend today, this week and this month, a 30-day chart, and spend by
+  prompt and model; `Llm:MonthlyBudgetUsd` caps paid calls per month.
+
+**For applications**
+- **HTTP API** with keys: the production (or latest, or a given) version of a
+  prompt by slug, or its text with variables filled in. ETags, a rate limit and
+  an OpenAPI description. See [API](#api).
+
+**Running it**
+- Light and dark theme (follows the system, or a choice kept in the browser),
+  a layout that works on a phone, keyboard focus marks.
+- Health checks, structured JSON logs, and OpenTelemetry traces and metrics.
 
 ## What it does not do (yet)
 
-Known limitations:
-
-- **Only Claude is wired in.** Other providers (OpenAI, Gemini) need their own
-  `ILlmClient`; the interface is ready for them.
-- **Single runs happen inside the web request** (up to `Llm:TimeoutSeconds`,
-  180 s by default). Evals use an in-process background queue, which is lost
-  if the app restarts mid-eval (the eval is then marked failed with its
-  partial results) and does not spread over several app instances.
+- **Only Claude is wired in.** Other providers need their own `ILlmClient`.
+- **Suggested fixes have only been tested with a scripted model.** The live
+  instance has no API key, and the automated tests do not call a real model.
+  The real Anthropic path is tested against a stubbed HTTP handler.
+- **Single runs happen inside the web request** (up to `Llm:TimeoutSeconds`).
+  Evals use an in-process queue: an eval interrupted by a restart is marked
+  failed, and the queue does not spread over several instances.
 - **The monthly budget is checked before each paid call**, so the call that
-  crosses it still completes; with several calls at once the overshoot can be
-  a few calls.
-- **Prices are configuration.** Cost is computed from the per-million-token
-  prices in `appsettings.json`, which must be kept up to date by hand.
-- **The real Anthropic API path has not been exercised by the automated
-  tests**: they drive the SDK against a stubbed HTTP handler.
-- **No e-mail confirmation or password reset yet.** Accounts work right after
-  registration, and there is no admin page for managing users and roles.
-- Categories and AI tools are fixed lists in
-  [`Constants.cs`](src/PromptManager/Infrastructure/Constants.cs).
+  crosses it still completes.
+- **Prices are configuration** and must be kept up to date by hand.
+- **No e-mail.** There is no e-mail confirmation, password reset or e-mail
+  notification; the inbox is in the app only.
+- **Search is lexical.** Semantic (embedding) search is not built.
+- **Git sync is manual:** export the folder, commit, edit, import. Nothing
+  watches a repository.
+- **Accessibility has not been audited.** The colours were chosen for contrast
+  by eye, not measured against WCAG AA.
+- **The interface is English only.**
 
 ## Run it
 
@@ -93,44 +127,34 @@ docker compose up -d db                  # PostgreSQL 17 on localhost:5433
 dotnet run --project src/PromptManager
 ```
 
-Open http://localhost:5139. On start the database is migrated, and in
-Development three sample prompts are added to an empty database. The local
-connection string is in `appsettings.Development.json`; it only works with the
-database from `compose.yaml`.
+Open http://localhost:5139. The database is migrated on start, and in
+Development three sample prompts are added to an empty database.
 
 ### Accounts and admins
 
-Anyone can browse the library and runs. Creating, rating and running need an
-account (e-mail and password, ASP.NET Core Identity). A prompt can be edited,
-versioned, archived, restored or deleted only by its author or an admin.
-
-Admins are chosen in configuration, never in the UI: an account registered
-with an address listed in `Auth:AdminEmails` gets the Admin role.
+Anyone can browse the library, runs and evals. Creating, rating, commenting
+and running need an account (ASP.NET Core Identity). A prompt can be changed
+only by its author or an admin. Admins are chosen in configuration: an account
+registered with an address in `Auth:AdminEmails` gets the Admin role.
 
 ```bash
 dotnet user-secrets --project src/PromptManager set "Auth:AdminEmails:0" "you@example.com"
 ```
 
-`Llm:PaidModelsAccess` decides who may run models that cost money: `Admins`
-(the default, so a public instance cannot spend your API credit) or
-`Everyone` (the Development setting). The offline echo model is open to every
-signed-in user.
+`Llm:PaidModelsAccess` decides who may use models that cost money: `Admins`
+(the default, so a public instance cannot spend your API credit) or `Everyone`.
 
 ### Running prompts on Claude
 
-Without a key only the offline *echo* model is available, which returns the
-prompt it was given. To use Claude, set an API key with user secrets (or the
-`ANTHROPIC_API_KEY` environment variable):
+Without a key only the *echo* model is available, which returns the prompt it
+was given. To use Claude:
 
 ```bash
 dotnet user-secrets --project src/PromptManager set "Anthropic:ApiKey" "<your key>"
 ```
 
 Models, prices, the default model and the timeout are in the `Llm` section of
-[`appsettings.json`](src/PromptManager/appsettings.json). `Anthropic:Effort`
-(default `high`) sets the reasoning effort, and `Anthropic:UseRefusalFallbacks`
-(default `true`) lets the API re-serve a refused request with a fallback
-model; the run then shows which model answered.
+[`appsettings.json`](src/PromptManager/appsettings.json).
 
 ### With Docker
 
@@ -138,27 +162,27 @@ model; the run then shows which model answered.
 docker compose up --build
 ```
 
-This starts the app and PostgreSQL. Open http://localhost:8080. Data is kept in
-the `prompt-db` volume. The data-protection keys (sign-in cookies, form
-tokens) are stored in the database too, so the app container is stateless.
-Pass a key with `ANTHROPIC_API_KEY=<key> docker compose up`, and set
-`ASPNETCORE_ENVIRONMENT=Development` to get the sample prompts.
+The app and PostgreSQL; open http://localhost:8080. Data-protection keys are
+stored in the database, so the app container is stateless.
+
+### Observability
+
+Logs are JSON outside Development, one line per request with method, path,
+status and duration (no query string, headers or client IP). Traces and
+metrics (ASP.NET Core, HttpClient, Npgsql, and every model call with its
+tokens and cost, never its text) are exported over OTLP when
+`OTEL_EXPORTER_OTLP_ENDPOINT` is set, for example to an OpenTelemetry
+collector, Grafana Cloud or Honeycomb.
 
 ### Deploy: Render + Supabase
 
 The live instance runs the Docker image on Render (free plan, Frankfurt) with
-PostgreSQL on Supabase (free plan, eu-central-1).
-[`render.yaml`](render.yaml) is the Render Blueprint; it asks for three values:
-`ConnectionStrings__DefaultConnection`, `Auth__AdminEmails__0` and, optionally,
-`ANTHROPIC_API_KEY`.
+PostgreSQL on Supabase (free plan, eu-central-1). [`render.yaml`](render.yaml)
+is the Render Blueprint and asks for `ConnectionStrings__DefaultConnection`,
+`Auth__AdminEmails__0` and, optionally, `ANTHROPIC_API_KEY`.
 
-Database setup on Supabase:
-
-- The app uses its own login role and schema, not `postgres` and `public`:
-  Supabase exposes `public` through its REST API, and the app's tables
-  (accounts, password hashes) must not be reachable there. The role's
-  `search_path` points at its schema, so migrations and queries need no
-  schema names.
+- The app uses its own login role and schema on Supabase, not `postgres` and
+  `public`, because Supabase exposes `public` through its REST API:
 
   ```sql
   create role promptmanager with login password '<generated>' noinherit;
@@ -166,64 +190,44 @@ Database setup on Supabase:
   create schema promptmanager authorization promptmanager;
   alter role promptmanager set search_path = promptmanager;
   ```
-- Render cannot reach Supabase's direct (IPv6-only) host, so the connection
-  goes through the Supavisor **session** pooler on port 5432, with the user
-  name `<role>.<project-ref>`:
-  `Host=aws-0-eu-central-1.pooler.supabase.com;Port=5432;Database=postgres;Username=promptmanager.<project-ref>;Password=...;SSL Mode=Require`.
-  (The transaction pooler on 6543 does not suit the app's prepared statements.)
-- Migrations run when the app starts.
-
-The app also accepts `postgresql://` URLs, trusts Render's proxy headers
-(`ASPNETCORE_FORWARDEDHEADERS_ENABLED`) so cookies are marked secure, and keeps
-its keys in the database because free services have no persistent disk.
-
-Free-plan limits: the Render service sleeps after 15 minutes without traffic
-(the next request takes a while), and a free Supabase project is paused after
-a week without activity.
+- Render cannot reach Supabase's IPv6-only direct host, so the connection goes
+  through the **session** pooler on port 5432 with the user name
+  `<role>.<project-ref>`. The transaction pooler (6543) does not suit the
+  app's prepared statements.
+- Migrations run when the app starts. Free plans sleep: Render after 15 idle
+  minutes, Supabase after a week without activity.
 
 ## API
 
-Create a key under **API keys** (it is shown once; only its hash is stored),
-then:
+Create a key under **API keys** (shown once; only its hash is stored), then:
 
 ```bash
 # The production version (?label=latest for the newest, ?version=3 for a specific one)
-curl -H "X-Api-Key: pm_..." https://<host>/api/prompts/support-reply-en
+curl -H "X-Api-Key: pm_..." https://<host>/api/prompts/support-reply
 
 # The text with {{variables}} filled in (no model is called)
-curl -H "X-Api-Key: pm_..." -H "Content-Type: application/json"      -d '{"variables": {"customer": "Olena", "topic": "a refund"}}'      https://<host>/api/prompts/support-reply-en/render
+curl -H "X-Api-Key: pm_..." -H "Content-Type: application/json" \
+     -d '{"variables": {"shop": "Northwind Books", "question": "Where is my order?"}}' \
+     https://<host>/api/prompts/support-reply/render
 ```
 
 ```json
 {
-  "slug": "support-reply-en",
-  "title": "Support reply (EN)",
-  "version": 2,
+  "slug": "support-reply",
+  "title": "Support reply",
+  "version": 1,
   "status": "production",
-  "text": "Reply politely to {{customer}} about {{topic}}.",
-  "variables": ["customer", "topic"],
-  "updatedAt": "2026-11-22T21:40:00Z"
+  "text": "You answer customers of {{shop}}.\nReply to {{question}} politely, ...",
+  "variables": ["shop", "question"],
+  "updatedAt": "2026-11-24T00:24:00Z"
 }
 ```
 
-- Responses carry an `ETag`; send it back in `If-None-Match` to get a cheap
-  `304` while the version is unchanged. `Cache-Control: no-cache` makes clients
-  revalidate, so a promotion is picked up on the next request.
-- Each key may make 60 requests per minute (`429` above that).
-- Errors are `application/problem+json`; a missing or revoked key gets `401`.
-- The OpenAPI description is at `/openapi/v1.json`.
-
-### Example client
-
+Responses carry an `ETag` for cheap `304` revalidation; each key may make 60
+requests per minute; errors are `application/problem+json`; the OpenAPI
+description is at `/openapi/v1.json`.
 [`examples/PromptClient`](examples/PromptClient) is a small console app that
-reads its prompt from here instead of hard-coding it. It keeps the last answer
-and revalidates it with `If-None-Match`, so repeated reads cost a `304` until a
-new version is promoted, and it fills in variables through `/render`. An
-integration test runs it against the real app.
-
-```bash
-PROMPT_MANAGER_URL=https://<host> PROMPT_MANAGER_KEY=pm_...   dotnet run --project examples/PromptClient -- support-reply-en customer=Olena "topic=a refund"
-```
+reads its prompt from here, and an integration test runs it against the app.
 
 ## Tests
 
@@ -231,83 +235,119 @@ PROMPT_MANAGER_URL=https://<host> PROMPT_MANAGER_KEY=pm_...   dotnet run --proje
 dotnet test
 ```
 
-261 tests in [`tests/PromptManager.Tests`](tests/PromptManager.Tests):
+Docker must be running: every database test uses real PostgreSQL in a
+container ([Testcontainers](https://dotnet.testcontainers.org/)), migrated
+once into a template database that each test copies.
 
-- **All database tests use real PostgreSQL** in a container started by
-  [Testcontainers](https://dotnet.testcontainers.org/), so Docker must be
-  running. The schema is migrated once into a template database and every test
-  gets its own copy, so tests are isolated and still fast.
-- **Service tests** cover `PromptService`; unique indexes, transactions and
-  search behave exactly as in the app.
-- **Concurrency tests** inject a competing write between the service's read and
-  its save, to check version numbering, duplicate ratings and archive-vs-edit.
-- **Validation tests** for every form DTO.
-- **LLM client tests** run the real Anthropic SDK against a stub HTTP handler
-  and check the request it sends and how answers, refusals, truncation and
-  errors are read.
-- **Runner tests** cover variables, timeouts, cancellation, provider failures
-  and cost.
-- **Eval tests** cover every check type, judge replies, the executor, model
-  comparison, and the full loop through the real background worker.
-- **Authorization tests** cover anonymous visitors, authors, other users and
-  admins, including attempts to spoof the author or owner in a form.
-- **Integration tests** start the app with `WebApplicationFactory` and post real
-  forms with antiforgery tokens.
+- **303 unit and integration tests** in
+  [`tests/PromptManager.Tests`](tests/PromptManager.Tests): services,
+  concurrency (a competing write injected between read and save), validation,
+  the Anthropic SDK against a stubbed handler, the runner, every eval check,
+  the background worker, suggestions with a scripted model, authorization for
+  anonymous visitors, authors, other users and admins, import and export round
+  trips, and the app through `WebApplicationFactory` with real forms.
+- **4 browser tests** in [`tests/PromptManager.E2E`](tests/PromptManager.E2E):
+  Playwright drives headless Chromium against the app on Kestrel through the
+  main flow (write, run, eval, new version, diff, promote), search and
+  collections, the copy button and confirm dialogs, the phone menu and the
+  theme. Any console error fails a test, which catches CSP violations.
+  Install the browser once with
+  `pwsh tests/PromptManager.E2E/bin/Debug/net10.0/playwright.ps1 install chromium`.
 
-CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) builds with
-`-warnaserror`, runs the tests, and starts the Docker image with PostgreSQL
-through `compose.yaml` on every pull request.
+CI builds with `-warnaserror`, runs both suites, publishes a coverage summary
+on each run (89.9% of lines and 77% of branches on the last run, generated
+migrations excluded), and starts the Docker image with PostgreSQL.
+
+The screenshots above come from a seeded demo in the browser tests:
+
+```bash
+PM_SCREENSHOTS=docs/images dotnet test tests/PromptManager.E2E --filter Screenshots
+```
+
+It also writes a screen recording, `docs/images/demo.webm`, which is not
+committed.
 
 ## How it is built
 
+```mermaid
+flowchart TB
+    subgraph Browser
+        UI[Razor pages<br/>no inline scripts]
+    end
+    subgraph App[ASP.NET Core app]
+        C[Controllers] --> S[Services<br/>prompts, versions, lookups,<br/>collaboration, transfer]
+        C --> L[Version lifecycle<br/>promotion gate]
+        C --> EV[Eval service] --> Q[(In-process queue)] --> X[Eval worker]
+        X --> J[Checks and judge]
+        RU[Prompt runner] --> CAT[LLM catalog]
+        X --> RU
+        AS[Improvement assistant] --> CAT
+        CAT --> I[Instrumented client] --> AN[Anthropic client]
+        I --> EC[Echo client]
+        API[Minimal API<br/>keys, ETag, rate limit] --> S
+    end
+    UI --> C
+    Apps[Other applications] --> API
+    S --> DB[(PostgreSQL<br/>EF Core)]
+    X --> DB
+    AN --> Claude[Claude API]
+    App -. OTLP, when configured .-> OT[Telemetry backend]
+```
+
 ```
 src/PromptManager/
-  Controllers/      Prompts, History, Health, Home (redirect + error page)
-  Services/         PromptService (prompts, versions, ratings, archive),
-                    PromptRunner (runs), InputSetService
-  Llm/              ILlmClient, Anthropic and Echo clients, model catalogue
-  Evals/            Checks, judge, executor, background worker, eval service
-  Data/             AppDbContext, DevDataSeeder
-  Models/           EF entities
-  DTOs/             Form and view DTOs with validation attributes
-  Infrastructure/   Category and tool lists, field limits, templates, diff
-  Migrations/       EF Core migrations (applied automatically at startup)
-  Views/            Razor views, Bootstrap 5
-tests/PromptManager.Tests/
+  Controllers/      MVC pages: prompts, runs, evals, lists, transfer, inbox, keys, costs
+  Api/              The prompt API and API keys
+  Services/         Prompts, lookups, tags, collaboration, costs, runner, transfer
+  Evals/            Checks, judge, executor, worker, injection pack, assistant
+  Llm/              ILlmClient, Anthropic and Echo clients, catalog, telemetry
+  Data/ Models/ DTOs/ ViewModels/ Views/
+  Infrastructure/   Field limits, templates, diff, slugs, tag names, prompt markup
+  Migrations/       EF Core migrations (applied at startup)
+tests/PromptManager.Tests/   unit and integration tests
+tests/PromptManager.E2E/     browser tests and the screenshot script
+examples/PromptClient/       a client that reads prompts over the API
 ```
 
 ### Design decisions
 
 - **PostgreSQL everywhere.** Development, tests and deployment use the same
   database, so there is one set of migrations and no provider differences
-  hiding in tests. (The project started on SQLite; its migrations were
-  replaced by a single PostgreSQL one.)
-- **Concurrency is handled by the database, not by checks in code.** A unique
-  index on `(PromptId, VersionNumber)` and an optimistic concurrency token on
-  `Prompt` make simultaneous edits produce consecutive versions (the service
-  retries on conflict). A unique index on `(PromptId, UserName)` is the only
+  hiding in tests. Full-text search uses PostgreSQL's own `tsvector` with the
+  `simple` configuration: prompts mix English and Ukrainian, and a stemmer for
+  one language mangles the other.
+- **The database guards concurrency.** A unique index on
+  `(PromptId, VersionNumber)` and an optimistic concurrency token make
+  simultaneous edits produce consecutive versions; a unique index is the only
   guard against double ratings, so there is no check-then-insert window.
-- **One source of truth for field limits.**
-  [`FieldLimits`](src/PromptManager/Infrastructure/FieldLimits.cs) is used by
-  both the form validation and the EF model.
+- **Evals gate releases.** Promotion compares the version's latest eval with
+  production's on the same model. Suggested fixes go through the same gate:
+  accepting one saves a draft and reruns the eval, so a model's revision is
+  never trusted without the checks.
 - **Providers behind one small interface.** `ILlmClient` only translates a
-  prompt into a provider call and back. Timing, cost and storage are done once
-  in `PromptRunner`, so every model is measured the same way.
-- **A failed call is still a run.** Provider errors and timeouts are stored as
-  failed runs, because the call was made and may have cost money; only invalid
-  input (unknown model, missing variable) is rejected without a record.
-- **Warnings are errors**, including NuGet vulnerability audits of transitive
-  packages ([`Directory.Build.props`](Directory.Build.props)).
+  prompt into a provider call and back. Timing, cost and storage live in the
+  runner, and telemetry in one wrapper, so every model is measured the same way.
+- **A failed call is still a run**, because it was made and may have cost
+  money. Suggestions are stored as runs for the same reason, which also lets
+  the review page reload without calling the model again.
+- **Model answers are data.** Injection-case answers and judge inputs are
+  wrapped in tags and called data in the prompts that read them, because they
+  may contain instructions aimed at the judge or the assistant.
+- **No inline scripts.** The Content Security Policy allows scripts from the
+  app only; behaviour hangs off `data-` attributes in one script file, and the
+  browser tests fail on any CSP violation.
+- **Warnings are errors**, including NuGet vulnerability audits
+  ([`Directory.Build.props`](Directory.Build.props)).
+
+More on why versions and evals are built this way:
+[Versioning and testing prompts like code](docs/versioning-and-evaluating-prompts.md).
 
 ## How it compares
-
-There are mature tools in this space; this project is a small, self-hosted
-ASP.NET Core app that covers one workflow end to end.
 
 | | This project | [Langfuse](https://langfuse.com) | [promptfoo](https://www.promptfoo.dev) | [PromptLayer](https://www.promptlayer.com) |
 |---|---|---|---|---|
 | What it is | Web app: prompt library with versions, runs, evals and an API | Open-source LLM engineering platform: tracing, prompt management, evaluations | Open-source CLI and library for testing prompts and red-teaming | Hosted platform: prompt registry, request logging, evaluations |
-| Where prompts live | In the app (PostgreSQL), fetched over HTTP | In the platform, fetched through its SDKs | In config files in your repository | In the platform |
+| Where prompts live | In the app (PostgreSQL), fetched over HTTP; YAML export for git | In the platform, fetched through its SDKs | In config files in your repository | In the platform |
 | Observing production traffic | No: only runs started from the app | Yes, tracing is its core | No | Yes, request logging |
 | Gating a release on eval results | Yes: a version that does worse than production cannot be promoted without an admin | Not as a built-in promotion rule | Yes, by failing a CI run | Through its own evaluation features |
 
@@ -315,12 +355,6 @@ Use this project to see how such a workflow fits together in a few thousand
 lines of C#, or as a starting point for a team that wants a small self-hosted
 tool. For tracing production traffic or many providers, the tools above go much
 further.
-
-## Roadmap
-
-Next steps: an assistant that proposes a better version from eval results,
-more providers behind `ILlmClient` (OpenAI, Gemini), and tracing with
-OpenTelemetry.
 
 ## License
 
