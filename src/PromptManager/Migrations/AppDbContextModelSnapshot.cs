@@ -561,6 +561,47 @@ namespace PromptManager.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PromptManager.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PromptId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PromptId");
+
+                    b.HasIndex("UserId", "ReadAt");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("PromptManager.Models.Prompt", b =>
                 {
                     b.Property<int>("Id")
@@ -887,6 +928,20 @@ namespace PromptManager.Migrations
                     b.ToTable("PromptVersions");
                 });
 
+            modelBuilder.Entity("PromptManager.Models.PromptWatch", b =>
+                {
+                    b.Property<int>("PromptId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("PromptId", "UserId");
+
+                    b.ToTable("PromptWatches");
+                });
+
             modelBuilder.Entity("PromptManager.Models.Tag", b =>
                 {
                     b.Property<int>("Id")
@@ -911,6 +966,45 @@ namespace PromptManager.Migrations
                         .IsUnique();
 
                     b.ToTable("Tags");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.VersionComment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<string>("AuthorName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PromptId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PromptId", "VersionNumber");
+
+                    b.ToTable("VersionComments");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1007,6 +1101,17 @@ namespace PromptManager.Migrations
                     b.Navigation("Prompt");
                 });
 
+            modelBuilder.Entity("PromptManager.Models.Notification", b =>
+                {
+                    b.HasOne("PromptManager.Models.Prompt", "Prompt")
+                        .WithMany()
+                        .HasForeignKey("PromptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prompt");
+                });
+
             modelBuilder.Entity("PromptManager.Models.PromptInputSet", b =>
                 {
                     b.HasOne("PromptManager.Models.Prompt", "Prompt")
@@ -1063,6 +1168,28 @@ namespace PromptManager.Migrations
                 {
                     b.HasOne("PromptManager.Models.Prompt", "Prompt")
                         .WithMany("Versions")
+                        .HasForeignKey("PromptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prompt");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.PromptWatch", b =>
+                {
+                    b.HasOne("PromptManager.Models.Prompt", "Prompt")
+                        .WithMany()
+                        .HasForeignKey("PromptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prompt");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.VersionComment", b =>
+                {
+                    b.HasOne("PromptManager.Models.Prompt", "Prompt")
+                        .WithMany()
                         .HasForeignKey("PromptId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

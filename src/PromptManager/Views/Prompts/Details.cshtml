@@ -40,6 +40,15 @@
         </div>
     </div>
     <div class="pm-actions">
+        @if (Model.IsSignedIn)
+        {
+            <form action="/Prompts/Watch" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="promptId" value="@p.Id" />
+                <input type="hidden" name="watch" value="@(Model.IsWatching ? "false" : "true")" />
+                <button type="submit" class="btn btn-outline-secondary" aria-pressed="@(Model.IsWatching ? "true" : "false")">@(Model.IsWatching ? "Watching" : "Watch")</button>
+            </form>
+        }
         <a asp-controller="Evals" asp-action="Index" asp-route-id="@p.Id" class="btn btn-outline-secondary">Evals</a>
         @if (p.CurrentVersion > 1)
         {
@@ -207,7 +216,7 @@
             @foreach (var v in Model.Versions)
             {
                 var rollback = p.ProductionVersion is { } prod && v.VersionNumber < prod;
-                <li class="pm-history-item @(v.Status == VersionStatus.Production ? "is-live" : "")">
+                <li class="pm-history-item @(v.Status == VersionStatus.Production ? "is-live" : "")" id="v@(v.VersionNumber)">
                     <div class="pm-history-head">
                         <div>
                             <span class="pm-history-version">v@(v.VersionNumber)</span>
@@ -244,6 +253,45 @@
                     <div class="collapse" id="version-@v.Id">
                         <pre class="pm-lines pm-lines-compact">@PromptMarkup.Lines(v.PromptText)</pre>
                     </div>
+                    @{
+                        var comments = Model.Comments.GetValueOrDefault(v.VersionNumber) ?? [];
+                    }
+                    @if (comments.Any() || (Model.IsSignedIn && !p.IsArchived))
+                    {
+                        <details class="pm-comments" open="@(comments.Any() ? "open" : null)">
+                            <summary>@(comments.Count == 0 ? "Comment" : comments.Count == 1 ? "1 comment" : $"{comments.Count} comments")</summary>
+                            @foreach (var c in comments)
+                            {
+                                <div class="pm-comment">
+                                    <div class="pm-comment-meta">
+                                        <strong>@c.AuthorName</strong> <span class="pm-num">@c.CreatedAt.ToString("dd MMM yyyy HH:mm", inv)</span>
+                                        @if (Model.IsAdmin || c.AuthorId == Model.CurrentUserId)
+                                        {
+                                            <form action="/Prompts/DeleteComment" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="promptId" value="@p.Id" />
+                                                <input type="hidden" name="commentId" value="@c.Id" />
+                                                <input type="hidden" name="versionNumber" value="@v.VersionNumber" />
+                                                <button type="submit" class="btn btn-link btn-sm p-0 ms-2 text-danger" data-confirm="Delete this comment?">Delete</button>
+                                            </form>
+                                        }
+                                    </div>
+                                    <div class="pm-comment-body">@c.Body</div>
+                                </div>
+                            }
+                            @if (Model.IsSignedIn && !p.IsArchived)
+                            {
+                                <form action="/Prompts/Comment" method="post" class="pm-comment-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="promptId" value="@p.Id" />
+                                    <input type="hidden" name="versionNumber" value="@v.VersionNumber" />
+                                    <label class="visually-hidden" for="comment-@v.Id">Comment on v@(v.VersionNumber)</label>
+                                    <textarea id="comment-@v.Id" name="body" class="form-control" rows="2" maxlength="2000" placeholder="What works, what does not, what to try next"></textarea>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary mt-2">Comment on v@(v.VersionNumber)</button>
+                                </form>
+                            }
+                        </details>
+                    }
                 </li>
             }
         </ol>

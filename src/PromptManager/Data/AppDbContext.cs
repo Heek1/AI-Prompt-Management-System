@@ -22,6 +22,9 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
     public DbSet<LookupValue> LookupValues => Set<LookupValue>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<PromptTag> PromptTags => Set<PromptTag>();
+    public DbSet<VersionComment> VersionComments => Set<VersionComment>();
+    public DbSet<PromptWatch> PromptWatches => Set<PromptWatch>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     /// <summary>Data-protection keys (cookies, antiforgery tokens), see Program.cs.</summary>
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
@@ -89,6 +92,34 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             e.HasOne(pt => pt.Tag).WithMany(t => t.PromptTags).HasForeignKey(pt => pt.TagId).OnDelete(DeleteBehavior.Cascade);
             // The library filters by tag.
             e.HasIndex(pt => pt.TagId);
+        });
+
+        modelBuilder.Entity<VersionComment>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Body).IsRequired().HasMaxLength(2_000);
+            e.Property(c => c.AuthorName).IsRequired().HasMaxLength(FieldLimits.PersonName);
+            e.Property(c => c.AuthorId).IsRequired().HasMaxLength(450);
+            e.HasOne(c => c.Prompt).WithMany().HasForeignKey(c => c.PromptId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(c => new { c.PromptId, c.VersionNumber });
+        });
+
+        modelBuilder.Entity<PromptWatch>(e =>
+        {
+            e.HasKey(w => new { w.PromptId, w.UserId });
+            e.Property(w => w.UserId).HasMaxLength(450);
+            e.HasOne(w => w.Prompt).WithMany().HasForeignKey(w => w.PromptId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Notification>(e =>
+        {
+            e.HasKey(n => n.Id);
+            e.Property(n => n.UserId).IsRequired().HasMaxLength(450);
+            e.Property(n => n.Text).IsRequired().HasMaxLength(500);
+            e.Property(n => n.Url).IsRequired().HasMaxLength(300);
+            e.HasOne(n => n.Prompt).WithMany().HasForeignKey(n => n.PromptId).OnDelete(DeleteBehavior.Cascade);
+            // Every page counts the reader's unread notices.
+            e.HasIndex(n => new { n.UserId, n.ReadAt });
         });
 
         modelBuilder.Entity<PromptVersion>(e =>

@@ -1,10 +1,12 @@
 @inject PromptManager.Services.ICurrentUser CurrentUser
+@inject PromptManager.Services.ICollaborationService Collaboration
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
     var action = ViewContext.RouteData.Values["action"]?.ToString();
     string? Current(string c, string? a = null) =>
         string.Equals(controller, c, StringComparison.OrdinalIgnoreCase)
         && (a is null || string.Equals(action, a, StringComparison.OrdinalIgnoreCase)) ? "page" : null;
+    var unread = CurrentUser.IsSignedIn ? await Collaboration.UnreadCountAsync() : 0;
     var onLibrary = Current("Prompts") is not null && action != "Create" || Current("Evals") is not null;
 }
 <!DOCTYPE html>
@@ -42,6 +44,10 @@
                         @if (CurrentUser.IsSignedIn)
                         {
                             <li><a asp-controller="Prompts" asp-action="Create" aria-current="@Current("Prompts", "Create")">New prompt</a></li>
+                            <li><a href="/Inbox" aria-current="@Current("Collaboration")"><span>Inbox</span>@if (unread > 0)
+                                {
+                                    <span class="pm-count" aria-label="@unread unread">@(unread > 99 ? "99+" : unread)</span>
+                                }</a></li>
                         }
                     </ul>
 

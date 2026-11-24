@@ -21,10 +21,12 @@ public class EvalsController : Controller
     private readonly LlmCatalog _catalog;
     private readonly ICurrentUser _user;
     private readonly ImprovementAssistant _assistant;
+    private readonly ICollaborationService _collab;
 
     public EvalsController(IEvalService evals, IPromptService prompts, LlmCatalog catalog, ICurrentUser user,
-        ImprovementAssistant assistant)
+        ImprovementAssistant assistant, ICollaborationService collab)
     {
+        _collab = collab;
         _assistant = assistant;
         _evals = evals;
         _prompts = prompts;
@@ -288,6 +290,8 @@ public class EvalsController : Controller
         }
 
         var version = (await _prompts.GetByIdAsync(prompt.Id))!.CurrentVersion;
+        await _collab.NotifyWatchersAsync(prompt.Id, $"{author} added v{version} of {prompt.Title}, suggested from eval #{evalRunId}.",
+            $"/Prompts/Details/{prompt.Id}#v{version}");
         var (newEvalId, error) = await _evals.StartAsync(new StartEvalDto
         {
             PromptId = prompt.Id,

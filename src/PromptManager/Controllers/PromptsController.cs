@@ -24,10 +24,12 @@ public class PromptsController : Controller
     private readonly ICurrentUser _user;
     private readonly IVersionLifecycle _lifecycle;
     private readonly ILookupService _lookups;
+    private readonly ICollaborationService _collab;
 
     public PromptsController(IPromptService service, IPromptRunner runner, LlmCatalog catalog, IInputSetService inputSets,
-        ICurrentUser user, IVersionLifecycle lifecycle, ILookupService lookups)
+        ICurrentUser user, IVersionLifecycle lifecycle, ILookupService lookups, ICollaborationService collab)
     {
+        _collab = collab;
         _lifecycle = lifecycle;
         _lookups = lookups;
         _service = service;
@@ -89,6 +91,7 @@ public class PromptsController : Controller
         dto.Author = await _user.GetDisplayNameAsync();
         dto.OwnerId = _user.Id;
         var id = await _service.CreateAsync(dto);
+        await _collab.SetWatchingAsync(id, true);
         TempData["Success"] = "Prompt created successfully!";
         return RedirectToAction(nameof(Details), new { id });
     }
@@ -123,7 +126,10 @@ public class PromptsController : Controller
             IsSignedIn = _user.IsSignedIn,
             CanManage = _user.CanManage(prompt.OwnerId),
             IsAdmin = _user.IsAdmin,
-            BlockedPromotion = TempData["BlockedPromotion"] as int?
+            BlockedPromotion = TempData["BlockedPromotion"] as int?,
+            Comments = await _collab.CommentsByVersionAsync(id),
+            IsWatching = await _collab.IsWatchingAsync(id),
+            CurrentUserId = _user.Id
         });
     }
 
@@ -209,6 +215,10 @@ public class PromptsController : Controller
             return View(dto);
         }
 
+        var created = await _service.GetByIdAsync(dto.PromptId);
+        await _collab.NotifyWatchersAsync(dto.PromptId,
+            $"{dto.CreatedBy} added v{created!.CurrentVersion} of {created.Title}" + (string.IsNullOrWhiteSpace(dto.ChangeNote) ? "." : $": {dto.ChangeNote}"),
+            $"/Prompts/Details/{dto.PromptId}#v{created.CurrentVersion}");
         TempData["Success"] = "New version created!";
         return RedirectToAction(nameof(Details), new { id = dto.PromptId });
     }
@@ -265,6 +275,9 @@ public class PromptsController : Controller
             overrideRegression && _user.IsAdmin);
 
         TempData[result.Promoted ? "Success" : "Error"] = result.Message;
+        if (result.Promoted)
+            await _collab.NotifyWatchersAsync(id, $"{await _user.GetDisplayNameAsync()} put v{versionNumber} of {prompt.Title} in production.",
+                $"/Prompts/Details/{id}#v{versionNumber}");
         if (result.BlockedByRegression)
             TempData["BlockedPromotion"] = versionNumber;
         return RedirectToAction(nameof(Details), new { id });

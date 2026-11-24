@@ -30,7 +30,8 @@ public sealed record ImportUpload(string FileName, Stream Content);
 /// the file's newest text as a draft version, so a folder can be edited in
 /// git and brought back without losing the history here.
 /// </summary>
-public sealed class PromptTransferService(AppDbContext db, ILookupService lookups, IEvalService evals, ICurrentUser user)
+public sealed class PromptTransferService(AppDbContext db, ILookupService lookups, IEvalService evals, ICurrentUser user,
+    ICollaborationService collab)
 {
     public const long MaxUploadBytes = 5 * 1024 * 1024;
     public const int MaxPromptsPerImport = 500;
@@ -269,6 +270,7 @@ public sealed class PromptTransferService(AppDbContext db, ILookupService lookup
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
 
+        await collab.SetWatchingAsync(prompt.Id, true);
         var (added, caseErrors) = await AddCasesAsync(prompt.Id, doc.Evals);
         var detail = $"{number} {(number == 1 ? "version" : "versions")}, v{prompt.ProductionVersion} in production"
                      + (added > 0 ? $", {added} eval {(added == 1 ? "case" : "cases")}" : "")
@@ -308,6 +310,8 @@ public sealed class PromptTransferService(AppDbContext db, ILookupService lookup
         // rather than overwriting their version.
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
+        await collab.NotifyWatchersAsync(existing.Id, $"{author} imported v{version} of {existing.Title} from a file.",
+            $"/Prompts/Details/{existing.Id}#v{version}");
         return new ImportLine(existing.Title, ImportOutcome.NewVersion, $"Added v{version} as a draft{cases}{caseErrors}", existing.Id);
     }
 
