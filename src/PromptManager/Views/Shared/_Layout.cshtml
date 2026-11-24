@@ -51,6 +51,7 @@
                             @if (CurrentUser.IsAdmin)
                             {
                                 <li><a asp-controller="Costs" asp-action="Index" aria-current="@Current("Costs")">Costs</a></li>
+                                <li><a asp-controller="Lists" asp-action="Index" aria-current="@Current("Lists")">Lists</a></li>
                             }
                         </ul>
                     }

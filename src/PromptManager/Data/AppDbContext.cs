@@ -19,6 +19,9 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
     public DbSet<EvalRun> EvalRuns => Set<EvalRun>();
     public DbSet<EvalResult> EvalResults => Set<EvalResult>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<LookupValue> LookupValues => Set<LookupValue>();
+    public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<PromptTag> PromptTags => Set<PromptTag>();
 
     /// <summary>Data-protection keys (cookies, antiforgery tokens), see Program.cs.</summary>
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
@@ -41,6 +44,40 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             e.Property(p => p.Slug).IsRequired().HasMaxLength(Slugs.MaxLength);
             e.HasIndex(p => p.Slug).IsUnique();
             e.HasIndex(p => p.OwnerId);
+        });
+
+        modelBuilder.Entity<LookupValue>(e =>
+        {
+            e.HasKey(v => v.Id);
+            e.Property(v => v.Kind).HasConversion<string>().HasMaxLength(20);
+            e.Property(v => v.Name).IsRequired().HasMaxLength(Math.Max(FieldLimits.Category, FieldLimits.AiTool));
+            e.HasIndex(v => new { v.Kind, v.Name }).IsUnique();
+            // The lists that used to be hard-coded, plus two tools the owner had
+            // planned; admins change them on the Lists page from here on.
+            var id = 0;
+            e.HasData(
+                new[] { "Code Generation", "Bug Fixing", "Testing", "Documentation", "UI Design", "Business Analysis", "Learning" }
+                    .Select(n => new LookupValue { Id = ++id, Kind = LookupKind.Category, Name = n })
+                    .Concat(new[] { "ChatGPT", "Copilot", "Claude", "Gemini", "Grok", "Mistral" }
+                        .Select(n => new LookupValue { Id = ++id, Kind = LookupKind.Tool, Name = n }))
+                    .ToArray());
+        });
+
+        modelBuilder.Entity<Tag>(e =>
+        {
+            e.HasKey(t => t.Id);
+            e.Property(t => t.Name).IsRequired().HasMaxLength(TagNames.MaxLength);
+            e.Property(t => t.Slug).IsRequired().HasMaxLength(TagNames.MaxLength);
+            e.HasIndex(t => t.Slug).IsUnique();
+        });
+
+        modelBuilder.Entity<PromptTag>(e =>
+        {
+            e.HasKey(pt => new { pt.PromptId, pt.TagId });
+            e.HasOne(pt => pt.Prompt).WithMany(p => p.PromptTags).HasForeignKey(pt => pt.PromptId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(pt => pt.Tag).WithMany(t => t.PromptTags).HasForeignKey(pt => pt.TagId).OnDelete(DeleteBehavior.Cascade);
+            // The library filters by tag.
+            e.HasIndex(pt => pt.TagId);
         });
 
         modelBuilder.Entity<PromptVersion>(e =>

@@ -454,6 +454,112 @@ namespace PromptManager.Migrations
                     b.ToTable("EvalRuns");
                 });
 
+            modelBuilder.Entity("PromptManager.Models.LookupValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Kind", "Name")
+                        .IsUnique();
+
+                    b.ToTable("LookupValues");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Kind = "Category",
+                            Name = "Code Generation"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Kind = "Category",
+                            Name = "Bug Fixing"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Kind = "Category",
+                            Name = "Testing"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Kind = "Category",
+                            Name = "Documentation"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Kind = "Category",
+                            Name = "UI Design"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Kind = "Category",
+                            Name = "Business Analysis"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Kind = "Category",
+                            Name = "Learning"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Kind = "Tool",
+                            Name = "ChatGPT"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Kind = "Tool",
+                            Name = "Copilot"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Kind = "Tool",
+                            Name = "Claude"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Kind = "Tool",
+                            Name = "Gemini"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Kind = "Tool",
+                            Name = "Grok"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Kind = "Tool",
+                            Name = "Mistral"
+                        });
+                });
+
             modelBuilder.Entity("PromptManager.Models.Prompt", b =>
                 {
                     b.Property<int>("Id")
@@ -697,6 +803,21 @@ namespace PromptManager.Migrations
                     b.ToTable("PromptRuns");
                 });
 
+            modelBuilder.Entity("PromptManager.Models.PromptTag", b =>
+                {
+                    b.Property<int>("PromptId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("PromptId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("PromptTags");
+                });
+
             modelBuilder.Entity("PromptManager.Models.PromptVersion", b =>
                 {
                     b.Property<int>("Id")
@@ -754,6 +875,32 @@ namespace PromptManager.Migrations
                         .IsUnique();
 
                     b.ToTable("PromptVersions");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.Tag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -883,6 +1030,25 @@ namespace PromptManager.Migrations
                     b.Navigation("Prompt");
                 });
 
+            modelBuilder.Entity("PromptManager.Models.PromptTag", b =>
+                {
+                    b.HasOne("PromptManager.Models.Prompt", "Prompt")
+                        .WithMany("PromptTags")
+                        .HasForeignKey("PromptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PromptManager.Models.Tag", "Tag")
+                        .WithMany("PromptTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prompt");
+
+                    b.Navigation("Tag");
+                });
+
             modelBuilder.Entity("PromptManager.Models.PromptVersion", b =>
                 {
                     b.HasOne("PromptManager.Models.Prompt", "Prompt")
@@ -901,9 +1067,16 @@ namespace PromptManager.Migrations
 
             modelBuilder.Entity("PromptManager.Models.Prompt", b =>
                 {
+                    b.Navigation("PromptTags");
+
                     b.Navigation("Ratings");
 
                     b.Navigation("Versions");
+                });
+
+            modelBuilder.Entity("PromptManager.Models.Tag", b =>
+                {
+                    b.Navigation("PromptTags");
                 });
 #pragma warning restore 612, 618
         }

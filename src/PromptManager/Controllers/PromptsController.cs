@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PromptManager.DTOs;
 using PromptManager.Infrastructure;
 using PromptManager.Llm;
+using PromptManager.Models;
 using PromptManager.Services;
 using PromptManager.ViewModels;
 
@@ -22,11 +23,13 @@ public class PromptsController : Controller
     private readonly IInputSetService _inputSets;
     private readonly ICurrentUser _user;
     private readonly IVersionLifecycle _lifecycle;
+    private readonly ILookupService _lookups;
 
     public PromptsController(IPromptService service, IPromptRunner runner, LlmCatalog catalog, IInputSetService inputSets,
-        ICurrentUser user, IVersionLifecycle lifecycle)
+        ICurrentUser user, IVersionLifecycle lifecycle, ILookupService lookups)
     {
         _lifecycle = lifecycle;
+        _lookups = lookups;
         _service = service;
         _runner = runner;
         _catalog = catalog;
@@ -34,11 +37,12 @@ public class PromptsController : Controller
         _user = user;
     }
 
-    // GET /Prompts?search=&category=&aiTool=&sortBy=&showArchived=&page=
-    public async Task<IActionResult> Index(string? search, string? category, string? aiTool, string sortBy = "rating",
-        bool showArchived = false, int page = 1)
+    // GET /Prompts?search=&category=&aiTool=&tag=&sortBy=&showArchived=&page=
+    public async Task<IActionResult> Index(string? search, string? category, string? aiTool, string? tag,
+        string sortBy = "rating", bool showArchived = false, int page = 1)
     {
-        var result = await _service.GetPageAsync(search, category, aiTool, sortBy, showArchived, page, PageSize);
+        var result = await _service.GetPageAsync(search, category, aiTool, sortBy, showArchived, page, PageSize, tag);
+        var tagCounts = await _service.TagCountsAsync(showArchived);
 
         return View(new PromptIndexViewModel
         {
@@ -49,19 +53,21 @@ public class PromptsController : Controller
             SearchQuery = search,
             CategoryFilter = category,
             AiToolFilter = aiTool,
+            TagFilter = tag,
+            ActiveTag = tagCounts.FirstOrDefault(t => t.Slug == tag),
+            TagCounts = tagCounts,
             SortBy = sortBy,
             ShowArchived = showArchived,
-            Categories = PromptCategories.All,
-            AiTools = AiTools.All
+            Categories = await _lookups.NamesAsync(LookupKind.Category),
+            AiTools = await _lookups.NamesAsync(LookupKind.Tool)
         });
     }
 
     // GET /Prompts/Create
     [Authorize]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        ViewBag.Categories = PromptCategories.All;
-        ViewBag.AiTools = AiTools.All;
+        await FillListsAsync();
         return View(new CreatePromptDto());
     }
 
@@ -71,10 +77,10 @@ public class PromptsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreatePromptDto dto)
     {
+        await ValidateListsAsync(dto.Category, dto.AiTool, dto.Tags);
         if (!ModelState.IsValid)
         {
-            ViewBag.Categories = PromptCategories.All;
-            ViewBag.AiTools = AiTools.All;
+            await FillListsAsync();
             return View(dto);
         }
 
@@ -127,15 +133,15 @@ public class PromptsController : Controller
         if (prompt == null) return NotFound();
         if (!_user.CanManage(prompt.OwnerId)) return Forbid();
 
-        ViewBag.Categories = PromptCategories.All;
-        ViewBag.AiTools = AiTools.All;
+        await FillListsAsync(prompt.Category, prompt.AiTool);
         return View(new EditPromptDto
         {
             Id = prompt.Id,
             Title = prompt.Title,
             Description = prompt.Description,
             Category = prompt.Category,
-            AiTool = prompt.AiTool
+            AiTool = prompt.AiTool,
+            Tags = string.Join(", ", prompt.Tags.Select(t => t.Name))
         });
     }
 
@@ -149,10 +155,12 @@ public class PromptsController : Controller
         if (prompt == null) return NotFound();
         if (!_user.CanManage(prompt.OwnerId)) return Forbid();
 
+        // A prompt may keep a category or tool an admin has since removed.
+        await ValidateListsAsync(dto.Category == prompt.Category ? null : dto.Category,
+            dto.AiTool == prompt.AiTool ? null : dto.AiTool, dto.Tags);
         if (!ModelState.IsValid)
         {
-            ViewBag.Categories = PromptCategories.All;
-            ViewBag.AiTools = AiTools.All;
+            await FillListsAsync(prompt.Category, prompt.AiTool);
             return View(dto);
         }
 
@@ -438,4 +446,29 @@ public class PromptsController : Controller
         models.FirstOrDefault(m => m.IsAvailable && m.Model.Id == _catalog.DefaultModel)?.Model.Id
         ?? models.FirstOrDefault(m => m.IsAvailable)?.Model.Id
         ?? _catalog.DefaultModel;
+
+    /// <summary>
+    /// Category and tool must be in the admin-managed lists (the dropdowns only
+    /// offer those, but a hand-made POST could send anything); null skips the check.
+    /// </summary>
+    private async Task ValidateListsAsync(string? category, string? aiTool, string? tags)
+    {
+        if (!string.IsNullOrEmpty(category) && !await _lookups.IsAllowedAsync(LookupKind.Category, category))
+            ModelState.AddModelError(nameof(CreatePromptDto.Category), "Pick a category from the list.");
+        if (!string.IsNullOrEmpty(aiTool) && !await _lookups.IsAllowedAsync(LookupKind.Tool, aiTool))
+            ModelState.AddModelError(nameof(CreatePromptDto.AiTool), "Pick a tool from the list.");
+        if (TagNames.Parse(tags).Error is { } tagError)
+            ModelState.AddModelError(nameof(CreatePromptDto.Tags), tagError);
+    }
+
+    /// <summary>The dropdown lists, plus the prompt's current values when they were removed from the lists.</summary>
+    private async Task FillListsAsync(string? currentCategory = null, string? currentTool = null)
+    {
+        var categories = await _lookups.NamesAsync(LookupKind.Category);
+        var tools = await _lookups.NamesAsync(LookupKind.Tool);
+        if (!string.IsNullOrEmpty(currentCategory) && !categories.Contains(currentCategory)) categories.Add(currentCategory);
+        if (!string.IsNullOrEmpty(currentTool) && !tools.Contains(currentTool)) tools.Add(currentTool);
+        ViewBag.Categories = categories;
+        ViewBag.AiTools = tools;
+    }
 }

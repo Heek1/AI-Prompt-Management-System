@@ -43,6 +43,11 @@ public class PromptIndexViewModel
     public string? SearchQuery { get; set; }
     public string? CategoryFilter { get; set; }
     public string? AiToolFilter { get; set; }
+    public string? TagFilter { get; set; }
+
+    /// <summary>The tag being filtered by, for the heading; null when the slug is unknown.</summary>
+    public TagCountDto? ActiveTag { get; set; }
+    public List<TagCountDto> TagCounts { get; set; } = new();
     public string SortBy { get; set; } = "rating";
     public List<string> Categories { get; set; } = new();
     public List<string> AiTools { get; set; } = new();
@@ -103,4 +108,12 @@ public class ModelComparisonViewModel
     public List<ModelComparisonRowDto> Rows { get; set; } = [];
 
     public bool AllFinished => Rows.All(r => r.Eval.Status is Models.EvalRunStatus.Completed or Models.EvalRunStatus.Failed);
+}
+
+public class ListsViewModel
+{
+    public List<PromptManager.Models.LookupValue> Categories { get; set; } = new();
+    public List<PromptManager.Models.LookupValue> Tools { get; set; } = new();
+    public Dictionary<string, int> CategoryUsage { get; set; } = new();
+    public Dictionary<string, int> ToolUsage { get; set; } = new();
 }

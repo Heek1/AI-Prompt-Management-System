@@ -29,6 +29,10 @@
             <span class="pm-tag">@p.Category</span>
             <span class="pm-tag">@p.AiTool</span>
             <span class="pm-tag">by @p.Author</span>
+            @foreach (var t in p.Tags)
+            {
+                <a class="pm-tag pm-tag-link" asp-action="Index" asp-route-tag="@t.Slug">#@t.Name</a>
+            }
             @if (p.IsArchived)
             {
                 <span class="pm-status pm-status-draft">archived</span>

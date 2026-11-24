@@ -643,3 +643,24 @@ details > summary { cursor: pointer; }
     .pm-filters { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
     .pm-filters .pm-search { grid-column: 1 / -1; }
 }
+
+/* ---------- Tags and collections ---------- */
+.pm-tag-hash { background: var(--marker-soft); color: var(--ink-2); }
+a.pm-tag-link { background: var(--marker-soft); color: var(--ink); text-decoration: none; }
+a.pm-tag-link:hover { background: var(--marker); }
+.pm-collections { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: -0.25rem 0 1.1rem; }
+.pm-collections a {
+    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.75rem;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--sheet);
+    color: var(--ink-2); font-size: 0.86rem; font-weight: 500; text-decoration: none;
+}
+.pm-collections a span { color: var(--ink-4); font-variant-numeric: tabular-nums; }
+.pm-collections a:hover { border-color: var(--ink-4); color: var(--ink); }
+.pm-collections a[aria-current="page"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.pm-collections a[aria-current="page"] span { color: var(--marker); }
+
+/* ---------- Admin lists ---------- */
+.pm-lookup { list-style: none; margin: 0; padding: 0; }
+.pm-lookup li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.55rem 1.1rem; border-top: 1px solid var(--line-2); }
+.pm-lookup li:first-child { border-top: 0; }
+.pm-lookup .pm-num { color: var(--ink-4); font-size: 0.85rem; }

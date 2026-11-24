@@ -6,12 +6,13 @@
     ViewData["Title"] = "Library";
     var inv = CultureInfo.InvariantCulture;
     var filtered = !string.IsNullOrWhiteSpace(Model.SearchQuery) || !string.IsNullOrWhiteSpace(Model.CategoryFilter)
-                   || !string.IsNullOrWhiteSpace(Model.AiToolFilter) || Model.ShowArchived;
+                   || !string.IsNullOrWhiteSpace(Model.AiToolFilter) || !string.IsNullOrWhiteSpace(Model.TagFilter)
+                   || Model.ShowArchived;
 }
 
 <header class="pm-head">
     <div>
-        <h1>Library</h1>
+        <h1>@(Model.ActiveTag is { } active ? "#" + active.Name : "Library")</h1>
         <p class="pm-sub">
             @Model.TotalCount @(Model.TotalCount == 1 ? "prompt" : "prompts")@(filtered ? " match these filters" : "")@(Model.PageCount > 1 ? $", page {Model.Page} of {Model.PageCount}" : "").
         </p>
@@ -24,7 +25,24 @@
     }
 </header>
 
+@if (Model.TagCounts.Any())
+{
+    <nav class="pm-collections" aria-label="Collections">
+        <a asp-action="Index" asp-route-showArchived="@(Model.ShowArchived ? "true" : null)"
+           aria-current="@(string.IsNullOrEmpty(Model.TagFilter) ? "page" : null)">All</a>
+        @foreach (var t in Model.TagCounts.Take(16))
+        {
+            <a asp-action="Index" asp-route-tag="@t.Slug" asp-route-showArchived="@(Model.ShowArchived ? "true" : null)"
+               aria-current="@(Model.TagFilter == t.Slug ? "page" : null)">#@t.Name <span>@t.Count</span></a>
+        }
+    </nav>
+}
+
 <form method="get" asp-action="Index" class="pm-filters" role="search">
+    @if (!string.IsNullOrEmpty(Model.TagFilter))
+    {
+        <input type="hidden" name="tag" value="@Model.TagFilter" />
+    }
     <div class="pm-search">
         <label class="form-label small" for="search">Search</label>
         <input type="search" id="search" name="search" value="@Model.SearchQuery" class="form-control" placeholder="Title, description or text" />
@@ -111,6 +129,10 @@ else
                         <span class="pm-tag">@prompt.Category</span>
                         <span class="pm-tag">@prompt.AiTool</span>
                         <span class="pm-tag">by @prompt.Author</span>
+                        @foreach (var t in prompt.Tags)
+                        {
+                            <span class="pm-tag pm-tag-hash">#@t.Name</span>
+                        }
                         @if (prompt.IsArchived)
                         {
                             <span class="pm-tag">archived</span>
@@ -155,7 +177,7 @@ else
                     <li class="page-item @(i == Model.Page ? "active" : "")">
                         <a class="page-link" asp-action="Index"
                            asp-route-search="@Model.SearchQuery" asp-route-category="@Model.CategoryFilter"
-                           asp-route-aiTool="@Model.AiToolFilter" asp-route-sortBy="@Model.SortBy"
+                           asp-route-aiTool="@Model.AiToolFilter" asp-route-tag="@Model.TagFilter" asp-route-sortBy="@Model.SortBy"
                            asp-route-showArchived="@(Model.ShowArchived ? "true" : null)" asp-route-page="@i">@i</a>
                     </li>
                 }

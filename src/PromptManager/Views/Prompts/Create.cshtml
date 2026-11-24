@@ -51,7 +51,7 @@
             <span asp-validation-for="Category" class="text-danger small"></span>
         </div>
 
-        <div class="mb-4">
+        <div class="mb-3">
             <label asp-for="AiTool" class="form-label">Tool</label>
             <select asp-for="AiTool" class="form-select">
                 <option value="">Choose a tool</option>
@@ -61,6 +61,13 @@
                 }
             </select>
             <span asp-validation-for="AiTool" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="Tags" class="form-label">Tags</label>
+            <input asp-for="Tags" class="form-control" placeholder="support, email, en" />
+            <div class="form-text">Separated by commas, up to 8. Prompts with the same tag form a collection.</div>
+            <span asp-validation-for="Tags" class="text-danger small"></span>
         </div>
 
         <div class="d-grid gap-2">
