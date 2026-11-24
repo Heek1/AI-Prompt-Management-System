@@ -35,12 +35,30 @@ jobs:
       - name: Build
         run: dotnet build PromptManager.slnx --no-restore --configuration Release -warnaserror
 
+      - name: Install Chromium for the browser tests
+        run: pwsh tests/PromptManager.E2E/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
       - name: Test
         run: >
           dotnet test PromptManager.slnx --no-build --configuration Release
           --logger "trx;LogFileName=results.trx"
           --collect "XPlat Code Coverage"
           --results-directory TestResults
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:coverage -reporttypes:"MarkdownSummaryGithub;HtmlInline;Badges" -assemblyfilters:"+PromptManager" -classfilters:"-PromptManager.Migrations.*"
+          cat coverage/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+          retention-days: 14
 
       - name: Upload test results
         if: always()

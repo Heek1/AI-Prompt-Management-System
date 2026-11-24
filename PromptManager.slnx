@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/src/" />
   <Folder Name="/tests/">
+    <Project Path="tests/PromptManager.E2E/PromptManager.E2E.csproj" />
     <Project Path="tests/PromptManager.Tests/PromptManager.Tests.csproj" />
   </Folder>
   <Project Path="src/PromptManager/PromptManager.csproj" />
