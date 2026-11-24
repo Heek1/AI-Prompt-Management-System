@@ -22,12 +22,14 @@ public class CreatePromptDto
     [Required(ErrorMessage = "Prompt text is required.")]
     [StringLength(FieldLimits.PromptText, MinimumLength = FieldLimits.PromptTextMin,
         ErrorMessage = "Prompt text must be between {2} and {1} characters.")]
+    [Display(Name = "Prompt text")]
     public string PromptText { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Category is required.")]
     public string Category { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "AI Tool is required.")]
+    [Display(Name = "Tool")]
     public string AiTool { get; set; } = string.Empty;
 
     /// <summary>Comma-separated; parsed by <see cref="TagNames"/>.</summary>
@@ -59,6 +61,7 @@ public class EditPromptDto
     public string Category { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "AI Tool is required.")]
+    [Display(Name = "Tool")]
     public string AiTool { get; set; } = string.Empty;
 
     /// <summary>Comma-separated; parsed by <see cref="TagNames"/>.</summary>
@@ -126,6 +129,7 @@ public class PromptVersionDto
 {
     public int Id { get; set; }
     public int VersionNumber { get; set; }
+    [Display(Name = "Prompt text")]
     public string PromptText { get; set; } = string.Empty;
     public string ChangeNote { get; set; } = string.Empty;
     public string CreatedBy { get; set; } = string.Empty;
@@ -144,9 +148,11 @@ public class CreatePromptVersionDto
     [Required(ErrorMessage = "Prompt text is required.")]
     [StringLength(FieldLimits.PromptText, MinimumLength = FieldLimits.PromptTextMin,
         ErrorMessage = "Prompt text must be between {2} and {1} characters.")]
+    [Display(Name = "Prompt text")]
     public string PromptText { get; set; } = string.Empty;
 
     [StringLength(FieldLimits.ChangeNote, ErrorMessage = "Change note cannot exceed {1} characters.")]
+    [Display(Name = "What changed")]
     public string? ChangeNote { get; set; }
 
     [BindNever]
@@ -164,6 +170,7 @@ public class RatePromptDto
 
     [Required]
     [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5.")]
+    [Display(Name = "Rating")]
     public int Rating { get; set; }
 
     [StringLength(FieldLimits.Comment, ErrorMessage = "Comment cannot exceed {1} characters.")]

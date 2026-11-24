@@ -26,4 +26,7 @@ public interface IPromptService
     Task<bool> CreateVersionAsync(CreatePromptVersionDto dto);
     Task<(bool success, string error)> RateAsync(RatePromptDto dto);
     Task<bool> ArchiveAsync(int id);
+
+    /// <summary>The score this account gave the prompt, or null when it has not rated it.</summary>
+    Task<int?> RatingByAsync(int promptId, string userId);
 }

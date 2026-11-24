@@ -35,7 +35,7 @@
             <div class="pm-auth-inner">
                 @if (TempData["Error"] != null)
                 {
-                    <div class="alert alert-danger" role="alert">@T[TempData["Error"]!.ToString()!]</div>
+                    <div class="alert alert-danger" role="alert">@T.Message(TempData["Error"]?.ToString())</div>
                 }
                 @RenderBody()
             </div>

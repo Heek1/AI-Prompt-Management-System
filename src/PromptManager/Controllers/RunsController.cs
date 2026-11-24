@@ -17,7 +17,10 @@ public class RunsController : Controller
     // GET /Runs?promptId=5&page=2
     public async Task<IActionResult> Index(int? promptId, int page = 1)
     {
-        return View(await _runner.ListRunsAsync(promptId, page));
+        var runs = await _runner.ListRunsAsync(promptId, page);
+        // Runs of a prompt that does not exist are a missing page, not an empty list.
+        if (promptId is not null && runs.PromptTitle is null) return NotFound();
+        return View(runs);
     }
 
     // GET /Runs/Compare?left=7&right=8

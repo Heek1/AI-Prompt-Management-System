@@ -197,7 +197,7 @@ public sealed class PromptsEndpointsTests : IDisposable, IAsyncLifetime
         };
 
         var first = await _client.PostFormAsync($"/Prompts/Rate/{id}", "/Prompts/Rate", rating);
-        var second = await _client.PostFormAsync($"/Prompts/Rate/{id}", "/Prompts/Rate", rating);
+        var second = await _client.PostFormAsync($"/Prompts/Details/{id}", "/Prompts/Rate", rating);
 
         Assert.Equal(HttpStatusCode.Redirect, first.StatusCode);
         Assert.Equal(HttpStatusCode.OK, second.StatusCode);

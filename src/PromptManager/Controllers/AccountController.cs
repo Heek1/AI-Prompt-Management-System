@@ -27,7 +27,10 @@ public class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult Register(string? returnUrl) => View(new RegisterViewModel { ReturnUrl = returnUrl });
+    public IActionResult Register(string? returnUrl) =>
+        User.Identity?.IsAuthenticated == true
+            ? LocalRedirect(SafeReturnUrl(returnUrl))
+            : View(new RegisterViewModel { ReturnUrl = returnUrl });
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -61,7 +64,10 @@ public class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult Login(string? returnUrl) => View(new LoginViewModel { ReturnUrl = returnUrl });
+    public IActionResult Login(string? returnUrl) =>
+        User.Identity?.IsAuthenticated == true
+            ? LocalRedirect(SafeReturnUrl(returnUrl))
+            : View(new LoginViewModel { ReturnUrl = returnUrl });
 
     [HttpPost]
     [ValidateAntiForgeryToken]

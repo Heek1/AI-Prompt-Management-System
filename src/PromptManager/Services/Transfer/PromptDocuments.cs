@@ -109,6 +109,8 @@ public static class PromptSerializer
         if (isJson)
         {
             using var doc = JsonDocument.Parse(content);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+                throw new JsonException("the file must hold an object: one prompt, or \"prompts\" with a list");
             return doc.RootElement.TryGetProperty("prompts", out _)
                 ? JsonSerializer.Deserialize<PromptFile>(content, Json)?.Prompts ?? []
                 : [JsonSerializer.Deserialize<PromptDocument>(content, Json)!];

@@ -35,6 +35,9 @@ public class PromptDetailsViewModel
     public Dictionary<int, List<PromptManager.Services.CommentDto>> Comments { get; set; } = new();
     public bool IsWatching { get; set; }
     public string? CurrentUserId { get; set; }
+
+    /// <summary>The score the reader gave this prompt, when they have rated it.</summary>
+    public int? MyRating { get; set; }
     public int TotalRuns { get; set; }
 }
 

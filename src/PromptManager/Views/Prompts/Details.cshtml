@@ -345,7 +345,14 @@
                 }
                 @if (!p.IsArchived && Model.IsSignedIn)
                 {
-                    <a asp-action="Rate" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary mt-3">@T["Rate this prompt"]</a>
+                    @if (Model.MyRating is { } mine)
+                    {
+                        <p class="small text-muted mt-3 mb-0">@T["You rated it {0} out of 5.", mine]</p>
+                    }
+                    else
+                    {
+                        <a asp-action="Rate" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary mt-3">@T["Rate this prompt"]</a>
+                    }
                 }
             </div>
         </section>

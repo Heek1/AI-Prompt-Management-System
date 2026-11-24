@@ -170,13 +170,16 @@ public sealed class AuthorizationTests : IDisposable
         {
             ["PromptId"] = id.ToString(), ["Rating"] = "5", ["UserName"] = "alias-1"
         });
-        var second = await rater.PostFormAsync($"/Prompts/Rate/{id}", "/Prompts/Rate", new Dictionary<string, string>
+        var second = await rater.PostFormAsync($"/Prompts/Details/{id}", "/Prompts/Rate", new Dictionary<string, string>
         {
             ["PromptId"] = id.ToString(), ["Rating"] = "1", ["UserName"] = "alias-2"
         });
 
         Assert.Equal(HttpStatusCode.Redirect, first.StatusCode);
         Assert.Contains("You have already rated this prompt.", await second.Content.ReadAsStringAsync());
+        // The form itself is no longer offered.
+        Assert.Equal($"/Prompts/Details/{id}", (await rater.GetAsync($"/Prompts/Rate/{id}")).Headers.Location!.OriginalString);
+        Assert.Contains("You rated it 5 out of 5.", await rater.GetStringAsync($"/Prompts/Details/{id}"));
     }
 
     // ---------- Admin ----------

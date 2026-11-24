@@ -27,11 +27,13 @@ public class PromptService : IPromptService
     public async Task<PromptPageDto> GetPageAsync(string? search, string? category, string? aiTool, string sortBy,
         bool includeArchived, int page, int pageSize, string? tag = null)
     {
-        page = Math.Max(1, page);
         var query = Filter(search, category, aiTool, sortBy, includeArchived, tag);
+        var total = await query.CountAsync();
+        // A page past the end (an old link, a hand-typed number) shows the last one.
+        page = Math.Clamp(page, 1, Math.Max(1, (total + pageSize - 1) / pageSize));
         return new PromptPageDto
         {
-            TotalCount = await query.CountAsync(),
+            TotalCount = total,
             Prompts = await Project(query.Skip((page - 1) * pageSize).Take(pageSize), search).ToListAsync(),
             Page = page,
             PageSize = pageSize
@@ -305,7 +307,7 @@ public class PromptService : IPromptService
     {
         await using var tx = await _db.Database.BeginTransactionAsync();
         var updated = await _db.Prompts
-            .Where(p => p.Id == dto.Id)
+            .Where(p => p.Id == dto.Id && !p.IsArchived)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(p => p.Title, dto.Title)
                 .SetProperty(p => p.Description, dto.Description ?? string.Empty)
@@ -326,6 +328,12 @@ public class PromptService : IPromptService
     }
 
     private Task<List<Tag>> ResolveTagsAsync(string? input) => TagStore.ResolveAsync(_db, input);
+
+    public Task<int?> RatingByAsync(int promptId, string userId) =>
+        _db.PromptRatings.AsNoTracking()
+            .Where(r => r.PromptId == promptId && r.UserId == userId)
+            .Select(r => (int?)r.Rating)
+            .FirstOrDefaultAsync();
 
     public async Task<bool> UnarchiveAsync(int id) =>
         await _db.Prompts

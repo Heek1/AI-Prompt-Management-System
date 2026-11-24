@@ -92,12 +92,18 @@ public sealed class RunsEndpointsTests : IDisposable, IAsyncLifetime
 
     [Theory]
     [InlineData("/Runs")]
-    [InlineData("/Runs?promptId=1&page=3")]
+    [InlineData("/Runs?page=3")]
     public async Task Runs_index_renders_when_empty(string url)
     {
         var response = await _client.GetAsync(url);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Runs_of_a_prompt_that_does_not_exist_are_404()
+    {
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync("/Runs?promptId=99999")).StatusCode);
     }
 
     [Fact]
