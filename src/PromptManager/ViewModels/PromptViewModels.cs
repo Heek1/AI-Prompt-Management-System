@@ -117,3 +117,11 @@ public class ListsViewModel
     public Dictionary<string, int> CategoryUsage { get; set; } = new();
     public Dictionary<string, int> ToolUsage { get; set; } = new();
 }
+
+public class SuggestionViewModel
+{
+    public PromptDetailsDto Prompt { get; set; } = new();
+    public EvalRunDetailsDto Eval { get; set; } = new();
+    public PromptManager.Evals.ImprovementSuggestion Suggestion { get; set; } = null!;
+    public DiffResult Diff { get; set; } = new([], 0, 0, 0);
+}

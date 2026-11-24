@@ -4,6 +4,7 @@ using PromptManager.DTOs;
 using PromptManager.Evals;
 using PromptManager.Infrastructure;
 using PromptManager.Llm;
+using PromptManager.Models;
 using PromptManager.Services;
 using PromptManager.ViewModels;
 
@@ -19,9 +20,12 @@ public class EvalsController : Controller
     private readonly IPromptService _prompts;
     private readonly LlmCatalog _catalog;
     private readonly ICurrentUser _user;
+    private readonly ImprovementAssistant _assistant;
 
-    public EvalsController(IEvalService evals, IPromptService prompts, LlmCatalog catalog, ICurrentUser user)
+    public EvalsController(IEvalService evals, IPromptService prompts, LlmCatalog catalog, ICurrentUser user,
+        ImprovementAssistant assistant)
     {
+        _assistant = assistant;
         _evals = evals;
         _prompts = prompts;
         _catalog = catalog;
@@ -198,7 +202,118 @@ public class EvalsController : Controller
     public async Task<IActionResult> Run(int id)
     {
         var run = await _evals.GetRunAsync(id);
-        return run is null ? NotFound() : View(run);
+        if (run is null) return NotFound();
+
+        var prompt = await _prompts.GetByIdAsync(run.PromptId);
+        if (prompt is not null && !prompt.IsArchived && _user.CanManage(prompt.OwnerId)
+            && run.Status == EvalRunStatus.Completed && run.PassedCases < run.TotalCases)
+        {
+            // The echo model cannot write a prompt, so it is not offered.
+            ViewData["SuggestModels"] = _catalog.List()
+                .Where(m => !string.Equals(m.Model.Provider, "Echo", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        return View(run);
+    }
+
+    // POST /Evals/Suggest: asks a model for a revision (B11). The answer is
+    // stored as a run and the review page reads it from there, so reloading
+    // that page does not call (and pay for) the model again.
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Suggest(int evalRunId, string model, CancellationToken ct)
+    {
+        if (await ManagedPromptOfEvalAsync(evalRunId) is null) return Forbid();
+
+        var (suggestion, error) = await _assistant.SuggestAsync(evalRunId, model, _user.MayUsePaidModels,
+            await _user.GetDisplayNameAsync(), _user.Id, ct);
+        if (suggestion is null)
+        {
+            TempData["Error"] = error;
+            return RedirectToAction(nameof(Run), new { id = evalRunId });
+        }
+        return RedirectToAction(nameof(Suggestion), new { id = suggestion.RunId, evalRunId });
+    }
+
+    // GET /Evals/Suggestion/12?evalRunId=7  (12 = the run that holds the answer)
+    [Authorize]
+    public async Task<IActionResult> Suggestion(int id, int evalRunId)
+    {
+        if (await ManagedPromptOfEvalAsync(evalRunId) is not { } prompt) return Forbid();
+        var eval = await _evals.GetRunAsync(evalRunId);
+        var suggestion = await _assistant.LoadAsync(id, evalRunId);
+        if (eval is null || suggestion is null) return NotFound();
+
+        return View(new SuggestionViewModel
+        {
+            Prompt = prompt,
+            Eval = eval,
+            Suggestion = suggestion,
+            Diff = TextDiff.Compare(suggestion.BaseText, suggestion.RevisedText)
+        });
+    }
+
+    // POST /Evals/AcceptSuggestion: saves the (possibly edited) text as a draft
+    // and runs the same eval on it, with the same model and judge.
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AcceptSuggestion(int evalRunId, string? text, string? changeNote)
+    {
+        if (await ManagedPromptOfEvalAsync(evalRunId) is not { } prompt) return Forbid();
+        var eval = await _evals.GetRunAsync(evalRunId);
+        if (eval is null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(text) || text.Length is < FieldLimits.PromptTextMin or > FieldLimits.PromptText)
+        {
+            TempData["Error"] = $"The text must be between {FieldLimits.PromptTextMin} and {FieldLimits.PromptText} characters.";
+            return RedirectToAction(nameof(Run), new { id = evalRunId });
+        }
+
+        var author = await _user.GetDisplayNameAsync();
+        var note = string.IsNullOrWhiteSpace(changeNote) ? $"Suggested from eval #{evalRunId}" : changeNote.Trim();
+        var saved = await _prompts.CreateVersionAsync(new CreatePromptVersionDto
+        {
+            PromptId = prompt.Id,
+            PromptText = text,
+            ChangeNote = note.Length > FieldLimits.ChangeNote ? note[..FieldLimits.ChangeNote] : note,
+            CreatedBy = author,
+            CreatedById = _user.Id
+        });
+        if (!saved)
+        {
+            TempData["Error"] = "Could not save the version.";
+            return RedirectToAction("Details", "Prompts", new { id = prompt.Id });
+        }
+
+        var version = (await _prompts.GetByIdAsync(prompt.Id))!.CurrentVersion;
+        var (newEvalId, error) = await _evals.StartAsync(new StartEvalDto
+        {
+            PromptId = prompt.Id,
+            VersionNumber = version,
+            Model = eval.Model,
+            JudgeModel = eval.JudgeModel,
+            RunBy = author,
+            RunByUserId = _user.Id,
+            MayUsePaidModels = _user.MayUsePaidModels
+        });
+        if (newEvalId is null)
+        {
+            TempData["Error"] = $"Saved v{version} as a draft, but the eval did not start: {error}";
+            return RedirectToAction("Details", "Prompts", new { id = prompt.Id });
+        }
+        TempData["Success"] = $"Saved v{version} as a draft and started the same eval on it.";
+        return RedirectToAction(nameof(Run), new { id = newEvalId });
+    }
+
+    /// <summary>The prompt an eval belongs to, when the current user may change it.</summary>
+    private async Task<PromptDetailsDto?> ManagedPromptOfEvalAsync(int evalRunId)
+    {
+        var eval = await _evals.GetRunAsync(evalRunId);
+        if (eval is null) return null;
+        var prompt = await _prompts.GetByIdAsync(eval.PromptId);
+        return prompt is not null && !prompt.IsArchived && _user.CanManage(prompt.OwnerId) ? prompt : null;
     }
 
     private static EvalCaseViewModel CaseViewModel(PromptDetailsDto prompt, EvalCaseDto dto) => new()

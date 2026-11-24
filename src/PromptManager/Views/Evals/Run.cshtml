@@ -91,6 +91,41 @@
     </div>
 </section>
 
+@if (ViewData["SuggestModels"] is List<PromptManager.Llm.AvailableModel> suggestModels)
+{
+    <section class="card pm-suggest mb-4" aria-labelledby="suggest-heading">
+        <div class="card-body d-flex flex-wrap gap-3 align-items-end justify-content-between">
+            <div style="max-width: 560px">
+                <h2 class="h6 mb-1" id="suggest-heading">Ask a model to fix it</h2>
+                <p class="small text-muted mb-0">
+                    The model sees v@(Model.VersionNumber), the failed cases with their answers and checks, and the names of the cases that passed.
+                    You review the change as a diff before anything is saved; accepting it saves a draft and runs this eval again.
+                </p>
+            </div>
+            @if (suggestModels.Any(m => m.IsAvailable))
+            {
+                <form asp-action="Suggest" method="post" class="d-flex gap-2 align-items-end">
+                    <input type="hidden" name="evalRunId" value="@Model.Id" />
+                    <div>
+                        <label class="form-label small" for="suggest-model">Model</label>
+                        <select id="suggest-model" name="model" class="form-select">
+                            @foreach (var m in suggestModels)
+                            {
+                                <option value="@m.Model.Id" disabled="@(!m.IsAvailable)">@m.Model.DisplayName@(m.IsAvailable ? "" : $" ({m.UnavailableReason})")</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-marker text-nowrap">Suggest a fix</button>
+                </form>
+            }
+            else
+            {
+                <p class="small mb-0">No model that can write prompts is configured here; the echo model only repeats its input.</p>
+            }
+        </div>
+    </section>
+}
+
 <h2 class="pm-section-title">Cases</h2>
 <ul class="pm-cases">
     @foreach (var r in Model.Results)
